@@ -1,0 +1,31 @@
+/* modules.css — estilos específicos por módulo */
+
+/* Dashboard */
+.dash-section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-muted); margin: 28px 0 12px; font-weight: 700; }
+.alert-panel { max-height: 420px; overflow-y: auto; }
+
+/* Fermentación */
+.ferm-header { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.so2-meter { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
+/* Onboarding */
+.onb-modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+.onb-modules div { border: 1px solid var(--color-border); border-radius: 8px; padding: 10px; font-size: 13px; }
+.onb-modules b { display: block; font-size: 14px; margin-bottom: 2px; }
+@media (max-width: 640px) { .onb-modules { grid-template-columns: 1fr; } }
+
+/* Costos */
+.cost-bar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--color-border); }
+.cost-bar span { display: block; height: 100%; }
+
+/* Matriz BCG */
+.bcg { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; height: 260px; }
+.bcg > div { border-radius: 8px; padding: 10px; font-size: 12.5px; border: 1px solid var(--color-border); }
+.bcg .q-star { background: var(--color-success-soft); }
+.bcg .q-q { background: var(--color-info-soft); }
+.bcg .q-cow { background: var(--color-accent-soft); }
+.bcg .q-dog { background: var(--color-error-soft); }
+.bcg h5 { margin: 0 0 4px; font-size: 12.5px; }
+
+/* Calendario tributario */
+.cal-list .cal-item { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--color-border); align-items: center; font-size: 13.5px; }

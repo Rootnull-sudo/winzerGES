@@ -1,0 +1,122 @@
+/* ==========================================================================
+   tokens.css — Design tokens (variables CSS) del sistema.
+   Cambiar aquí la paleta, tipografía o espaciado afecta a toda la app.
+   ========================================================================== */
+:root {
+  /* Paleta Winzer Gestión — blanco y negro */
+  --color-primary: #111111;          /* negro */
+  --color-primary-hover: #000000;
+  --color-primary-soft: #EFEFEF;
+  --color-secondary: #3D3D3D;        /* gris grafito */
+  --color-secondary-soft: #F2F2F2;
+  --color-accent: #6B6B6B;           /* gris medio (foco, realces) */
+  --color-accent-soft: #F5F5F5;
+
+  /* Neutros */
+  --color-bg: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F6F6F6;
+  --color-border: #E3E3E3;
+  --color-muted: #666666;
+  --color-text: #111111;
+  --color-on-primary: #FFFFFF;
+
+  /* Estados (se mantienen en color por accesibilidad: comunican ok/advertencia/error) */
+  --color-success: #2F7A45;
+  --color-success-soft: #E6F2EA;
+  --color-warning: #B57A12;
+  --color-warning-text: #7E5408;
+  --color-warning-soft: #FBF1DE;
+  --color-error: #B02A2A;
+  --color-error-soft: #F8E4E4;
+  --color-info: #2F5F86;
+  --color-info-soft: #E5EEF5;
+
+  /* Vino */
+  --color-blanco: #D8C374;
+  --color-tinto: #7A1F35;
+
+  /* Gráficos — orden categorial fijo (validado CVD, ver docs/architecture.md) */
+  --chart-1: #A8344E; --chart-2: #2F7FB8; --chart-3: #B5801A; --chart-4: #8257B0; --chart-5: #4E8A3A;
+
+  /* Tipografía */
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 30px;
+
+  /* Espaciado 4/8/12/16/24/32 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* Bordes y sombras */
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.18);
+
+  /* Layout */
+  --header-h: 60px;
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 64px;
+
+  /* Animación */
+  --dur: 160ms;
+  --ease: cubic-bezier(.2, .7, .3, 1);
+
+  color-scheme: light;
+}
+
+/* Modo oscuro — se activa con data-theme="dark" en <html> */
+[data-theme="dark"] {
+  --color-primary: #F5F5F5;
+  --color-primary-hover: #FFFFFF;
+  --color-primary-soft: #2A2A2A;
+  --color-secondary: #CFCFCF;
+  --color-secondary-soft: #242424;
+  --color-accent: #A8A8A8;
+  --color-accent-soft: #1F1F1F;
+
+  --color-bg: #0B0B0B;
+  --color-surface: #161616;
+  --color-surface-2: #1C1C1C;
+  --color-border: #2E2E2E;
+  --color-muted: #A3A3A3;
+  --color-text: #F2F2F2;
+  --color-on-primary: #0B0B0B;
+
+  --color-success: #6DB282;
+  --color-success-soft: #1C2D21;
+  --color-warning: #E0AA47;
+  --color-warning-text: #E0AA47;
+  --color-warning-soft: #33291A;
+  --color-error: #E06A6A;
+  --color-error-soft: #361F1F;
+  --color-info: #74A7CC;
+  --color-info-soft: #1B2833;
+
+  --color-blanco: #E3D08A;
+  --color-tinto: #C2586E;
+
+  --chart-1: #C9566E; --chart-2: #4A8CC4; --chart-3: #B08528; --chart-4: #9273C2; --chart-5: #5E9A48;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 0ms; }
+}

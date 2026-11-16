@@ -1,0 +1,28 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Dependencias (si se agrega tooling opcional)
+node_modules/
+package-lock.json
+
+# Respaldos con datos reales: NUNCA al repositorio
+*backup*.json
+vina-gestion-backup-*.json
+winzer-backup-*.json
+*.cartola.csv
+respaldos/
+
+# Variables de entorno (preventivo)
+.env
+.env.*
+
+# Artefactos de release
+dist/
+*.zip

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es-CL" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Winzer Gestión — sistema de gestión integral para viña boutique chilena: operación, bodega, comercial, finanzas y tributario. 100% offline.">
+  <meta name="color-scheme" content="light dark">
+  <title>Winzer Gestión</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='black'/><text x='50' y='72' font-size='64' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>W</text></svg>">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/modules.css">
+</head>
+<body>
+  <div id="app" aria-live="polite">
+    <div style="display:grid;place-items:center;min-height:100vh;font-family:system-ui;color:#6F6A63">Cargando Winzer Gestión…</div>
+  </div>
+  <noscript><p style="padding:24px">Esta aplicación necesita JavaScript habilitado.</p></noscript>
+
+  <!-- Núcleo (scripts clásicos: funcionan abriendo el archivo con doble clic, sin servidor) -->
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/events.js"></script>
+  <script src="js/data/schema.js"></script>
+  <script src="js/data/db.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/auth/permissions.js"></script>
+  <script src="js/auth/auth.js"></script>
+  <!-- Capa de cálculo -->
+  <script src="js/calc/oenology.js"></script>
+  <script src="js/calc/inventory.js"></script>
+  <script src="js/calc/tax.js"></script>
+  <script src="js/calc/financial.js"></script>
+  <!-- Integraciones y reglas de dominio (siempre activas) -->
+  <script src="js/integrations/dte.js"></script>
+  <script src="js/integrations/recon.js"></script>
+  <script src="js/integrations/domain.js"></script>
+  <!-- UI, datos y arranque -->
+  <script src="js/core/ui.js"></script>
+  <script src="js/core/charts.js"></script>
+  <script src="js/core/alerts.js"></script>
+  <script src="js/data/backup.js"></script>
+  <script src="js/modules/_registry.js"></script>
+  <script src="js/core/router.js"></script>
+  <script src="js/core/app.js"></script>
+  <!-- Los módulos (js/modules/<id>/) y los datos demo (js/data/seed.js) se cargan bajo demanda. -->
+</body>
+</html>

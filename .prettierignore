@@ -11,3 +11,6 @@ packages/db/drizzle/
 **/test-results/
 **/playwright-report/
 node_modules/
+
+# Estado local de la skill impeccable
+**/.impeccable/

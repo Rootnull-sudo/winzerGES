@@ -40,29 +40,25 @@ export function Dialog({
         onClose();
       }}
       className={cn(
-        'm-0 mt-auto w-full max-w-none rounded-t-[14px] border border-rule bg-raised p-0 text-ink backdrop:bg-black/35',
-        'sm:m-auto sm:rounded-[14px]',
+        'm-0 mt-auto w-full max-w-none border-t border-ink bg-raised p-0 text-ink backdrop:bg-black/40',
+        'sm:m-auto sm:border',
         size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-lg',
         'open:animate-[dlg-in_200ms_cubic-bezier(0.23,1,0.32,1)]'
       )}
     >
       {open && (
         <div className="flex max-h-[88dvh] flex-col">
-          <header className="flex items-start justify-between gap-4 border-b border-rule px-5 py-4">
+          <header className="flex items-start justify-between gap-4 border-b border-rule px-6 py-5">
             <div>
-              <h2 className="font-label text-[20px] leading-tight font-semibold tracking-[-0.01em]">{title}</h2>
+              <h2 className="font-label text-[24px] leading-tight">{title}</h2>
               {description && <p className="mt-1 text-[13px] text-ink-3">{description}</p>}
             </div>
-            <button
-              onClick={onClose}
-              aria-label="Cerrar"
-              className="-mr-1.5 grid size-9 place-items-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink"
-            >
+            <button onClick={onClose} aria-label="Cerrar" className="-mr-1.5 grid size-10 place-items-center text-ink-3 hover:bg-sunken hover:text-ink">
               <X size={18} />
             </button>
           </header>
-          <div className="overflow-y-auto px-5 py-4">{children}</div>
-          {footer && <footer className="flex justify-end gap-2 border-t border-rule px-5 py-3">{footer}</footer>}
+          <div className="overflow-y-auto px-6 py-5">{children}</div>
+          {footer && <footer className="flex justify-end gap-2 border-t border-rule px-6 py-4">{footer}</footer>}
         </div>
       )}
       <style>{`@keyframes dlg-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}`}</style>

@@ -1,81 +1,106 @@
-# Sistema de diseño
+# Sistema de diseño — «Marca de fuego»
+
+Elegida en noviembre de 2026 entre cinco alternativas (lienzo de exploración en claude.ai, privado del equipo;
+decisión en [adr/0008](adr/0008-direccion-visual-marca-de-fuego.md)). Contexto de producto: `apps/web/PRODUCT.md`.
 
 ## Dirección
 
-*Tinta sobre papel de etiqueta.* Mantiene la identidad blanco y negro de v1, pensada para quien trabaja en el
-viñedo y la bodega con el teléfono en la mano, y en la oficina con tablas largas.
+*Cada registro lleva su marca, como una barrica marcada a fuego.* Blanco y negro estricto, como el logo WINZER®.
+Pensada por igual para la oficina (tablas largas, cifras) y para el viñedo y la bodega (teléfono a pleno sol).
 
-- **Color escaso y con significado**: estados (ok, advertencia, error, info) y **tinto / blanco** solo para el
-  tipo de uva — siempre acompañados de texto o ícono, nunca solo color.
-- **Profundidad solo con bordes** sutiles (sin sombras). Superficies: papel (`paper`), elevada (`raised`:
-  tarjetas, diálogos, tablas) y hundida (`sunken`: inputs, hover).
-- **Tipografía**: títulos en **Fraunces** (`font-label`, serif de etiqueta de vino); cuerpo y datos en
-  **Instrument Sans** (`font-sans`); cifras con `tabular` (números tabulares).
-- **Densidad de herramienta** en escritorio (filas de 40 px, controles de 36 px); en móvil los listados pasan a
-  tarjetas grandes y la acción principal ocupa todo el ancho.
+- **Blanco y negro estricto.** El color solo comunica **estado** (advertencia, error, info) y nunca solo:
+  siempre con texto o ícono. Lo normal ("Bueno", "Al día") no se pinta.
+- **La forma reemplaza al color**:
+  - tipo de uva: punto **relleno** = tinta, punto **vacío** = blanca (`UvaDot`, `TipoUva`);
+  - sincronización: línea **continua** = guardado en el servidor, línea **de trazos** = pendiente (bajo el
+    `Sello`, en el indicador del header y en la leyenda).
+- **El sello** (`Sello`): el código de un registro (cuartel, estanque, lote, barrica) en la serif del logo dentro
+  de un círculo de 1 px. Es la firma visual: úsalo en la primera columna de listados de entidades con código.
+- **Profundidad solo con líneas de 1 px.** Sin sombras, sin tarjetas. Línea de tinta (`border-ink`) para cerrar
+  encabezados y abrir tablas o secciones; línea suave (`border-rule`) entre filas. Esquinas rectas (2 px).
+- **Tipografía**:
+  - **Gilda Display** (`font-label`, `titulo`): serif de alto contraste afín a Agatho, la del logo. Solo peso 400
+    (nunca `font-semibold`). Títulos de página en versales (`titulo`), títulos de sección y diálogos en
+    caja normal (`font-label`), etiquetas de área del menú en versales pequeñas.
+  - **Public Sans** (`font-sans`): cuerpo y datos, cifras `tabular`.
+  - Agatho no se usa en la interfaz: su licencia web no está confirmada. El logo va como imagen
+    (`public/winzer-logo.png`, negro con transparencia; la clase `logo` lo invierte en modo oscuro).
+- **Sin etiquetas pequeñas sobre los títulos** (kicker/eyebrow): el título se sostiene solo y el menú ya dice el área.
+- **Densidad**: filas de 48 px (el sello mide 52), controles de 40 px; en móvil botones de 52 px y listas de filas
+  anchas con el sello a la izquierda.
 
 ## Tokens (`apps/web/src/app/globals.css`)
 
-Se usan siempre como clases de Tailwind, **nunca colores sueltos** (`bg-white`, `#333`, `text-gray-500`).
+Siempre como clases de Tailwind, **nunca colores sueltos** (`bg-white`, `#333`, `text-gray-500`).
 
 | Token / clase | Uso |
 |---|---|
-| `bg-paper` | Fondo de la app |
-| `bg-raised` | Tarjetas, tablas, diálogos |
-| `bg-sunken` | Inputs, hover de filas, placeholders de carga |
+| `bg-paper` | Fondo (blanco; negro mate `#0f0f0e` en oscuro) |
+| `bg-raised` | Diálogos, menús desplegables (se separan por borde, no por tono) |
+| `bg-sunken` | Hover de filas, placeholders de carga |
 | `text-ink` · `text-ink-2` · `text-ink-3` · `text-ink-4` | Principal · secundario · metadatos · deshabilitado |
-| `border-rule` · `border-rule-strong` | Bordes normales · énfasis (controles, diálogos) |
+| `border-ink` | Líneas de énfasis: bajo el título de página, sobre tablas y secciones, botones |
+| `border-rule` · `border-rule-strong` | Entre filas · bordes de inputs |
 | `bg-ink text-on-ink` | Acción primaria |
-| `ok` `warn` `bad` `info` (+ `-soft`) | Estados: texto en el color, fondo en `-soft` |
-| `bg-tinto` · `bg-blanco` | Tipo de uva |
-| `rounded-control` (6 px) · `rounded-card` (10 px) | Radios |
-| `font-label` · `font-sans` · `tabular` | Títulos · texto · cifras |
+| `warn` `bad` `info` (+ `-soft`) | Estados que piden atención. `ok` existe pero casi no se usa: lo normal no se pinta |
+| `rounded-control` · `rounded-card` | 2 px |
+| `font-label` · `titulo` · `font-sans` · `tabular` | Serif del logo · título de página en versales · texto · cifras |
+| `logo` · `logo-on-ink` | Filtro del logo según fondo y tema |
 | `ease-out-quick` | Curva de animación (`cubic-bezier(.23,1,.32,1)`) |
 
-Modo oscuro: automático por preferencia del sistema o manual (`data-theme` en `<html>`, guardado en `localStorage`).
-Los tokens se redefinen; los componentes no cambian.
+Modo oscuro: automático por preferencia del sistema o manual (`data-theme` en `<html>`). Los tokens se redefinen;
+los componentes no cambian.
 
 ## Escala tipográfica
 
 | Uso | Estilo |
 |---|---|
-| Título de página | `font-label text-[28px] font-semibold tracking-[-0.015em]` (`PageHeader`) |
-| Título de sección / diálogo | `font-label text-[20px] font-semibold` |
-| Kicker (área, etiquetas de cifras) | `text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3` |
-| Cifra destacada | `tabular text-[24px] font-semibold` (`Stat`) |
-| Cuerpo / tablas | 14 px · ayuda y metadatos 12–13 px `text-ink-3` |
+| Título de página | `titulo text-[34px] sm:text-[44px]` (`PageHeader`) |
+| Título de sección / diálogo | `font-label text-[22px]` / `text-[24px]` (`SectionTitle`, `Dialog`) |
+| Área del menú | `font-label text-[13px] tracking-[0.12em] uppercase text-ink-3` |
+| Encabezado de tabla | `text-[12px] tracking-[0.06em] text-ink-3` |
+| Cifra destacada | `tabular text-[26px] font-semibold` (`Stat`) |
+| Cuerpo / tablas | 14–15 px · ayuda y metadatos 12–13 px `text-ink-3` |
 
 ## Componentes (`apps/web/src/components/ui`)
 
 | Componente | Notas |
 |---|---|
-| `Button` | `variant`: `primary` · `secondary` · `ghost` · `danger`; `size`: `md` (36 px) · `sm` (30 px). Presión `scale(.97)` |
-| `Field` + `Input` / `Select` / `Textarea` | `Field` da label, unidad, ayuda y error junto al campo; pasa `id` y `aria-describedby` al control por render-prop |
-| `Dialog` | Sobre `<dialog>` nativo (foco atrapado, Esc). En móvil se ancla abajo como hoja. `footer` para acciones |
-| `DataTable` | Búsqueda sin tildes, orden por columna, CSV (`;` + BOM para Excel), primera columna fija, `empty` |
-| `Badge`, `TipoUva` | Estados y tipo de uva (punto de color + texto) |
-| `PageHeader`, `Stat`, `EmptyState` | Encabezado con kicker, cifra destacada, estado vacío con acción |
-| `useToast()` | Confirmaciones (`ok`), avisos (`info`) y errores (`bad`, `role="alert"`) |
+| `Button` | `primary` (tinta) · `secondary` (borde de tinta) · `ghost` · `danger`; `md` 40 px · `sm` 32 px |
+| `Field` + `Input` / `Select` / `Textarea` | Fondo papel, borde `rule-strong`, foco con línea de tinta; error junto al campo |
+| `Dialog` | `<dialog>` nativo, rectangular, borde de tinta; en móvil se ancla abajo |
+| `DataTable` | Abre con línea de tinta, filas separadas por `rule`, sin caja. Búsqueda, orden, CSV |
+| `Sello` | Código en círculo + línea de sincronización (`pending` = trazos). `size="lg"` para fichas |
+| `UvaDot`, `TipoUva` | Relleno = tinta, vacío = blanca, siempre con texto |
+| `Badge` | Estado en texto; solo `warn` y `bad` llevan color |
+| `PageHeader` | Título en versales + línea de hechos (`description`) + acciones; cierra con línea de tinta |
+| `SectionTitle`, `Stat`, `EmptyState` | Título de sección, cifra, estado vacío con borde de trazos |
 
-Shell (`components/shell`): menú por áreas (punto verde = funciona offline; "v1" = no migrado), selector de viña,
-Ctrl+K (`cmdk`, sin animación porque se usa mucho), indicador de sincronización y franja de avisos.
+Shell (`components/shell`): logo arriba, viña activa entre una línea de tinta y una suave, menú solo de texto por
+áreas (la activa con una raya corta; círculo vacío = el área funciona sin conexión; "v1" = no migrado), buscador
+Ctrl+K como línea, indicador de sincronización con el mismo lenguaje de líneas.
 
 ## Patrones
 
-- **Página de módulo**: `PageHeader` (kicker = área) → franja de `Stat` entre bordes (si hay cifras útiles) →
-  `DataTable` con la acción primaria en `toolbar` → `Dialog` de formulario.
-- **Formularios**: secciones con kicker, grilla de 2–3 columnas en escritorio, 1 en móvil; validación al enviar
-  con error junto al campo; cálculos en vivo como ayuda del campo (p. ej. plantas = densidad × superficie);
-  decimales con coma chilena aceptados.
-- **Estados obligatorios**: cargando (bloque `animate-pulse bg-sunken`), vacío (`EmptyState` con qué hacer),
-  error (mensaje accionable), sin permiso (`NoAccess`), pendiente de sincronizar (ícono `CloudUpload` en `text-info`).
-- **Móvil**: probar en 390 px; objetivos táctiles ≥ 40 px; acción principal ancha arriba del listado.
-- **Accesibilidad**: controles nativos, `aria-label` en botones de solo ícono, foco visible, color nunca como
-  único indicador, `prefers-reduced-motion` respetado.
+- **Página de módulo**: `PageHeader` con una **línea de hechos** en vez de tarjetas de cifras
+  ("7,70 ha en 3 cuarteles · 28.800 plantas · Tinta 5,20 ha…") → listado → columna de **composición**
+  a la derecha en pantallas anchas (`xl`), al final en móvil.
+- **Composición** (ver Catastro): reparto por categoría con barras de 3 px (tinta sobre `rule`), datos clave en
+  pares etiqueta/valor separados por líneas, y la leyenda de las marcas. Llena la pantalla con información real,
+  no con decoración.
+- **Formularios**: secciones con título `font-label` sobre línea de tinta, grilla de 2–3 columnas en escritorio,
+  1 en móvil; validación al enviar con error junto al campo; cálculos en vivo como ayuda del campo; coma decimal.
+- **Estados obligatorios**: cargando (`animate-pulse bg-sunken`), vacío (`EmptyState`), error (mensaje
+  accionable), sin permiso (`NoAccess`), pendiente de sincronizar (línea de trazos del `Sello`).
+- **Móvil**: probar a 390 px; objetivos táctiles ≥ 44 px; acción principal ancha sobre el listado
+  (`actionsDesktopOnly` en `PageHeader` y botón ancho en la vista).
+- **Accesibilidad**: controles nativos, `aria-label` en botones de solo ícono, foco visible (línea de tinta),
+  forma o texto además del color, `prefers-reduced-motion` respetado.
 - **Movimiento**: < 300 ms, solo `transform`/`opacity`, curva `ease-out-quick`; nada en acciones repetitivas.
 
 ## Antes de agregar algo nuevo
 
 1. ¿Existe en `components/ui`? Úsalo. ¿Necesitas una variante? Agrégala al componente (PR de código compartido).
 2. ¿Se repite en 2+ módulos? Extráelo a `components/ui`.
-3. ¿Nuevo color o tamaño? Casi nunca: usa un token. Si de verdad falta, se agrega a `globals.css` y a esta tabla.
+3. ¿Nuevo color? Casi nunca: la identidad es blanco y negro. Si un estado nuevo lo exige, se agrega a
+   `globals.css` (claro y oscuro) y a esta tabla.

@@ -15,13 +15,14 @@ export default async function Invitacion({ params }: { params: Promise<{ token: 
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4">
       {!inv ? (
         <>
-          <h1 className="font-label text-[28px] font-semibold">Invitación no válida</h1>
+          <h1 className="font-label text-[28px]">Invitación no válida</h1>
           <p className="mt-2 text-ink-3">Ya se usó o expiró. Pide al administrador de la viña que te envíe una nueva.</p>
         </>
       ) : (
         <>
-          <p className="text-[11px] font-medium tracking-[0.08em] text-ink-3 uppercase">Invitación</p>
-          <h1 className="mt-1 font-label text-[30px] leading-tight font-semibold">Únete a {inv.org.nombre}</h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/winzer-logo.png" alt="Winzer" width={120} height={22} className="logo mb-10 h-auto w-[120px]" />
+          <h1 className="font-label text-[32px] leading-tight">Únete a {inv.org.nombre}</h1>
           <p className="mt-2 text-ink-2">
             Con el rol <b>{ROLES[inv.inv.role]?.nombre ?? inv.inv.role}</b>, para <b>{inv.inv.email}</b>.
           </p>

@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Instrument_Sans } from 'next/font/google';
+import { Gilda_Display, Public_Sans } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
-// Fraunces: serif con carácter de etiqueta de vino, solo para títulos. Instrument Sans: cuerpo y datos.
-const display = Fraunces({ subsets: ['latin'], variable: '--font-display', axes: ['opsz'], display: 'swap' });
-const body = Instrument_Sans({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
+// Gilda Display: serif de alto contraste afín a Agatho (la del logo), solo para títulos y códigos sellados.
+// Public Sans: cuerpo y datos, legible a pleno sol, con cifras tabulares.
+const display = Gilda_Display({ subsets: ['latin'], weight: '400', variable: '--font-display', display: 'swap' });
+const body = Public_Sans({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
 
 export const metadata: Metadata = {
   title: { default: 'Winzer', template: '%s · Winzer' },
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#faf8f4' },
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#0f0e0d' }
   ]
 };

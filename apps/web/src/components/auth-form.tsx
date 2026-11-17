@@ -45,7 +45,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'registro' }) {
 
   return (
     <>
-      <h1 className="font-label text-[28px] leading-tight font-semibold tracking-[-0.015em]">{mode === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}</h1>
+      <h1 className="font-label text-[28px] leading-tight">{mode === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}</h1>
       <p className="mt-1.5 text-[14px] text-ink-3">{mode === 'login' ? 'Entra a tus viñas.' : 'Después creas tu viña o aceptas una invitación.'}</p>
       <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-4">
         {mode === 'registro' && (

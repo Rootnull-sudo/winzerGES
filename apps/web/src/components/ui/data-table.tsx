@@ -79,15 +79,15 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <label className="relative min-w-0 flex-1 sm:max-w-xs">
           <span className="sr-only">Buscar</span>
-          <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-4" />
+          <Search size={15} className="pointer-events-none absolute top-1/2 left-0.5 -translate-y-1/2 text-ink-3" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar…"
-            className="h-9 w-full rounded-control border border-rule bg-sunken pr-3 pl-8.5 text-[14px] placeholder:text-ink-4 hover:border-rule-strong focus:border-ink/40 focus:ring-2 focus:ring-ink/10 focus:outline-none"
+            className="h-10 w-full border-0 border-b border-rule-strong bg-transparent pr-3 pl-7 text-[14px] placeholder:text-ink-3 hover:border-ink-3 focus:border-ink focus:outline-none"
           />
         </label>
         <span className="tabular text-[12px] text-ink-3">
@@ -98,7 +98,7 @@ export function DataTable<T extends { id: string }>({
           {canExport && rows.length > 0 && (
             <button
               onClick={exportCsv}
-              className="inline-flex h-9 items-center gap-1.5 rounded-control px-2.5 text-[13px] font-medium text-ink-2 hover:bg-sunken hover:text-ink"
+              className="inline-flex h-10 items-center gap-1.5 px-2.5 text-[13px] font-medium text-ink-2 hover:bg-sunken hover:text-ink"
             >
               <Download size={15} /> CSV
             </button>
@@ -108,7 +108,7 @@ export function DataTable<T extends { id: string }>({
       {rows.length === 0 && empty ? (
         empty
       ) : (
-        <div className="overflow-x-auto rounded-card border border-rule bg-raised">
+        <div className="overflow-x-auto border-t border-ink">
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-rule">
@@ -120,9 +120,9 @@ export function DataTable<T extends { id: string }>({
                       scope="col"
                       aria-sort={active ? (sort!.dir === 1 ? 'ascending' : 'descending') : undefined}
                       className={cn(
-                        'h-9 px-3 text-[12px] font-medium whitespace-nowrap text-ink-3',
+                        'h-10 px-3 text-[12px] font-medium tracking-[0.06em] whitespace-nowrap text-ink-3 uppercase first:pl-0',
                         c.num ? 'text-right' : 'text-left',
-                        i === 0 && 'sticky left-0 bg-raised'
+                        i === 0 && 'sticky left-0 bg-paper'
                       )}
                     >
                       <button
@@ -142,15 +142,15 @@ export function DataTable<T extends { id: string }>({
                 <tr
                   key={r.id}
                   onClick={onRowClick ? () => onRowClick(r) : undefined}
-                  className={cn('group border-b border-rule last:border-0', onRowClick && 'cursor-pointer hover:bg-sunken/60', rowClassName?.(r))}
+                  className={cn('group border-b border-rule last:border-0', onRowClick && 'cursor-pointer hover:bg-sunken', rowClassName?.(r))}
                 >
                   {columns.map((c, i) => (
                     <td
                       key={c.key}
                       className={cn(
-                        'h-10 px-3 whitespace-nowrap',
+                        'h-12 px-3 whitespace-nowrap first:pl-0',
                         c.num && 'tabular text-right',
-                        i === 0 && 'sticky left-0 bg-raised group-hover:bg-sunken/60',
+                        i === 0 && 'sticky left-0 bg-paper group-hover:bg-sunken',
                         c.className
                       )}
                     >

@@ -40,7 +40,7 @@ export function UsuariosView({ members, invitations, roles, me }: { members: Mem
   return (
     <>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-label text-[20px] font-semibold">
+        <h2 className="font-label text-[20px]">
           Miembros <span className="tabular text-ink-4">{members.length}</span>
         </h2>
         {can('usuarios', 'c') && (
@@ -49,7 +49,7 @@ export function UsuariosView({ members, invitations, roles, me }: { members: Mem
           </Button>
         )}
       </div>
-      <ul className="divide-y divide-rule overflow-hidden rounded-card border border-rule bg-raised">
+      <ul className="divide-y divide-rule overflow-hidden border-y border-ink">
         {members.map((m) => (
           <li key={m.userId} className="flex flex-wrap items-center gap-3 px-4 py-3">
             <span aria-hidden className="grid size-9 place-items-center rounded-full bg-sunken text-[13px] font-semibold text-ink-2">
@@ -94,8 +94,8 @@ export function UsuariosView({ members, invitations, roles, me }: { members: Mem
 
       {invitations.length > 0 && (
         <>
-          <h2 className="mt-10 mb-3 font-label text-[20px] font-semibold">Invitaciones pendientes</h2>
-          <ul className="divide-y divide-rule rounded-card border border-rule bg-raised">
+          <h2 className="mt-10 mb-3 font-label text-[20px]">Invitaciones pendientes</h2>
+          <ul className="divide-y divide-rule border-y border-ink">
             {invitations.map((i) => (
               <li key={i.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-[14px]">
                 <span className="flex-1">{i.email}</span>
@@ -107,7 +107,7 @@ export function UsuariosView({ members, invitations, roles, me }: { members: Mem
         </>
       )}
 
-      <h2 className="mt-10 mb-3 font-label text-[20px] font-semibold">Roles</h2>
+      <h2 className="mt-10 mb-3 font-label text-[20px]">Roles</h2>
       <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
         {roles.map((r) => (
           <div key={r.id} className="border-t border-rule pt-3">

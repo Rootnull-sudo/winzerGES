@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: Promise<{ org: string }
         <span className="capitalize">{org.plan}</span>
       </section>
       <section id="importar" className="max-w-2xl scroll-mt-20">
-        <h2 className="font-label text-[20px] font-semibold">Importar desde Winzer de escritorio (v1)</h2>
+        <h2 className="font-label text-[20px]">Importar desde Winzer de escritorio (v1)</h2>
         <p className="mt-1 mb-4 text-[14px] text-ink-2">
           En la versión de escritorio ve a <i>Configuración › Datos y respaldos › Exportar respaldo</i> y sube aquí el archivo .json. Por ahora se importan:{' '}
           <b>{IMPORTABLE_ENTITIES.join(', ')}</b>. Puedes repetirlo cuando quieras: los registros ya importados se actualizan, no se duplican.

@@ -3,16 +3,16 @@ import { cn } from '@/lib/cn';
 
 /** Controles hundidos (más oscuros que la superficie): "aquí se escribe". */
 export const controlClass =
-  'w-full rounded-control border border-rule bg-sunken px-3 text-[14px] text-ink placeholder:text-ink-4 ' +
-  'transition-[border-color,box-shadow] duration-150 hover:border-rule-strong focus:border-ink/40 focus:outline-none focus:ring-2 focus:ring-ink/10 ' +
+  'w-full rounded-control border border-rule-strong bg-paper px-3 text-[15px] text-ink placeholder:text-ink-3 ' +
+  'transition-[border-color,box-shadow] duration-150 hover:border-ink-3 focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink ' +
   'aria-[invalid=true]:border-bad/60 disabled:opacity-50';
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...p }, ref) {
-  return <input ref={ref} className={cn(controlClass, 'h-9', className)} {...p} />;
+  return <input ref={ref} className={cn(controlClass, 'h-10', className)} {...p} />;
 });
 
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(function Select({ className, ...p }, ref) {
-  return <select ref={ref} className={cn(controlClass, 'h-9 pr-8', className)} {...p} />;
+  return <select ref={ref} className={cn(controlClass, 'h-10 pr-8', className)} {...p} />;
 });
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea({ className, ...p }, ref) {

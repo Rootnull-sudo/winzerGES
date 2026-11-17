@@ -1,92 +1,91 @@
 @import 'tailwindcss';
 
 /* =====================================================================
-   Winzer v2 — tokens. Derivados de css/tokens.css (v1): identidad blanco y negro,
-   estados accesibles y paleta de gráficos validada para daltonismo.
-   Mundo: tinta sobre papel de etiqueta, bodega de piedra. El color es escaso:
-   solo comunica estado o tipo de uva (tinto / blanco). Profundidad: solo bordes.
+   Winzer v2 — tokens. Dirección «Marca de fuego» (docs/v2/diseno.md):
+   blanco y negro estricto como el logo. Cada registro se identifica por su código
+   sellado, como la marca a fuego de una barrica. El color solo comunica estado
+   (ok, advertencia, error, info). Tinto/blanco y sincronizado/pendiente se
+   distinguen por forma (relleno/vacío, línea continua/de trazos), nunca por color.
+   Profundidad: solo líneas de 1 px; esquinas rectas.
    ===================================================================== */
 :root {
-  --paper: #faf8f4; /* fondo: papel de etiqueta */
-  --paper-raised: #ffffff; /* superficies elevadas (tarjetas, diálogos) */
-  --paper-sunken: #f2efe9; /* inputs, filas seleccionadas */
-  --ink: #161412; /* texto principal y acción primaria */
-  --ink-2: #4a4641; /* texto secundario */
-  --ink-3: #77716a; /* metadatos */
-  --ink-4: #a39d95; /* deshabilitado / placeholders */
-  --rule: rgba(22, 20, 18, 0.1); /* bordes */
-  --rule-strong: rgba(22, 20, 18, 0.18);
-  --on-ink: #faf8f4;
-  --focus: rgba(22, 20, 18, 0.35);
+  --paper: #ffffff; /* fondo */
+  --paper-raised: #ffffff; /* diálogos y menús (se separan por borde, no por tono) */
+  --paper-sunken: #f4f4f2; /* inputs, hover de filas */
+  --ink: #1c1c1b; /* texto principal, acción primaria, líneas de énfasis (= tinta del logo) */
+  --ink-2: #4a4a47; /* texto secundario */
+  --ink-3: #6b6b67; /* metadatos (5,3:1 sobre blanco) */
+  --ink-4: #8f8f8a; /* deshabilitado */
+  --rule: #e4e4e0; /* líneas de separación */
+  --rule-strong: #c9c9c4; /* bordes de controles */
+  --on-ink: #ffffff;
+  --focus: #1c1c1b;
+  --logo-filter: none;
+  --logo-on-ink-filter: invert(1);
 
-  --ok: #2f7a45;
-  --ok-soft: #e6f2ea;
-  --warn: #7e5408;
-  --warn-soft: #fbf1de;
-  --bad: #b02a2a;
-  --bad-soft: #f8e4e4;
-  --info: #2f5f86;
-  --info-soft: #e5eef5;
+  --ok: #2f6b41;
+  --ok-soft: #eaf2ec;
+  --warn: #8a4b00;
+  --warn-soft: #f8efe3;
+  --bad: #a82828;
+  --bad-soft: #f8e6e6;
+  --info: #2c5a80;
+  --info-soft: #e7eef5;
 
-  --tinto: #7a1f35;
-  --blanco: #b8a04a;
-
-  --chart-1: #a8344e;
-  --chart-2: #2f7fb8;
-  --chart-3: #b5801a;
-  --chart-4: #8257b0;
-  --chart-5: #4e8a3a;
+  /* Tipo de uva: tinto = relleno de tinta, blanco = vacío con contorno. */
+  --tinto: var(--ink);
+  --blanco: transparent;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #0f0e0d;
-    --paper-raised: #181715;
-    --paper-sunken: #0b0a09;
-    --ink: #f2efe9;
-    --ink-2: #c4bfb7;
-    --ink-3: #8f8981;
-    --ink-4: #5f5a54;
-    --rule: rgba(255, 255, 255, 0.08);
-    --rule-strong: rgba(255, 255, 255, 0.15);
-    --on-ink: #0f0e0d;
-    --focus: rgba(255, 255, 255, 0.4);
-    --ok: #6db282;
-    --ok-soft: #1c2d21;
-    --warn: #e0aa47;
-    --warn-soft: #33291a;
-    --bad: #e06a6a;
-    --bad-soft: #361f1f;
-    --info: #74a7cc;
-    --info-soft: #1b2833;
-    --tinto: #c2586e;
-    --blanco: #e3d08a;
+    --paper: #0f0f0e;
+    --paper-raised: #161615;
+    --paper-sunken: #1b1b1a;
+    --ink: #edede9;
+    --ink-2: #c2c2bd;
+    --ink-3: #a3a39e;
+    --ink-4: #6f6f6b;
+    --rule: #2e2e2b;
+    --rule-strong: #4a4a46;
+    --on-ink: #0f0f0e;
+    --focus: #edede9;
+    --logo-filter: invert(1);
+    --logo-on-ink-filter: none;
+    --ok: #7fbf92;
+    --ok-soft: #18261c;
+    --warn: #e0a84e;
+    --warn-soft: #2c2214;
+    --bad: #e57373;
+    --bad-soft: #2e1818;
+    --info: #86b2d6;
+    --info-soft: #17222c;
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
-  --paper: #0f0e0d;
-  --paper-raised: #181715;
-  --paper-sunken: #0b0a09;
-  --ink: #f2efe9;
-  --ink-2: #c4bfb7;
-  --ink-3: #8f8981;
-  --ink-4: #5f5a54;
-  --rule: rgba(255, 255, 255, 0.08);
-  --rule-strong: rgba(255, 255, 255, 0.15);
-  --on-ink: #0f0e0d;
-  --focus: rgba(255, 255, 255, 0.4);
-  --ok: #6db282;
-  --ok-soft: #1c2d21;
-  --warn: #e0aa47;
-  --warn-soft: #33291a;
-  --bad: #e06a6a;
-  --bad-soft: #361f1f;
-  --info: #74a7cc;
-  --info-soft: #1b2833;
-  --tinto: #c2586e;
-  --blanco: #e3d08a;
+  --paper: #0f0f0e;
+  --paper-raised: #161615;
+  --paper-sunken: #1b1b1a;
+  --ink: #edede9;
+  --ink-2: #c2c2bd;
+  --ink-3: #a3a39e;
+  --ink-4: #6f6f6b;
+  --rule: #2e2e2b;
+  --rule-strong: #4a4a46;
+  --on-ink: #0f0f0e;
+  --focus: #edede9;
+  --logo-filter: invert(1);
+  --logo-on-ink-filter: none;
+  --ok: #7fbf92;
+  --ok-soft: #18261c;
+  --warn: #e0a84e;
+  --warn-soft: #2c2214;
+  --bad: #e57373;
+  --bad-soft: #2e1818;
+  --info: #86b2d6;
+  --info-soft: #17222c;
   color-scheme: dark;
 }
 
@@ -112,10 +111,9 @@
   --color-tinto: var(--tinto);
   --color-blanco: var(--blanco);
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  --font-label: var(--font-display), ui-serif, Georgia, serif;
   --font-mono: var(--font-numeric), ui-monospace, monospace;
-  --radius-control: 6px;
-  --radius-card: 10px;
+  --radius-control: 2px;
+  --radius-card: 2px;
   --ease-out-quick: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -138,9 +136,8 @@
     text-wrap: pretty;
   }
   :focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: 1px solid var(--focus);
+    outline-offset: 3px;
   }
   ::selection {
     background: var(--ink);
@@ -150,6 +147,31 @@
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Gilda Display solo tiene peso 400: nunca sintetizar negrita. */
+@utility font-label {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+/* Títulos de página: versales con aire, como el logo. */
+@utility titulo {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-weight: 400;
+  font-synthesis: none;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* Logo (imagen negra con transparencia): se invierte en modo oscuro. */
+@utility logo {
+  filter: var(--logo-filter);
+}
+@utility logo-on-ink {
+  filter: var(--logo-on-ink-filter);
 }
 
 @media (prefers-reduced-motion: reduce) {

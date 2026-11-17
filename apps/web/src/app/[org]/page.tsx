@@ -41,7 +41,7 @@ export default async function Inicio({ params }: { params: Promise<{ org: string
     <>
       <PageHeader area={org.nombre} title={`${hora < 12 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches'}, ${user.name.split(' ')[0]}`} />
 
-      <section className="mb-10 grid grid-cols-2 gap-x-6 gap-y-6 border-y border-rule py-6 md:grid-cols-4">
+      <section className="mb-12 grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
         {data.cu && (
           <Stat
             label="Superficie plantada"
@@ -58,13 +58,13 @@ export default async function Inicio({ params }: { params: Promise<{ org: string
         <Stat label="Módulos en v2" value={`${migrated} de ${MODULES.length}`} sub="El resto sigue en la versión de escritorio" />
       </section>
 
-      <h2 className="mb-4 font-label text-[20px] font-semibold tracking-[-0.01em]">Tus módulos</h2>
+      <h2 className="mb-6 border-b border-ink pb-2 font-label text-[22px]">Tus módulos</h2>
       <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
         {AREAS.filter((a) => visibles.some((m) => m.area === a.id)).map((a) => (
           <section key={a.id}>
-            <p className="mb-2 flex items-center gap-2 text-[11px] font-medium tracking-[0.08em] text-ink-3 uppercase">
-              {a.name}
-              {a.offline && <span className="rounded bg-ok-soft px-1.5 py-px text-[10px] tracking-normal text-ok normal-case">sin conexión ✓</span>}
+            <p className="mb-2 flex items-baseline justify-between gap-2">
+              <span className="font-label text-[13px] tracking-[0.12em] text-ink-3 uppercase">{a.name}</span>
+              {a.offline && <span className="text-[12px] text-ink-3">funciona sin señal</span>}
             </p>
             <ul className="divide-y divide-rule border-y border-rule">
               {visibles

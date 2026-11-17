@@ -12,10 +12,13 @@ export default async function Onboarding() {
   const ms = await getMemberships(u.id);
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center px-4 py-12">
-      <p className="text-[11px] font-medium tracking-[0.08em] text-ink-3 uppercase">Hola, {u.name.split(' ')[0]}</p>
-      <h1 className="mt-1 font-label text-[32px] leading-tight font-semibold tracking-[-0.02em]">{ms.length ? 'Elige una viña' : 'Crea tu viña'}</h1>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/winzer-logo.png" alt="Winzer" width={120} height={22} className="logo mb-10 h-auto w-[120px]" />
+      <h1 className="font-label text-[32px] leading-tight">
+        Hola, {u.name.split(' ')[0]}. {ms.length ? 'Elige una viña' : 'Crea tu viña'}
+      </h1>
       {ms.length > 0 && (
-        <ul className="mt-6 divide-y divide-rule overflow-hidden rounded-card border border-rule bg-raised">
+        <ul className="mt-6 divide-y divide-rule overflow-hidden border-y border-ink">
           {ms.map((m) => (
             <li key={m.orgId}>
               <Link href={`/${m.slug}`} className="flex items-center justify-between px-4 py-3.5 hover:bg-sunken/60">
@@ -30,7 +33,7 @@ export default async function Onboarding() {
         </ul>
       )}
       <section className="mt-10">
-        {ms.length > 0 && <h2 className="mb-1 font-label text-[20px] font-semibold">O crea otra viña</h2>}
+        {ms.length > 0 && <h2 className="mb-1 font-label text-[20px]">O crea otra viña</h2>}
         <p className="mb-5 text-[14px] text-ink-3">Serás su administrador. Después puedes invitar a tu enólogo, agrónomo o contador, cada uno con su rol.</p>
         <CreateOrgForm />
       </section>

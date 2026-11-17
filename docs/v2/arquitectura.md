@@ -85,17 +85,17 @@ UI ◀──useLiveQuery──── Dexie: records ◀──GET /api/<viña>/sy
 
 ## Diseño
 
-Dirección: *tinta sobre papel de etiqueta*. Identidad blanco y negro de v1, fondo papel cálido, títulos en
-**Fraunces** (serif de etiqueta de vino), cuerpo y datos en **Instrument Sans** con números tabulares.
-El color es escaso y significa algo: estados (ok/advertencia/error/info) y **tinto/blanco** para el tipo de uva
-(siempre acompañado de texto). Profundidad solo con bordes sutiles. Densidad de herramienta (filas de 40 px).
-En móvil (uso en el viñedo) los listados pasan a tarjetas grandes y el botón principal ocupa todo el ancho.
-Indicador de sincronización siempre visible en el header. Modo oscuro por preferencia del sistema o manual.
+Dirección: *Marca de fuego* ([diseno.md](diseno.md), [adr/0008](adr/0008-direccion-visual-marca-de-fuego.md)).
+Blanco y negro estricto como el logo WINZER®. El código de cada registro va sellado en un círculo, como la marca a
+fuego de una barrica. Títulos en **Gilda Display** (afín a Agatho, la del logo) y datos en **Public Sans** con
+cifras tabulares. Tinto/blanco y sincronizado/pendiente se distinguen por forma (punto relleno o vacío, línea
+continua o de trazos); el color queda para estados que piden atención. Líneas de 1 px, esquinas rectas. En
+móvil, filas anchas con el sello y el botón principal a todo el ancho. Modo oscuro en negro mate.
 
 ## Decisiones
 
 Registradas en [adr/](adr/README.md): Postgres + RLS (0001), membresías propias (0002), sync propio (0003),
-npm workspaces (0004), v1 en la raíz (0005), RLS y sync derivados del esquema (0006), trunk + squash (0007).
+npm workspaces (0004), v1 en la raíz (0005), RLS y sync derivados del esquema (0006), trunk + squash (0007), dirección visual «Marca de fuego» (0008).
 
 ## Documentación relacionada
 

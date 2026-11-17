@@ -51,7 +51,7 @@ export function ImportV1({ slug }: { slug: string }) {
         </p>
       )}
       {report && (
-        <div className="mt-4 rounded-card border border-rule bg-raised p-4 text-[14px]" role="status">
+        <div className="mt-4 border-y border-ink p-4 text-[14px]" role="status">
           <p className="font-medium">Importación terminada</p>
           <ul className="mt-2 tabular">
             {Object.entries(report.importados).map(([e, n]) => (

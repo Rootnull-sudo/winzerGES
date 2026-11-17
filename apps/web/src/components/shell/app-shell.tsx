@@ -1,7 +1,7 @@
 'use client';
 import { AREAS, MODULES } from '@winzer/domain';
 import { moduleHref } from '@/lib/routes';
-import { ChevronsUpDown, CloudOff, LogOut, Menu, Moon, Search, Sun, X } from 'lucide-react';
+import { Check, ChevronsUpDown, CloudOff, LogOut, Menu, Moon, RefreshCw, Search, Sun, WifiOff, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import { SyncEngine } from '@/lib/offline/engine';
 import { SyncContext, useIssues, useSync, useSyncState } from '@/lib/offline/hooks';
 import { signOutAction } from '@/app/actions';
 import { CommandPalette } from './command-palette';
+import { ICONS } from './icons';
 import { OrgContext, useCan, useOrg, type OrgCtx } from './org-context';
 
 export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; memberships: { slug: string; nombre: string }[]; children: React.ReactNode }) {
@@ -41,27 +42,23 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
   return (
     <OrgContext.Provider value={ctx}>
       <SyncContext.Provider value={engine}>
-        <div className="min-h-dvh lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
-          {/* Sidebar: mismo fondo que el lienzo, separada solo por un borde */}
+        <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--side)_248px,transparent_248px)]">
+          {/* Menú lateral negro (como v1): logo, viña activa, módulos por área y usuario. */}
           <aside
             className={cn(
-              'fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-rule bg-paper transition-transform duration-200 ease-out-quick lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0',
+              'fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-side text-side-ink transition-transform duration-200 ease-out-quick lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0',
               navOpen ? 'translate-x-0' : '-translate-x-full'
             )}
           >
-            <Link href={`/${ctx.org.slug}`} className="block px-6 pt-7 pb-6" aria-label="Winzer, inicio">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/winzer-logo.png" alt="Winzer" width={128} height={23} className="logo h-auto w-[128px]" />
-            </Link>
             <OrgSwitcher memberships={memberships} />
             <Nav />
             <UserFooter />
           </aside>
-          {navOpen && <button aria-label="Cerrar menú" className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setNavOpen(false)} />}
+          {navOpen && <button aria-label="Cerrar menú" className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setNavOpen(false)} />}
           <div className="min-w-0">
-            <header className="sticky top-0 z-20 flex h-16 items-center gap-3 bg-paper px-4 sm:px-8 lg:px-12">
+            <header className="sticky top-0 z-20 flex h-15 items-center gap-3 border-b border-rule bg-raised px-4 sm:px-8">
               <button
-                className="-ml-2 grid size-11 place-items-center text-ink-2 hover:bg-sunken lg:hidden"
+                className="-ml-2 grid size-11 place-items-center rounded-control text-ink-2 hover:bg-sunken lg:hidden"
                 aria-label="Abrir menú"
                 onClick={() => setNavOpen(true)}
               >
@@ -69,17 +66,18 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
               </button>
               <button
                 onClick={() => setCmdOpen(true)}
-                className="flex h-10 min-w-0 flex-1 items-center gap-2.5 border-b border-rule-strong text-[14px] text-ink-3 hover:border-ink sm:max-w-sm"
+                className="flex h-9 min-w-0 flex-1 items-center gap-2.5 rounded-control border border-rule-strong px-3 text-[14px] text-ink-3 hover:border-ink-4 sm:max-w-md"
               >
-                <Search size={16} /> <span className="truncate">Buscar o ir a…</span>
-                <kbd className="ml-auto hidden border border-rule-strong px-1.5 font-sans text-[11px] text-ink-3 sm:inline">Ctrl K</kbd>
+                <Search size={16} /> <span className="truncate">Buscar módulos, cuarteles, clientes…</span>
+                <kbd className="ml-auto hidden rounded border border-rule px-1.5 font-sans text-[11px] text-ink-3 sm:inline">Ctrl K</kbd>
               </button>
-              <div className="ml-auto flex items-center gap-1">
+              <div className="ml-auto flex items-center gap-2">
                 <SyncPill />
+                <UserChip />
               </div>
             </header>
             <IssuesBanner />
-            <main className="mx-auto max-w-[1360px] px-4 pt-4 pb-12 sm:px-8 lg:px-12">{children}</main>
+            <main className="mx-auto max-w-[1360px] px-4 py-6 sm:px-8">{children}</main>
           </div>
         </div>
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
@@ -88,25 +86,27 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
   );
 }
 
+/** Logo + viña activa; al abrirlo se cambia de viña. */
 function OrgSwitcher({ memberships }: { memberships: { slug: string; nombre: string }[] }) {
-  const { org, roleName } = useOrg();
+  const { org } = useOrg();
   const others = memberships.filter((m) => m.slug !== org.slug);
   return (
-    <details className="group relative mx-6 border-y border-t-ink border-b-rule">
-      <summary className="flex h-14 cursor-pointer list-none items-center gap-3 hover:bg-sunken [&::-webkit-details-marker]:hidden">
+    <details className="group relative border-b border-side-rule">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-5 pt-5 pb-4 hover:bg-side-raised/50 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] leading-tight font-semibold">{org.nombre}</span>
-          <span className="block truncate text-[12px] text-ink-3">{roleName}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/winzer-logo.png" alt="Winzer" width={116} height={21} className="h-auto w-[116px] invert" />
+          <span className="mt-2 block truncate text-[13px] text-side-ink-2">{org.nombre}</span>
         </span>
-        <ChevronsUpDown size={15} className="text-ink-3" />
+        <ChevronsUpDown size={15} className="text-side-ink-3" />
       </summary>
-      <div className="absolute inset-x-0 top-[calc(100%+4px)] z-50 border border-ink bg-raised p-1">
+      <div className="absolute inset-x-3 top-[calc(100%+4px)] z-50 rounded-card border border-rule-strong bg-raised p-1 text-ink">
         {others.map((m) => (
-          <a key={m.slug} href={`/${m.slug}`} className="block truncate px-3 py-2.5 text-[14px] hover:bg-sunken">
+          <a key={m.slug} href={`/${m.slug}`} className="block truncate rounded-control px-3 py-2.5 text-[14px] hover:bg-sunken">
             {m.nombre}
           </a>
         ))}
-        <Link href="/onboarding" className="block px-3 py-2.5 text-[13px] text-ink-3 hover:bg-sunken hover:text-ink">
+        <Link href="/onboarding" className="block rounded-control px-3 py-2.5 text-[13px] text-ink-3 hover:bg-sunken hover:text-ink">
           + Crear o elegir otra viña
         </Link>
       </div>
@@ -119,16 +119,17 @@ function Nav() {
   const can = useCan();
   const pathname = usePathname();
   return (
-    <nav className="flex-1 overflow-y-auto px-6 py-6" aria-label="Módulos">
+    <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Módulos">
       {AREAS.map((a) => {
         const mods = MODULES.filter((m) => m.area === a.id && can(m.id));
         if (!mods.length) return null;
         return (
-          <div key={a.id} className="mb-6">
-            <p className="mb-1.5 flex items-center gap-2 font-label text-[13px] tracking-[0.12em] text-ink-3 uppercase">
+          <div key={a.id} className="mb-4">
+            <p className="mb-1 flex items-center gap-1.5 px-2.5 text-[11px] font-semibold tracking-[0.08em] text-side-ink-3 uppercase">
               {a.name}
               {a.offline && (
-                <span title="Funciona sin conexión" className="size-1.5 rounded-full border border-ink-3">
+                <span title="Funciona sin conexión">
+                  <WifiOff size={11} aria-hidden />
                   <span className="sr-only">(funciona sin conexión)</span>
                 </span>
               )}
@@ -136,20 +137,22 @@ function Nav() {
             {mods.map((m) => {
               const href = moduleHref(org.slug, m);
               const active = m.id === 'dashboard' ? pathname === href : pathname.startsWith(href);
+              const Icon = ICONS[m.icon] ?? ICONS.badge!;
+              const legacy = m.status !== 'v2' && m.id !== 'dashboard';
               return (
                 <Link
                   key={m.id}
                   href={href}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'flex h-9 items-center gap-2.5 text-[14px] transition-colors duration-100',
-                    active ? 'font-semibold text-ink' : 'pl-6 text-ink-2 hover:text-ink',
-                    m.status !== 'v2' && m.id !== 'dashboard' && 'text-ink-3'
+                    'flex h-9 items-center gap-2.5 rounded-control px-2.5 text-[14px] transition-colors duration-100',
+                    active ? 'bg-side-raised font-semibold text-side-ink' : 'text-side-ink-2 hover:bg-side-raised/60 hover:text-side-ink',
+                    legacy && !active && 'text-side-ink-3'
                   )}
                 >
-                  {active && <span aria-hidden className="w-3.5 shrink-0 border-t border-ink" />}
+                  <Icon size={17} strokeWidth={1.6} className="shrink-0" />
                   <span className="truncate">{m.name}</span>
-                  {m.status !== 'v2' && m.id !== 'dashboard' && <span className="ml-auto text-[10px] font-medium tracking-wide text-ink-4 uppercase">v1</span>}
+                  {legacy && <span className="ml-auto text-[10px] font-semibold tracking-wide text-side-ink-3 uppercase">v1</span>}
                 </Link>
               );
             })}
@@ -160,8 +163,7 @@ function Nav() {
   );
 }
 
-function UserFooter() {
-  const { user } = useOrg();
+function useTheme() {
   const [dark, setDark] = useState<boolean | null>(null);
   useEffect(() => {
     let t: string | null = null;
@@ -180,25 +182,47 @@ function UserFooter() {
     } catch {}
     setDark(!dark);
   }
+  return { dark, toggle };
+}
+
+/** Pie del menú: tema y cerrar sesión. */
+function UserFooter() {
+  const { dark, toggle } = useTheme();
   return (
-    <div className="mx-6 flex items-center gap-1 border-t border-rule py-3">
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium">{user.name}</span>
-        <span className="block truncate text-[12px] text-ink-3">{user.email}</span>
-      </span>
+    <div className="flex items-center gap-1 border-t border-side-rule px-3 py-2.5">
       <button
         onClick={toggle}
-        aria-label={dark ? 'Modo claro' : 'Modo oscuro'}
-        className="grid size-10 place-items-center text-ink-3 hover:bg-sunken hover:text-ink"
+        className="flex h-9 flex-1 items-center gap-2.5 rounded-control px-2.5 text-[13px] text-side-ink-2 hover:bg-side-raised hover:text-side-ink"
       >
-        {dark ? <Sun size={16} /> : <Moon size={16} />}
+        {dark ? <Sun size={16} /> : <Moon size={16} />} {dark ? 'Modo claro' : 'Modo oscuro'}
       </button>
       <form action={signOutAction}>
-        <button aria-label="Cerrar sesión" className="grid size-10 place-items-center text-ink-3 hover:bg-sunken hover:text-ink">
+        <button aria-label="Cerrar sesión" className="grid size-9 place-items-center rounded-control text-side-ink-2 hover:bg-side-raised hover:text-side-ink">
           <LogOut size={16} />
         </button>
       </form>
     </div>
+  );
+}
+
+/** Usuario en la barra superior (como v1): iniciales, nombre y rol. */
+function UserChip() {
+  const { user, roleName } = useOrg();
+  const initials = user.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
+  return (
+    <span className="flex items-center gap-2.5 rounded-full border border-rule py-1 pr-3 pl-1" title={user.email}>
+      <span aria-hidden className="grid size-8 place-items-center rounded-full bg-ink text-[12px] font-bold text-on-ink">
+        {initials}
+      </span>
+      <span className="hidden leading-tight sm:block">
+        <span className="block text-[13px] font-semibold">{user.name.split(' ')[0]}</span>
+        <span className="block text-[12px] text-ink-3">{roleName}</span>
+      </span>
+    </span>
   );
 }
 
@@ -212,16 +236,17 @@ function SyncPill() {
     <button
       onClick={() => void e.sync()}
       title={s.lastSync ? `Última sincronización: ${new Date(s.lastSync).toLocaleString('es-CL')}` : 'Aún no se sincroniza'}
-      className={cn('inline-flex h-10 items-center gap-2 px-2 text-[13px] hover:bg-sunken', !s.online ? 'font-semibold text-warn' : 'text-ink-2')}
+      className={cn(
+        'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold',
+        !s.online ? 'bg-warn-soft text-warn' : s.pending ? 'bg-info-soft text-info' : 'text-ink-3 hover:bg-sunken'
+      )}
     >
-      {/* Mismo lenguaje que el sello: línea continua = al día, de trazos = pendiente o en curso. */}
       {!s.online ? (
-        <CloudOff size={15} />
+        <CloudOff size={14} />
+      ) : s.syncing || !s.ready || s.pending ? (
+        <RefreshCw size={13} className={cn((s.syncing || !s.ready) && 'animate-spin')} />
       ) : (
-        <span
-          aria-hidden
-          className={cn('w-[18px] border-t-2 border-ink', (s.pending > 0 || s.syncing || !s.ready) && 'border-dashed', s.syncing && 'animate-pulse')}
-        />
+        <Check size={14} className="text-ok" />
       )}
       <span className="hidden sm:inline">{label}</span>
       {s.error && <span className="sr-only">{s.error}</span>}

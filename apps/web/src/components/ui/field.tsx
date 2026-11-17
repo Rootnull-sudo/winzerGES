@@ -3,8 +3,8 @@ import { cn } from '@/lib/cn';
 
 /** Controles hundidos (más oscuros que la superficie): "aquí se escribe". */
 export const controlClass =
-  'w-full rounded-control border border-rule-strong bg-paper px-3 text-[15px] text-ink placeholder:text-ink-3 ' +
-  'transition-[border-color,box-shadow] duration-150 hover:border-ink-3 focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink ' +
+  'w-full rounded-control border border-rule-strong bg-raised px-3 text-[15px] text-ink placeholder:text-ink-3 ' +
+  'transition-[border-color,box-shadow] duration-150 hover:border-ink-4 focus:border-ink/50 focus:outline-none focus:ring-2 focus:ring-ink/10 ' +
   'aria-[invalid=true]:border-bad/60 disabled:opacity-50';
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...p }, ref) {

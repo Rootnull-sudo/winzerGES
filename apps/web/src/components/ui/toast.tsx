@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             role={t.tone === 'bad' ? 'alert' : 'status'}
             className={cn(
-              'pointer-events-auto max-w-sm border px-4 py-3 text-[14px] font-medium',
+              'pointer-events-auto max-w-sm rounded-card border px-4 py-3 text-[14px] font-medium',
               'animate-[toast-in_220ms_cubic-bezier(0.23,1,0.32,1)]',
               t.tone === 'bad' ? 'border-bad/25 bg-bad-soft text-bad' : t.tone === 'info' ? 'border-rule bg-raised text-ink' : 'border-ink bg-ink text-on-ink'
             )}

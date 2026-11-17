@@ -1,6 +1,6 @@
 # 0008 — Dirección visual «Marca de fuego»
 
-- Estado: aceptada
+- Estado: reemplazada por [0009](0009-direccion-visual-v1-afinado.md)
 - Fecha: 2026-11-17
 
 ## Contexto

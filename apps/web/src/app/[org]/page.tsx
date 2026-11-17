@@ -1,10 +1,11 @@
 import { schema, withOrg } from '@winzer/db';
 import { AREAS, can, clp, dec2, MODULES, today } from '@winzer/domain';
 import { and, gte, isNull, sql } from 'drizzle-orm';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Coins, LayoutGrid, Sprout, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { moduleHref } from '@/lib/routes';
-import { PageHeader, Stat } from '@/components/ui/page';
+import { PageHeader, Stat, StatGrid } from '@/components/ui/page';
 import { requireOrg } from '@/lib/session';
 
 export default async function Inicio({ params }: { params: Promise<{ org: string }> }) {
@@ -39,34 +40,51 @@ export default async function Inicio({ params }: { params: Promise<{ org: string
 
   return (
     <>
-      <PageHeader area={org.nombre} title={`${hora < 12 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches'}, ${user.name.split(' ')[0]}`} />
+      <PageHeader
+        title={`${hora < 12 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches'}, ${user.name.split(' ')[0]}`}
+        description={
+          <>
+            Resumen de <strong className="text-ink">{org.nombre}</strong>.
+          </>
+        }
+      />
 
-      <section className="mb-12 grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
+      <StatGrid title="Resumen">
         {data.cu && (
           <Stat
             label="Superficie plantada"
             value={
               <>
-                {dec2(data.cu.ha)} <span className="text-[14px] font-medium text-ink-3">ha</span>
+                {dec2(data.cu.ha)} <span className="text-[15px] font-semibold text-ink-3">ha</span>
               </>
             }
             sub={`${data.cu.n} cuarteles`}
+            icon={<Sprout size={16} strokeWidth={1.6} />}
           />
         )}
-        {data.cl && <Stat label="Clientes" value={data.cl.n} />}
-        {data.co && <Stat label="Cobrado este mes" value={clp(data.co.total)} />}
-        <Stat label="Módulos en v2" value={`${migrated} de ${MODULES.length}`} sub="El resto sigue en la versión de escritorio" />
-      </section>
+        {data.cl && <Stat label="Clientes" value={data.cl.n} sub="activos" icon={<Users size={16} strokeWidth={1.6} />} />}
+        {data.co && <Stat label="Cobrado este mes" value={clp(data.co.total)} icon={<Coins size={16} strokeWidth={1.6} />} />}
+        <Stat
+          label="Módulos en v2"
+          value={`${migrated} de ${MODULES.length}`}
+          sub="El resto sigue en la versión de escritorio"
+          icon={<LayoutGrid size={16} strokeWidth={1.6} />}
+        />
+      </StatGrid>
 
-      <h2 className="mb-6 border-b border-ink pb-2 font-label text-[22px]">Tus módulos</h2>
-      <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+      <h2 className="mb-2.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Tus módulos</h2>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {AREAS.filter((a) => visibles.some((m) => m.area === a.id)).map((a) => (
-          <section key={a.id}>
-            <p className="mb-2 flex items-baseline justify-between gap-2">
-              <span className="font-label text-[13px] tracking-[0.12em] text-ink-3 uppercase">{a.name}</span>
-              {a.offline && <span className="text-[12px] text-ink-3">funciona sin señal</span>}
+          <section key={a.id} className="rounded-card border border-rule bg-raised px-4.5 pt-4 pb-1.5">
+            <p className="mb-1 flex items-baseline justify-between gap-2">
+              <span className="font-label text-[20px]">{a.name}</span>
+              {a.offline && (
+                <Badge tone="ok" className="shrink-0 whitespace-nowrap">
+                  funciona sin señal
+                </Badge>
+              )}
             </p>
-            <ul className="divide-y divide-rule border-y border-rule">
+            <ul className="divide-y divide-rule">
               {visibles
                 .filter((m) => m.area === a.id)
                 .map((m) => (

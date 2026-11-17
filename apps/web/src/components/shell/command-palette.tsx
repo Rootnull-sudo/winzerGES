@@ -26,7 +26,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     <div className="fixed inset-0 z-50 bg-black/30 px-4 pt-[12vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <Command
         label="Paleta de comandos"
-        className="mx-auto max-w-lg overflow-hidden border border-ink bg-raised"
+        className="mx-auto max-w-lg overflow-hidden rounded-[12px] border border-rule-strong bg-raised"
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
       >
         <Command.Input
@@ -39,13 +39,13 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           {actions.length > 0 && (
             <Command.Group
               heading="Acciones"
-              className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-label [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:tracking-[0.12em] [&_[cmdk-group-heading]]:text-ink-3 [&_[cmdk-group-heading]]:uppercase"
+              className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-ink-3 [&_[cmdk-group-heading]]:uppercase"
             >
               {actions.map((a) => (
                 <Command.Item
                   key={a.label}
                   onSelect={() => go(a.href)}
-                  className="flex h-9 cursor-pointer items-center px-2.5 text-[14px] data-[selected=true]:bg-sunken"
+                  className="flex h-9 cursor-pointer items-center rounded-control px-2.5 text-[14px] data-[selected=true]:bg-sunken"
                 >
                   {a.label}
                 </Command.Item>
@@ -54,7 +54,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           )}
           <Command.Group
             heading="Módulos"
-            className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-label [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:tracking-[0.12em] [&_[cmdk-group-heading]]:text-ink-3 [&_[cmdk-group-heading]]:uppercase"
+            className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-ink-3 [&_[cmdk-group-heading]]:uppercase"
           >
             {MODULES.filter((m) => can(m.id)).map((m) => {
               const Icon = ICONS[m.icon] ?? ICONS.badge!;
@@ -63,7 +63,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                   key={m.id}
                   value={m.name}
                   onSelect={() => go(moduleHref(org.slug, m))}
-                  className="flex h-9 cursor-pointer items-center gap-2.5 px-2.5 text-[14px] data-[selected=true]:bg-sunken"
+                  className="flex h-9 cursor-pointer items-center gap-2.5 rounded-control px-2.5 text-[14px] data-[selected=true]:bg-sunken"
                 >
                   <Icon size={15} className="text-ink-3" /> {m.name}
                   {m.status !== 'v2' && m.id !== 'dashboard' && <span className="ml-auto text-[11px] text-ink-4">en v1</span>}

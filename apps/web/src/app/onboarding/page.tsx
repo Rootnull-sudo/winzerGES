@@ -18,7 +18,7 @@ export default async function Onboarding() {
         Hola, {u.name.split(' ')[0]}. {ms.length ? 'Elige una viña' : 'Crea tu viña'}
       </h1>
       {ms.length > 0 && (
-        <ul className="mt-6 divide-y divide-rule overflow-hidden border-y border-ink">
+        <ul className="mt-6 divide-y divide-rule overflow-hidden rounded-card border border-rule bg-raised">
           {ms.map((m) => (
             <li key={m.orgId}>
               <Link href={`/${m.slug}`} className="flex items-center justify-between px-4 py-3.5 hover:bg-sunken/60">

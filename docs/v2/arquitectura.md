@@ -85,17 +85,16 @@ UI ◀──useLiveQuery──── Dexie: records ◀──GET /api/<viña>/sy
 
 ## Diseño
 
-Dirección: *Marca de fuego* ([diseno.md](diseno.md), [adr/0008](adr/0008-direccion-visual-marca-de-fuego.md)).
-Blanco y negro estricto como el logo WINZER®. El código de cada registro va sellado en un círculo, como la marca a
-fuego de una barrica. Títulos en **Gilda Display** (afín a Agatho, la del logo) y datos en **Public Sans** con
-cifras tabulares. Tinto/blanco y sincronizado/pendiente se distinguen por forma (punto relleno o vacío, línea
-continua o de trazos); el color queda para estados que piden atención. Líneas de 1 px, esquinas rectas. En
-móvil, filas anchas con el sello y el botón principal a todo el ancho. Modo oscuro en negro mate.
+Dirección: *v1 afinado* ([diseno.md](diseno.md), [adr/0009](adr/0009-direccion-visual-v1-afinado.md)).
+Se mantiene la estructura de v1: menú lateral negro con íconos, tarjetas de cifras, tablas en tarjeta y Noto Sans.
+Se agrega el logo real, títulos en **Gilda Display** (afín a Agatho) e íconos de línea. El color tiene
+significado y siempre va con texto: vino para tinto, dorado para blanco, verde/ámbar/rojo para estados. Bordes en
+vez de sombras. En móvil, tarjetas tocables y botón principal a todo el ancho. Modo oscuro manual o por sistema.
 
 ## Decisiones
 
 Registradas en [adr/](adr/README.md): Postgres + RLS (0001), membresías propias (0002), sync propio (0003),
-npm workspaces (0004), v1 en la raíz (0005), RLS y sync derivados del esquema (0006), trunk + squash (0007), dirección visual «Marca de fuego» (0008).
+npm workspaces (0004), v1 en la raíz (0005), RLS y sync derivados del esquema (0006), trunk + squash (0007), dirección visual «Marca de fuego» (0008, reemplazada) y «v1 afinado» (0009).
 
 ## Documentación relacionada
 

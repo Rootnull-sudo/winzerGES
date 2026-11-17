@@ -36,7 +36,8 @@ Cubre toda la cadena de una viña chilena en un solo sistema (del cuartel a la b
 ## Brand Commitments
 
 - **Nombre y logo**: WINZER®, palabra en mayúsculas en serif clásica de alto contraste (`../Logo Winzer.jpeg`, fuera del repo). Tipografía del logo: **Agatho RegularCaps** (comercial; licencia web sin confirmar, así que por ahora se usa solo el logo como imagen y fuentes libres afines en la interfaz).
-- **Blanco y negro estricto**: la identidad es B/N. El color se reserva para estados (ok, advertencia, error, info) y nunca es el único indicador.
+- **Continuidad con v1**: quienes ya usan Winzer reconocen su estructura (menú lateral negro, tarjetas de cifras, tablas con filtros). La v2 la conserva y la afina con la marca.
+- **Color con significado**: vino para tinto, dorado para blanco, verde/ámbar/rojo para estados; nunca como único indicador. (Se probó blanco y negro estricto y se descartó por alejarse de v1; ver docs/v2/adr/0009.)
 - Dirección buscada: elegancia, legibilidad y minimalismo, sin perder densidad de información.
 
 ## Evidence on Hand
@@ -48,7 +49,7 @@ Cubre toda la cadena de una viña chilena en un solo sistema (del cuartel a la b
 1. El dato manda: cifras legibles, alineadas y comparables antes que decoración.
 2. La misma app en la oficina y en el viñedo: la densidad se adapta, el lenguaje no.
 3. Sin señal no se pierde nada: el estado de sincronización siempre es visible.
-4. Sobriedad de marca: el B/N del logo es la identidad, y el color significa algo.
+4. Sobriedad de marca: el logo en blanco y negro manda, y el color siempre significa algo.
 
 ## Accessibility & Inclusion
 

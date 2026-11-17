@@ -77,17 +77,18 @@ export function DataTable<T extends { id: string }>({
     URL.revokeObjectURL(a.href);
   }
 
+  if (rows.length === 0 && empty) return <>{empty}</>;
   return (
-    <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+    <div className="overflow-hidden rounded-card border border-rule bg-raised">
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-rule px-4 py-3">
         <label className="relative min-w-0 flex-1 sm:max-w-xs">
           <span className="sr-only">Buscar</span>
-          <Search size={15} className="pointer-events-none absolute top-1/2 left-0.5 -translate-y-1/2 text-ink-3" />
+          <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar…"
-            className="h-10 w-full border-0 border-b border-rule-strong bg-transparent pr-3 pl-7 text-[14px] placeholder:text-ink-3 hover:border-ink-3 focus:border-ink focus:outline-none"
+            className="h-9 w-full rounded-control border border-rule-strong bg-raised pr-3 pl-8.5 text-[14px] placeholder:text-ink-3 hover:border-ink-4 focus:border-ink/50 focus:ring-2 focus:ring-ink/10 focus:outline-none"
           />
         </label>
         <span className="tabular text-[12px] text-ink-3">
@@ -98,78 +99,74 @@ export function DataTable<T extends { id: string }>({
           {canExport && rows.length > 0 && (
             <button
               onClick={exportCsv}
-              className="inline-flex h-10 items-center gap-1.5 px-2.5 text-[13px] font-medium text-ink-2 hover:bg-sunken hover:text-ink"
+              className="inline-flex h-9 items-center gap-1.5 rounded-control border border-rule-strong bg-raised px-3 text-[13px] font-semibold text-ink-2 hover:bg-sunken hover:text-ink"
             >
               <Download size={15} /> CSV
             </button>
           )}
         </div>
       </div>
-      {rows.length === 0 && empty ? (
-        empty
-      ) : (
-        <div className="overflow-x-auto border-t border-ink">
-          <table className="w-full border-collapse text-[14px]">
-            <thead>
-              <tr className="border-b border-rule">
-                {columns.map((c, i) => {
-                  const active = sort?.key === c.key;
-                  return (
-                    <th
-                      key={c.key}
-                      scope="col"
-                      aria-sort={active ? (sort!.dir === 1 ? 'ascending' : 'descending') : undefined}
-                      className={cn(
-                        'h-10 px-3 text-[12px] font-medium tracking-[0.06em] whitespace-nowrap text-ink-3 uppercase first:pl-0',
-                        c.num ? 'text-right' : 'text-left',
-                        i === 0 && 'sticky left-0 bg-paper'
-                      )}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[14px]">
+          <thead>
+            <tr className="border-b border-rule">
+              {columns.map((c, i) => {
+                const active = sort?.key === c.key;
+                return (
+                  <th
+                    key={c.key}
+                    scope="col"
+                    aria-sort={active ? (sort!.dir === 1 ? 'ascending' : 'descending') : undefined}
+                    className={cn(
+                      'h-10 px-3 text-[12px] font-bold tracking-[0.05em] whitespace-nowrap text-ink-3 uppercase first:pl-4',
+                      c.num ? 'text-right' : 'text-left',
+                      i === 0 && 'sticky left-0 bg-raised'
+                    )}
+                  >
+                    <button
+                      onClick={() => setSort(active ? (sort!.dir === 1 ? { key: c.key, dir: -1 } : null) : { key: c.key, dir: 1 })}
+                      className={cn('inline-flex items-center gap-1 hover:text-ink', active && 'text-ink')}
                     >
-                      <button
-                        onClick={() => setSort(active ? (sort!.dir === 1 ? { key: c.key, dir: -1 } : null) : { key: c.key, dir: 1 })}
-                        className={cn('inline-flex items-center gap-1 hover:text-ink', active && 'text-ink')}
-                      >
-                        {c.label}
-                        {active && (sort!.dir === 1 ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-                      </button>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((r) => (
-                <tr
-                  key={r.id}
-                  onClick={onRowClick ? () => onRowClick(r) : undefined}
-                  className={cn('group border-b border-rule last:border-0', onRowClick && 'cursor-pointer hover:bg-sunken', rowClassName?.(r))}
-                >
-                  {columns.map((c, i) => (
-                    <td
-                      key={c.key}
-                      className={cn(
-                        'h-12 px-3 whitespace-nowrap first:pl-0',
-                        c.num && 'tabular text-right',
-                        i === 0 && 'sticky left-0 bg-paper group-hover:bg-sunken',
-                        c.className
-                      )}
-                    >
-                      {c.render ? c.render(r) : String(val(c, r) ?? '—')}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              {shown.length === 0 && (
-                <tr>
-                  <td colSpan={columns.length} className="px-3 py-10 text-center text-[13px] text-ink-3">
-                    Nada coincide con “{q}”.
+                      {c.label}
+                      {active && (sort!.dir === 1 ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                    </button>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((r) => (
+              <tr
+                key={r.id}
+                onClick={onRowClick ? () => onRowClick(r) : undefined}
+                className={cn('group border-b border-rule last:border-0', onRowClick && 'cursor-pointer hover:bg-sunken', rowClassName?.(r))}
+              >
+                {columns.map((c, i) => (
+                  <td
+                    key={c.key}
+                    className={cn(
+                      'h-12 px-3 whitespace-nowrap first:pl-4',
+                      c.num && 'tabular text-right',
+                      i === 0 && 'sticky left-0 bg-raised group-hover:bg-sunken',
+                      c.className
+                    )}
+                  >
+                    {c.render ? c.render(r) : String(val(c, r) ?? '—')}
                   </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ))}
+              </tr>
+            ))}
+            {shown.length === 0 && (
+              <tr>
+                <td colSpan={columns.length} className="px-3 py-10 text-center text-[13px] text-ink-3">
+                  Nada coincide con “{q}”.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

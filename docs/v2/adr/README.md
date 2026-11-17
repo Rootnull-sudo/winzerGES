@@ -15,7 +15,8 @@ se registra aquí **antes** de implementarla, en un PR propio `docs(adr): …`. 
 | [0005](0005-v1-en-la-raiz.md) | v1 se queda en la raíz durante la migración | Aceptado |
 | [0006](0006-rls-automatica.md) | RLS y sync derivados del esquema; sin SQL por tabla | Aceptado |
 | [0007](0007-trunk-squash.md) | Ramas cortas sobre `main` y squash merge | Aceptado |
-| [0008](0008-direccion-visual-marca-de-fuego.md) | Dirección visual «Marca de fuego» | Aceptado |
+| [0008](0008-direccion-visual-marca-de-fuego.md) | Dirección visual «Marca de fuego» | Reemplazado por 0009 |
+| [0009](0009-direccion-visual-v1-afinado.md) | Dirección visual «v1 afinado» | Aceptado |
 
 ## Plantilla
 

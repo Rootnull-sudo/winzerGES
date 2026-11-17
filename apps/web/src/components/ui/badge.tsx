@@ -1,59 +1,48 @@
+import { CloudUpload } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 type Tone = 'neutral' | 'ok' | 'warn' | 'bad' | 'info';
 const tones: Record<Tone, string> = {
-  neutral: 'text-ink-2',
-  ok: 'text-ink-2',
-  warn: 'font-semibold text-warn',
-  bad: 'font-semibold text-bad',
-  info: 'text-info'
+  neutral: 'bg-sunken text-ink-2',
+  ok: 'bg-ok-soft text-ok',
+  warn: 'bg-warn-soft text-warn',
+  bad: 'bg-bad-soft text-bad',
+  info: 'bg-info-soft text-info'
 };
 
-/**
- * Estado en texto. Lo normal ("ok") no se pinta: el color se guarda para lo que pide atención
- * (advertencia, error). Así una tabla sana se lee en blanco y negro.
- */
+/** Etiqueta de estado en cápsula (como v1). El texto siempre dice el estado; el color lo refuerza. */
 export function Badge({ tone = 'neutral', children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
-  return <span className={cn('inline-flex items-center gap-1 text-[13px]', tones[tone], className)}>{children}</span>;
+  return <span className={cn('inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-[12px] font-semibold', tones[tone], className)}>{children}</span>;
 }
 
-/** Punto de tipo de uva: tinto relleno, blanco vacío. Siempre con texto (nunca solo forma o color). */
+/** Punto de tipo de uva: vino para tinta, dorado para blanca. */
 export function UvaDot({ tipo, className }: { tipo: string | null | undefined; className?: string }) {
-  return <span aria-hidden className={cn('inline-block size-2 shrink-0 rounded-full border border-ink', tipo === 'tinto' && 'bg-ink', className)} />;
+  return <span aria-hidden className={cn('inline-block size-2 shrink-0 rounded-full', tipo === 'tinto' ? 'bg-tinto' : 'bg-blanco-fill', className)} />;
 }
 
+/** Tipo de uva en cápsula: color del vino + texto. */
 export function TipoUva({ tipo }: { tipo: string | null | undefined }) {
+  const tinto = tipo === 'tinto';
   return (
-    <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-2">
-      <UvaDot tipo={tipo} />
-      {tipo === 'tinto' ? 'Tinta' : 'Blanca'}
+    <span
+      className={cn(
+        'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold',
+        tinto ? 'bg-tinto-soft text-tinto' : 'bg-blanco-soft text-blanco'
+      )}
+    >
+      <span aria-hidden className={cn('size-1.5 rounded-full', tinto ? 'bg-tinto' : 'bg-blanco')} />
+      {tinto ? 'Tinta' : 'Blanca'}
     </span>
   );
 }
 
-/**
- * Sello: el código de un registro (cuartel, estanque, lote) como la marca a fuego de una barrica.
- * La línea bajo el código dice su estado de sincronización por forma: continua = guardado en el
- * servidor, de trazos = pendiente de enviar.
- */
-export function Sello({ codigo, pending, size = 'md' }: { codigo: string; pending?: boolean; size?: 'md' | 'lg' }) {
-  const lg = size === 'lg';
+/** Código de un registro (cuartel, estanque, lote) en negrita, con aviso si tiene cambios sin enviar. */
+export function Codigo({ codigo, pending }: { codigo: string; pending?: boolean }) {
   return (
-    <span
-      className={cn(
-        'inline-flex shrink-0 flex-col items-center justify-center gap-[3px] rounded-full border border-ink font-label leading-none tracking-[0.04em] text-ink',
-        lg ? 'h-[72px] min-w-[72px] text-[20px]' : 'h-[52px] min-w-[52px] text-[15px]',
-        // Códigos largos: el círculo se estira a cápsula en vez de cortar el texto.
-        codigo.length > 5 && (lg ? 'px-4 text-[17px]' : 'px-3 text-[13px]')
-      )}
-    >
-      <span className="whitespace-nowrap">{codigo}</span>
-      {pending ? (
-        <span role="img" aria-label="Pendiente de sincronizar" className="w-[22px] border-t border-dashed border-ink" />
-      ) : (
-        <span aria-hidden className="w-[22px] border-t border-ink" />
-      )}
+    <span className="inline-flex items-center gap-2 font-bold">
+      {codigo}
+      {pending && <CloudUpload size={14} className="text-info" aria-label="Pendiente de sincronizar" />}
     </span>
   );
 }

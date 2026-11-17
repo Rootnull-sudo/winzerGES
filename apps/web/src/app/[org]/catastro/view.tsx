@@ -1,15 +1,15 @@
 'use client';
 import { CONDUCCIONES, dec2, ESTADOS_SANITARIOS, int, PATRONES, tipoUvaDe, VALLES, VARIEDADES, type Cuartel } from '@winzer/domain';
-import { Map as MapIcon, Plus } from 'lucide-react';
+import { CalendarDays, Grape, Map as MapIcon, Plus, Sprout } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useCan } from '@/components/shell/org-context';
-import { Badge, Sello, TipoUva, UvaDot } from '@/components/ui/badge';
+import { Badge, Codigo, TipoUva } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
-import { EmptyState, PageHeader, SectionTitle } from '@/components/ui/page';
+import { EmptyState, PageHeader, Stat, StatGrid } from '@/components/ui/page';
 import { useToast } from '@/components/ui/toast';
 import { useEntity, useSync } from '@/lib/offline/hooks';
 
@@ -27,10 +27,17 @@ export function CatastroView() {
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sorted = useMemo(() => (rows ?? []).slice().sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true })), [rows]);
-  const totals = useMemo(() => {
+  const t = useMemo(() => {
     const ha = sorted.reduce((a, c) => a + Number(c.superficie || 0), 0);
-    const tinto = sorted.filter((c) => c.tipo === 'tinto').reduce((a, c) => a + Number(c.superficie || 0), 0);
-    return { ha, tinto, blanco: ha - tinto, plantas: sorted.reduce((a, c) => a + Number(c.plantas || 0), 0) };
+    const tintos = sorted.filter((c) => c.tipo === 'tinto');
+    const tinto = tintos.reduce((a, c) => a + Number(c.superficie || 0), 0);
+    const plantas = sorted.reduce((a, c) => a + Number(c.plantas || 0), 0);
+    // Edad media ponderada por superficie: Σ(edad × ha) / Σ ha, solo cuarteles con año de plantación.
+    const conAnio = sorted.filter((c) => c.anioPlantacion);
+    const haAnio = conAnio.reduce((a, c) => a + Number(c.superficie || 0), 0);
+    const anio = new Date().getFullYear();
+    const edad = haAnio ? conAnio.reduce((a, c) => a + (anio - c.anioPlantacion!) * Number(c.superficie || 0), 0) / haAnio : null;
+    return { ha, tinto, blanco: ha - tinto, nTinto: tintos.length, nBlanco: sorted.length - tintos.length, plantas, edad };
   }, [sorted]);
 
   const nuevo = can('catastro', 'c') && (
@@ -40,20 +47,9 @@ export function CatastroView() {
   );
   const header = (
     <PageHeader
+      area="Operación"
       title="Catastro vitícola"
-      description={
-        !rows ? (
-          'Cargando cuarteles…'
-        ) : sorted.length === 0 ? (
-          'Cuarteles del viñedo: variedad, superficie, plantación y estado sanitario. Funciona sin señal.'
-        ) : (
-          <>
-            <strong className="tabular font-semibold text-ink">{dec2(totals.ha)} ha</strong> en{' '}
-            {sorted.length === 1 ? '1 cuartel' : `${sorted.length} cuarteles`} · <span className="tabular">{int(totals.plantas)}</span> plantas · Tinta{' '}
-            <span className="tabular">{dec2(totals.tinto)}</span> ha · Blanca <span className="tabular">{dec2(totals.blanco)}</span> ha
-          </>
-        )
-      }
+      description="Cuarteles del viñedo con su variedad, superficie y plantación. Funciona sin señal: lo que registres se envía al recuperar la conexión."
       actions={nuevo}
       actionsDesktopOnly
     />
@@ -63,53 +59,32 @@ export function CatastroView() {
     return (
       <>
         {header}
-        <div className="h-64 animate-pulse bg-sunken" aria-label="Cargando cuarteles" />
+        <div className="h-64 animate-pulse rounded-card bg-sunken" aria-label="Cargando cuarteles" />
       </>
     );
 
   const cols: Column<Row>[] = [
-    { key: 'codigo', label: 'Código', render: (c) => <Sello codigo={c.codigo} pending={c._pending} /> },
-    {
-      key: 'variedad',
-      label: 'Variedad',
-      render: (c) => (
-        <span className="flex flex-col gap-0.5">
-          <span className="font-semibold">{c.variedad}</span>
-          <TipoUva tipo={c.tipo} />
-        </span>
-      )
-    },
+    { key: 'codigo', label: 'Código', render: (c) => <Codigo codigo={c.codigo} pending={c._pending} /> },
+    { key: 'variedad', label: 'Variedad' },
+    { key: 'tipo', label: 'Tipo', render: (c) => <TipoUva tipo={c.tipo} /> },
     {
       key: 'valle',
       label: 'Valle · sector',
       value: (c) => [c.valle, c.sector].filter(Boolean).join(' · '),
-      render: (c) =>
-        c.valle || c.sector ? (
-          <span className="flex flex-col gap-0.5">
-            <span>{c.valle ?? '—'}</span>
-            {c.sector && <span className="text-[13px] text-ink-3">{c.sector}</span>}
-          </span>
-        ) : (
-          <span className="text-ink-4">—</span>
-        )
+      render: (c) => <span className="text-ink-2">{[c.valle, c.sector].filter(Boolean).join(' · ') || <span className="text-ink-4">—</span>}</span>
     },
     {
       key: 'superficie',
-      label: 'Superficie',
+      label: 'Sup. (ha)',
       num: true,
       value: (c) => Number(c.superficie),
-      render: (c) => (
-        <span className="font-semibold">
-          {dec2(c.superficie)} <span className="font-normal text-ink-3">ha</span>
-        </span>
-      )
+      render: (c) => <span className="font-semibold">{dec2(c.superficie)}</span>
     },
     { key: 'plantas', label: 'Plantas', num: true, value: (c) => c.plantas ?? 0, render: (c) => (c.plantas ? int(c.plantas) : '—') },
     { key: 'anioPlantacion', label: 'Plantación', num: true, value: (c) => c.anioPlantacion ?? 0, render: (c) => c.anioPlantacion ?? '—' },
     {
       key: 'estadoSanitario',
       label: 'Estado sanitario',
-      className: 'min-w-[140px] whitespace-normal',
       value: (c) => c.estadoSanitario ?? '',
       render: (c) => (c.estadoSanitario ? <Badge tone={estadoTone(c.estadoSanitario)}>{c.estadoSanitario}</Badge> : <span className="text-ink-4">—</span>)
     }
@@ -119,40 +94,82 @@ export function CatastroView() {
     <>
       {header}
 
-      {/* Móvil (en el viñedo): filas grandes y tocables con el sello. Escritorio: tabla densa + composición. */}
+      {sorted.length > 0 && (
+        <StatGrid>
+          <Stat
+            label="Cuarteles"
+            value={sorted.length}
+            sub={`${t.nBlanco} ${t.nBlanco === 1 ? 'blanco' : 'blancos'} · ${t.nTinto} ${t.nTinto === 1 ? 'tinto' : 'tintos'}`}
+            icon={<MapIcon size={16} strokeWidth={1.6} />}
+          />
+          <Stat
+            label="Superficie total"
+            value={
+              <>
+                {dec2(t.ha)} <span className="text-[15px] font-semibold text-ink-3">ha</span>
+              </>
+            }
+            sub={`Tinta ${dec2(t.tinto)} · Blanca ${dec2(t.blanco)}`}
+            icon={<Sprout size={16} strokeWidth={1.6} />}
+          />
+          <Stat
+            label="Plantas"
+            value={int(t.plantas)}
+            sub={t.ha ? `${int(t.plantas / t.ha)} pl/ha promedio` : undefined}
+            icon={<Grape size={16} strokeWidth={1.6} />}
+          />
+          <Stat
+            label="Edad media"
+            value={
+              t.edad != null ? (
+                <>
+                  {Math.round(t.edad)} <span className="text-[15px] font-semibold text-ink-3">años</span>
+                </>
+              ) : (
+                '—'
+              )
+            }
+            sub="ponderada por superficie"
+            icon={<CalendarDays size={16} strokeWidth={1.6} />}
+          />
+        </StatGrid>
+      )}
+
+      {/* Móvil (en el viñedo): tarjetas grandes y tocables. Escritorio: tabla en tarjeta. */}
       <div className="sm:hidden">
         {nuevo && (
-          <Button variant="primary" className="mb-5 h-13 w-full text-[16px]" onClick={() => setEditing('new')}>
+          <Button variant="primary" className="mb-4 h-12 w-full text-[16px]" onClick={() => setEditing('new')}>
             <Plus size={18} /> Nuevo cuartel
           </Button>
         )}
         {sorted.length === 0 ? (
           <Empty />
         ) : (
-          <ul className="border-b border-rule">
+          <ul className="flex flex-col gap-2">
             {sorted.map((c) => (
-              <li key={c.id} className="border-t border-rule">
-                <button onClick={() => can('catastro', 'e') && setEditing(c)} className="flex w-full items-center gap-4 py-3.5 text-left active:bg-sunken">
-                  <Sello codigo={c.codigo} pending={c._pending} />
+              <li key={c.id}>
+                <button
+                  onClick={() => can('catastro', 'e') && setEditing(c)}
+                  className="flex w-full items-center gap-3 rounded-card border border-rule bg-raised p-3.5 text-left active:bg-sunken"
+                >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[16px] font-semibold">{c.variedad}</span>
-                    <span className="block truncate text-[14px] text-ink-2">
-                      {c.tipo === 'tinto' ? 'Tinta' : 'Blanca'}
-                      {c.valle ? ` · ${c.valle}` : ''}
+                    <Codigo codigo={c.codigo} pending={c._pending} />
+                    <span className="mt-0.5 block truncate text-[14px] text-ink-2">{c.variedad}</span>
+                    <span className="mt-1.5 block">
+                      <TipoUva tipo={c.tipo} />
                     </span>
                   </span>
-                  <span className="tabular text-[16px] font-semibold">
-                    {dec2(c.superficie)} <span className="font-normal text-ink-3">ha</span>
+                  <span className="tabular text-right text-[17px] font-bold">
+                    {dec2(c.superficie)}
+                    <span className="block text-[12px] font-normal text-ink-3">ha</span>
                   </span>
                 </button>
               </li>
             ))}
           </ul>
         )}
-        {sorted.length > 0 && <Composicion rows={sorted} totalHa={totals.ha} className="mt-10" />}
       </div>
-
-      <div className="hidden gap-12 sm:grid xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="hidden sm:block">
         <DataTable
           rows={sorted}
           columns={cols}
@@ -161,103 +178,9 @@ export function CatastroView() {
           canExport={can('catastro', 'x')}
           empty={<Empty />}
         />
-        {sorted.length > 0 && <Composicion rows={sorted} totalHa={totals.ha} />}
       </div>
       {editing && <CuartelDialog cuartel={editing === 'new' ? null : editing} existing={sorted} onClose={() => setEditing(null)} />}
     </>
-  );
-}
-
-/**
- * Composición del viñedo (columna lateral en escritorio, al final en móvil): reparto de la superficie por
- * variedad y por valle con barras de 1 línea, edad y densidad del viñedo, y la leyenda de las marcas.
- */
-function Composicion({ rows, totalHa, className }: { rows: Row[]; totalHa: number; className?: string }) {
-  const grupos = (key: (c: Row) => string, tipo?: (c: Row) => string) => {
-    const m = new Map<string, { ha: number; tipo?: string }>();
-    rows.forEach((c) => {
-      const k = key(c) || 'Sin dato';
-      const g = m.get(k) ?? { ha: 0, tipo: tipo?.(c) };
-      g.ha += Number(c.superficie || 0);
-      m.set(k, g);
-    });
-    return [...m.entries()].sort((a, b) => b[1].ha - a[1].ha);
-  };
-  const porVariedad = grupos(
-    (c) => c.variedad,
-    (c) => c.tipo
-  );
-  const porValle = grupos((c) => c.valle ?? '');
-  const anio = new Date().getFullYear();
-  // Edad media ponderada por superficie: Σ(edad × ha) / Σ ha, solo cuarteles con año de plantación.
-  const conAnio = rows.filter((c) => c.anioPlantacion);
-  const haConAnio = conAnio.reduce((a, c) => a + Number(c.superficie || 0), 0);
-  const edad = haConAnio ? conAnio.reduce((a, c) => a + (anio - c.anioPlantacion!) * Number(c.superficie || 0), 0) / haConAnio : null;
-  const masAntiguo = conAnio.slice().sort((a, b) => a.anioPlantacion! - b.anioPlantacion!)[0];
-  const plantas = rows.reduce((a, c) => a + Number(c.plantas || 0), 0);
-
-  return (
-    <aside aria-label="Composición del viñedo" className={`grid content-start gap-10 sm:grid-cols-2 xl:grid-cols-1 ${className ?? ''}`}>
-      <Reparto titulo="Por variedad" items={porVariedad} total={totalHa} />
-      <Reparto titulo="Por valle" items={porValle} total={totalHa} />
-      <section>
-        <SectionTitle className="border-b border-ink pb-2">El viñedo</SectionTitle>
-        <dl className="mt-1 text-[14px]">
-          {edad != null && <Dato label="Edad media" value={`${Math.round(edad)} años`} />}
-          {masAntiguo && <Dato label="Más antiguo" value={`${masAntiguo.codigo} · ${masAntiguo.anioPlantacion}`} />}
-          {totalHa > 0 && plantas > 0 && <Dato label="Densidad media" value={`${int(plantas / totalHa)} pl/ha`} />}
-        </dl>
-      </section>
-      <section className="flex flex-col gap-2.5 text-[13px] text-ink-3">
-        <span className="flex items-center gap-2.5">
-          <span aria-hidden className="w-[22px] border-t border-ink" />
-          Sincronizado
-        </span>
-        <span className="flex items-center gap-2.5">
-          <span aria-hidden className="w-[22px] border-t border-dashed border-ink" />
-          Pendiente de sincronizar
-        </span>
-        <span className="flex items-center gap-2.5">
-          <UvaDot tipo="tinto" className="mx-[7px]" /> Tinta
-          <UvaDot tipo="blanco" className="mr-0 ml-4" /> Blanca
-        </span>
-      </section>
-    </aside>
-  );
-}
-
-function Reparto({ titulo, items, total }: { titulo: string; items: [string, { ha: number; tipo?: string }][]; total: number }) {
-  return (
-    <section>
-      <SectionTitle className="border-b border-ink pb-2">{titulo}</SectionTitle>
-      <ul className="mt-1">
-        {items.map(([nombre, g]) => {
-          const pct = total ? (g.ha / total) * 100 : 0;
-          return (
-            <li key={nombre} className="border-b border-rule py-2.5">
-              <span className="flex items-baseline gap-2 text-[14px]">
-                {g.tipo && <UvaDot tipo={g.tipo} className="self-center" />}
-                <span className="min-w-0 flex-1 truncate">{nombre}</span>
-                <span className="tabular font-semibold">{dec2(g.ha)}</span>
-                <span className="tabular w-10 text-right text-[12px] text-ink-3">{Math.round(pct)}%</span>
-              </span>
-              <span className="mt-2 block h-[3px] bg-rule" role="img" aria-label={`${Math.round(pct)}% de la superficie`}>
-                <span className="block h-full bg-ink" style={{ width: `${pct}%` }} />
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-function Dato({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-rule py-2.5">
-      <dt className="text-ink-3">{label}</dt>
-      <dd className="tabular font-semibold">{value}</dd>
-    </div>
   );
 }
 
@@ -465,7 +388,7 @@ function CuartelDialog({ cuartel, existing, onClose }: { cuartel: Row | null; ex
           {(id) => <Textarea id={id} name="observaciones" defaultValue={c?.observaciones ?? ''} />}
         </Field>
         {error && !error.field && (
-          <p role="alert" className="bg-bad-soft px-3 py-2 text-[13px] text-bad sm:col-span-3">
+          <p role="alert" className="rounded-control bg-bad-soft px-3 py-2 text-[13px] text-bad sm:col-span-3">
             {error.message}
           </p>
         )}
@@ -475,5 +398,5 @@ function CuartelDialog({ cuartel, existing, onClose }: { cuartel: Row | null; ex
 }
 
 function Section({ title }: { title: string }) {
-  return <p className="-mb-1 border-b border-ink pb-2 font-label text-[18px] sm:col-span-3">{title}</p>;
+  return <p className="-mb-1 border-b border-rule pb-2 font-label text-[18px] sm:col-span-3">{title}</p>;
 }

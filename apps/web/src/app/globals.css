@@ -1,30 +1,37 @@
 @import 'tailwindcss';
 
 /* =====================================================================
-   Winzer v2 — tokens. Dirección «Marca de fuego» (docs/v2/diseno.md):
-   blanco y negro estricto como el logo. Cada registro se identifica por su código
-   sellado, como la marca a fuego de una barrica. El color solo comunica estado
-   (ok, advertencia, error, info). Tinto/blanco y sincronizado/pendiente se
-   distinguen por forma (relleno/vacío, línea continua/de trazos), nunca por color.
-   Profundidad: solo líneas de 1 px; esquinas rectas.
+   Winzer v2 — tokens. Dirección «v1 afinado» (docs/v2/diseno.md, adr/0009):
+   la estructura conocida de v1 (menú lateral negro, tarjetas de cifras, tablas en
+   tarjeta) con la marca nueva (logo real, Gilda Display en títulos, íconos de línea).
+   Color con significado: acento vino para tinto y gráficos, dorado para blanco,
+   verde/ámbar/rojo para estados. Siempre acompañado de texto.
    ===================================================================== */
 :root {
-  --paper: #ffffff; /* fondo */
-  --paper-raised: #ffffff; /* diálogos y menús (se separan por borde, no por tono) */
-  --paper-sunken: #f4f4f2; /* inputs, hover de filas */
-  --ink: #1c1c1b; /* texto principal, acción primaria, líneas de énfasis (= tinta del logo) */
+  --paper: #f6f6f4; /* fondo del área de trabajo */
+  --paper-raised: #ffffff; /* tarjetas, tablas, diálogos, barra superior */
+  --paper-sunken: #f3f3f0; /* hover de filas, fondo de íconos, placeholders */
+  --ink: #1c1c1b; /* texto principal y acción primaria (= tinta del logo) */
   --ink-2: #4a4a47; /* texto secundario */
-  --ink-3: #6b6b67; /* metadatos (5,3:1 sobre blanco) */
+  --ink-3: #6b6b67; /* metadatos (5,0:1 sobre el fondo) */
   --ink-4: #8f8f8a; /* deshabilitado */
-  --rule: #e4e4e0; /* líneas de separación */
-  --rule-strong: #c9c9c4; /* bordes de controles */
+  --rule: #e6e6e2; /* bordes de tarjetas y separadores */
+  --rule-strong: #d4d4cf; /* bordes de controles */
   --on-ink: #ffffff;
-  --focus: #1c1c1b;
+  --focus: rgba(28, 28, 27, 0.4);
   --logo-filter: none;
   --logo-on-ink-filter: invert(1);
 
+  /* Menú lateral: siempre oscuro, como v1. */
+  --side: #141413;
+  --side-raised: #2e2e2b; /* ítem activo */
+  --side-ink: #ffffff;
+  --side-ink-2: #c2c2bd;
+  --side-ink-3: #8f8f8a;
+  --side-rule: #2e2e2b;
+
   --ok: #2f6b41;
-  --ok-soft: #eaf2ec;
+  --ok-soft: #e8f2eb;
   --warn: #8a4b00;
   --warn-soft: #f8efe3;
   --bad: #a82828;
@@ -32,27 +39,36 @@
   --info: #2c5a80;
   --info-soft: #e7eef5;
 
-  /* Tipo de uva: tinto = relleno de tinta, blanco = vacío con contorno. */
-  --tinto: var(--ink);
-  --blanco: transparent;
+  /* Acento vino: tipo de uva y gráficos. Siempre con texto, nunca como único indicador. */
+  --tinto: #7a1f35;
+  --tinto-soft: #f5e8eb;
+  --blanco: #6b5714;
+  --blanco-soft: #f6f0dc;
+  --blanco-fill: #d9c27a; /* relleno de gráficos (no para texto) */
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --paper: #0f0f0e;
-    --paper-raised: #161615;
-    --paper-sunken: #1b1b1a;
+    --paper-raised: #181816;
+    --paper-sunken: #222220;
     --ink: #edede9;
     --ink-2: #c2c2bd;
     --ink-3: #a3a39e;
     --ink-4: #6f6f6b;
-    --rule: #2e2e2b;
-    --rule-strong: #4a4a46;
+    --rule: #2a2a27;
+    --rule-strong: #3f3f3b;
     --on-ink: #0f0f0e;
-    --focus: #edede9;
+    --focus: rgba(237, 237, 233, 0.45);
     --logo-filter: invert(1);
     --logo-on-ink-filter: none;
+    --side: #0a0a09;
+    --side-raised: #242422;
+    --side-ink: #ffffff;
+    --side-ink-2: #c2c2bd;
+    --side-ink-3: #8f8f8a;
+    --side-rule: #242422;
     --ok: #7fbf92;
     --ok-soft: #18261c;
     --warn: #e0a84e;
@@ -61,23 +77,34 @@
     --bad-soft: #2e1818;
     --info: #86b2d6;
     --info-soft: #17222c;
+    --tinto: #d97a8f;
+    --tinto-soft: #2e1820;
+    --blanco: #e3d08a;
+    --blanco-soft: #2a2512;
+    --blanco-fill: #b9a45c;
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
   --paper: #0f0f0e;
-  --paper-raised: #161615;
-  --paper-sunken: #1b1b1a;
+  --paper-raised: #181816;
+  --paper-sunken: #222220;
   --ink: #edede9;
   --ink-2: #c2c2bd;
   --ink-3: #a3a39e;
   --ink-4: #6f6f6b;
-  --rule: #2e2e2b;
-  --rule-strong: #4a4a46;
+  --rule: #2a2a27;
+  --rule-strong: #3f3f3b;
   --on-ink: #0f0f0e;
-  --focus: #edede9;
+  --focus: rgba(237, 237, 233, 0.45);
   --logo-filter: invert(1);
   --logo-on-ink-filter: none;
+  --side: #0a0a09;
+  --side-raised: #242422;
+  --side-ink: #ffffff;
+  --side-ink-2: #c2c2bd;
+  --side-ink-3: #8f8f8a;
+  --side-rule: #242422;
   --ok: #7fbf92;
   --ok-soft: #18261c;
   --warn: #e0a84e;
@@ -86,6 +113,11 @@
   --bad-soft: #2e1818;
   --info: #86b2d6;
   --info-soft: #17222c;
+  --tinto: #d97a8f;
+  --tinto-soft: #2e1820;
+  --blanco: #e3d08a;
+  --blanco-soft: #2a2512;
+  --blanco-fill: #b9a45c;
   color-scheme: dark;
 }
 
@@ -109,11 +141,20 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-tinto: var(--tinto);
+  --color-tinto-soft: var(--tinto-soft);
   --color-blanco: var(--blanco);
+  --color-blanco-soft: var(--blanco-soft);
+  --color-blanco-fill: var(--blanco-fill);
+  --color-side: var(--side);
+  --color-side-raised: var(--side-raised);
+  --color-side-ink: var(--side-ink);
+  --color-side-ink-2: var(--side-ink-2);
+  --color-side-ink-3: var(--side-ink-3);
+  --color-side-rule: var(--side-rule);
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-numeric), ui-monospace, monospace;
-  --radius-control: 2px;
-  --radius-card: 2px;
+  --radius-control: 6px;
+  --radius-card: 8px;
   --ease-out-quick: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -136,8 +177,9 @@
     text-wrap: pretty;
   }
   :focus-visible {
-    outline: 1px solid var(--focus);
-    outline-offset: 3px;
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
   ::selection {
     background: var(--ink);
@@ -156,14 +198,12 @@
   font-synthesis: none;
 }
 
-/* Títulos de página: versales con aire, como el logo. */
+/* Títulos de página en la serif del logo. */
 @utility titulo {
   font-family: var(--font-display), ui-serif, Georgia, serif;
   font-weight: 400;
   font-synthesis: none;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 /* Logo (imagen negra con transparencia): se invierte en modo oscuro. */

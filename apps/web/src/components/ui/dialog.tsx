@@ -40,8 +40,8 @@ export function Dialog({
         onClose();
       }}
       className={cn(
-        'm-0 mt-auto w-full max-w-none border-t border-ink bg-raised p-0 text-ink backdrop:bg-black/40',
-        'sm:m-auto sm:border',
+        'm-0 mt-auto w-full max-w-none rounded-t-[14px] border border-rule bg-raised p-0 text-ink backdrop:bg-black/40',
+        'sm:m-auto sm:rounded-[12px]',
         size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-lg',
         'open:animate-[dlg-in_200ms_cubic-bezier(0.23,1,0.32,1)]'
       )}
@@ -53,7 +53,11 @@ export function Dialog({
               <h2 className="font-label text-[24px] leading-tight">{title}</h2>
               {description && <p className="mt-1 text-[13px] text-ink-3">{description}</p>}
             </div>
-            <button onClick={onClose} aria-label="Cerrar" className="-mr-1.5 grid size-10 place-items-center text-ink-3 hover:bg-sunken hover:text-ink">
+            <button
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="-mr-1.5 grid size-10 place-items-center rounded-control text-ink-3 hover:bg-sunken hover:text-ink"
+            >
               <X size={18} />
             </button>
           </header>

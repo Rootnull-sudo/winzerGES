@@ -49,7 +49,7 @@ export function UsuariosView({ members, invitations, roles, me }: { members: Mem
           </Button>
         )}
       </div>
-      <ul className="divide-y divide-rule overflow-hidden border-y border-ink">
+      <ul className="divide-y divide-rule overflow-hidden rounded-card border border-rule bg-raised">
         {members.map((m) => (
           <li key={m.userId} className="flex flex-wrap items-center gap-3 px-4 py-3">
             <span aria-hidden className="grid size-9 place-items-center rounded-full bg-sunken text-[13px] font-semibold text-ink-2">
@@ -95,7 +95,7 @@ export function UsuariosView({ members, invitations, roles, me }: { members: Mem
       {invitations.length > 0 && (
         <>
           <h2 className="mt-10 mb-3 font-label text-[20px]">Invitaciones pendientes</h2>
-          <ul className="divide-y divide-rule border-y border-ink">
+          <ul className="divide-y divide-rule rounded-card border border-rule bg-raised">
             {invitations.map((i) => (
               <li key={i.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-[14px]">
                 <span className="flex-1">{i.email}</span>

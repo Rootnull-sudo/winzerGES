@@ -1,0 +1,37 @@
+{
+  "name": "winzer",
+  "private": true,
+  "version": "2.0.0-alpha.0",
+  "description": "Winzer Gestión v2 — plataforma en la nube multi-viña",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @winzer/web",
+    "build": "npm run build -w @winzer/web",
+    "start": "npm run start -w @winzer/web",
+    "test": "npm run test -w @winzer/domain && npm run test -w @winzer/db",
+    "test:domain": "npm run test -w @winzer/domain",
+    "test:e2e": "npm run test:e2e -w @winzer/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run guardas && npm run typecheck && npm run db:check && npm test",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "npm run migrate -w @winzer/db",
+    "db:generate": "npm run generate -w @winzer/db --",
+    "db:check": "npm run check -w @winzer/db",
+    "db:reset": "npm run reset -w @winzer/db",
+    "db:seed": "npm run seed -w @winzer/db",
+    "db:rehacer": "node scripts/rehacer-migraciones.mjs",
+    "guardas": "node scripts/guardas.mjs"
+  },
+  "devDependencies": {
+    "prettier": "^3.10.1",
+    "wait-on": "^9.5.1"
+  }
+}

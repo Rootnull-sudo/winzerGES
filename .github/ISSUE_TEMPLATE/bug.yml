@@ -1,0 +1,18 @@
+name: Error
+description: Algo no funciona como debería
+labels: ['bug']
+body:
+  - type: textarea
+    id: que
+    attributes: { label: Qué pasó y qué esperabas }
+    validations: { required: true }
+  - type: textarea
+    id: pasos
+    attributes: { label: Pasos para reproducir, placeholder: '1. Entrar como agronomo@winzer.test …' }
+    validations: { required: true }
+  - type: dropdown
+    id: conexion
+    attributes: { label: ¿Con o sin conexión?, options: [Con conexión, Sin conexión, Al reconectar, No aplica] }
+  - type: input
+    id: version
+    attributes: { label: Versión o commit }

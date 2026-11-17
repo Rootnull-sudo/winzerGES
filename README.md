@@ -10,6 +10,8 @@
 
 Winzer Gestión es una aplicación web **100% frontend** (HTML + CSS + JavaScript vanilla) que cubre la cadena productiva, comercial, financiera y tributaria de una viña boutique: catastro, cosecha, fermentación con control de SO₂, bodega, envasado con costo real por botella, ventas, DTE (XML SII), conciliación bancaria, F29, PPM y Renta. Se abre con **doble clic** en `index.html`, guarda los datos en el navegador (IndexedDB) y no necesita servidor ni internet.
 
+> 🚧 **Winzer v2 (nube, multi-viña) en desarrollo** en la rama `v2`: Next.js + Postgres con aislamiento por viña, usuarios en varias viñas con roles distintos y módulos de campo/bodega que funcionan sin señal. Ver [docs/v2/arquitectura.md](docs/v2/arquitectura.md).
+
 > 🔗 **Demo online:** https://rootnull-sudo.github.io/winzerGES/
 > En la demo, cada visitante tiene sus propios datos en su navegador; se pierden si limpia el navegador.
 

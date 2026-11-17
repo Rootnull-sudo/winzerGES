@@ -1,5 +1,10 @@
 # Cómo contribuir a Winzer Gestión
 
+> **¿Trabajas en v2 (la plataforma en la nube, `apps/` y `packages/`)?** Sigue
+> [docs/v2/colaboracion.md](docs/v2/colaboracion.md) (ramas, PRs, conflictos, migraciones) y
+> [docs/v2/desarrollo.md](docs/v2/desarrollo.md) (entorno y convenciones). Índice: [docs/v2/README.md](docs/v2/README.md).
+> Lo que sigue aplica a **v1** (`index.html`, `js/`, `css/`).
+
 ¡Gracias por tu interés! Este proyecto es 100% frontend y no requiere herramientas de build: basta un navegador y un editor.
 
 ## Flujo de trabajo

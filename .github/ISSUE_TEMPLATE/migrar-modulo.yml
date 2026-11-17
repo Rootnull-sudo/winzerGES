@@ -1,0 +1,53 @@
+name: Migrar módulo a v2
+description: Reserva un módulo de v1 para migrarlo (evita que dos personas trabajen en lo mismo)
+title: 'Migrar módulo: '
+labels: ['migración', 'v2']
+body:
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options:
+        [
+          fenologia,
+          insumos,
+          cosecha,
+          calendario,
+          laboratorio,
+          vinificacion,
+          fermentacion,
+          bodega,
+          historico,
+          envasado,
+          ventas,
+          inventarios,
+          marca,
+          costos,
+          financiero,
+          administracion,
+          proveedores,
+          cumplimiento,
+          dte,
+          conciliacion,
+          tributario,
+          dashboard,
+          ayuda
+        ]
+    validations: { required: true }
+  - type: textarea
+    id: entidades
+    attributes:
+      label: Entidades y tablas nuevas
+      description: Entidades de js/data/schema.js que se migran, y si son offline.
+      placeholder: 'cosecha (offline), jornal (offline)'
+    validations: { required: true }
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Depende de / toca código compartido
+      description: Otros módulos que necesita, y si va a cambiar packages/domain, sync, repo o componentes ui/ (avisa al otro).
+  - type: textarea
+    id: reglas
+    attributes:
+      label: Reglas de negocio y cálculos a portar
+      description: Funciones de js/calc/* o reacciones de js/integrations/domain.js involucradas.

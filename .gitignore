@@ -10,7 +10,9 @@ desktop.ini
 
 # Dependencias (si se agrega tooling opcional)
 node_modules/
+# v2 usa npm workspaces: el lockfile de la raíz sí se versiona
 package-lock.json
+!/package-lock.json
 
 # Respaldos con datos reales: NUNCA al repositorio
 *backup*.json
@@ -22,7 +24,18 @@ respaldos/
 # Variables de entorno (preventivo)
 .env
 .env.*
+!.env.example
 
 # Artefactos de release
 dist/
 *.zip
+
+# v2 (Next.js / tests)
+.next/
+next-env.d.ts
+*.tsbuildinfo
+test-results/
+playwright-report/
+
+# Migraciones custom apartadas por scripts/rehacer-migraciones.mjs
+packages/db/drizzle-pendientes/

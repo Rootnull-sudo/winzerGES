@@ -1,0 +1,33 @@
+{
+  "name": "@winzer/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Esquema Postgres (Drizzle), migraciones, Row-Level Security por viña y seed demo.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "check": "drizzle-kit check",
+    "migrate": "tsx src/migrate.ts",
+    "reset": "tsx src/reset.ts",
+    "seed": "tsx src/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@winzer/domain": "*",
+    "drizzle-orm": "^0.45.4",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0",
+    "@types/node": "^22",
+    "dotenv": "^17"
+  }
+}

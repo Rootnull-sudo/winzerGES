@@ -1,0 +1,11 @@
+# Código compartido: cualquier cambio aquí requiere revisión del otro (Settings › Branches › Require review from Code Owners).
+# Los módulos (apps/web/src/app/[org]/<modulo>/) no tienen dueño fijo: se reservan con un issue "Migrar módulo".
+/packages/domain/src/sync.ts          @nrmurua @Rootnull-sudo
+/packages/domain/src/permissions.ts   @nrmurua @Rootnull-sudo
+/packages/db/src/                     @nrmurua @Rootnull-sudo
+/packages/db/drizzle/0000_init.sql    @nrmurua @Rootnull-sudo
+/packages/db/drizzle/0001_rls.sql     @nrmurua @Rootnull-sudo
+/apps/web/src/lib/                    @nrmurua @Rootnull-sudo
+/apps/web/src/components/ui/          @nrmurua @Rootnull-sudo
+/apps/web/src/app/globals.css         @nrmurua @Rootnull-sudo
+/.github/                             @nrmurua @Rootnull-sudo

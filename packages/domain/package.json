@@ -1,0 +1,22 @@
+{
+  "name": "@winzer/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lógica de dominio pura de Winzer: cálculos, permisos, módulos y esquemas de validación. Corre igual en cliente y servidor.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0",
+    "@types/node": "^22"
+  }
+}

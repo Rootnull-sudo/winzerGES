@@ -1,0 +1,99 @@
+# CI de Winzer v2. Corre en cada PR hacia main y en cada push a main.
+# Los tres jobs deben pasar para poder fusionar (configurar en Settings › Branches › main).
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL_ADMIN: postgres://winzer:winzer@localhost:5432/winzer
+  DATABASE_URL: postgres://winzer_app:winzer_app@localhost:5432/winzer
+  BETTER_AUTH_SECRET: ci-secret-no-usar-en-produccion-0123456789
+  BETTER_AUTH_URL: http://localhost:3000
+
+jobs:
+  calidad:
+    name: Formato, tipos y migraciones
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Formato (Prettier)
+        run: npm run format:check
+      - name: Guardas de arquitectura
+        run: npm run guardas
+      - name: Tipos (TypeScript)
+        run: npm run typecheck
+      - name: Migraciones consistentes (drizzle-kit check)
+        run: npm run db:check
+      - name: El esquema y las migraciones están al día
+        run: |
+          npm run db:generate -- --name ci-drift
+          if [ -n "$(git status --porcelain packages/db/drizzle)" ]; then
+            echo "::error::schema.ts tiene cambios sin migración. Corre: npm run db:generate -- --name <nombre> y haz commit de packages/db/drizzle/"
+            git status --porcelain packages/db/drizzle
+            exit 1
+          fi
+
+  tests:
+    name: Tests (dominio + Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: winzer, POSTGRES_PASSWORD: winzer, POSTGRES_DB: winzer }
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U winzer" --health-interval 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Rol de la app (sin BYPASSRLS)
+        run: psql "$DATABASE_URL_ADMIN" -f packages/db/docker-init.sql
+      - run: npm run db:migrate
+      - run: npm test
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [calidad]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: winzer, POSTGRES_PASSWORD: winzer, POSTGRES_DB: winzer }
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U winzer" --health-interval 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: psql "$DATABASE_URL_ADMIN" -f packages/db/docker-init.sql
+      - run: npm run db:migrate
+      - run: npm run build
+      - name: Levantar la app
+        run: |
+          AUTH_RATE_LIMIT=off npm start > next.log 2>&1 &
+          npx wait-on -t 60000 http://localhost:3000/login
+      - run: npm run db:seed
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-resultados
+          path: |
+            apps/web/test-results/
+            next.log
+          retention-days: 7

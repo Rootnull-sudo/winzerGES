@@ -5,6 +5,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+### Added (v2 — plataforma en la nube, rama `v2`)
+- Monorepo (`apps/web`, `packages/domain`, `packages/db`) con Next.js 16, PostgreSQL y Drizzle.
+- Multi-viña: organizaciones, membresías con rol por viña, invitaciones por enlace y aislamiento con Row-Level Security.
+- Autenticación con Better Auth (correo y contraseña, sesiones en servidor, límite de intentos).
+- Sincronización offline para Operación, Vinificación y bodega y Administración (IndexedDB + cola de cambios + PWA).
+- Módulos migrados: Catastro (offline), Clientes y cobranza (online), Usuarios y permisos, Configuración.
+- Importador de respaldos de v1.
+- Cálculos de IVA/ILA, F29, sueldos y enología portados a TypeScript con tests de paridad contra v1.
+
 ## [1.0.2] - 2026-11-13
 
 ### Added

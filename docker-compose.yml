@@ -1,0 +1,19 @@
+# Postgres local para Winzer v2. Puerto 5442 para no chocar con otros Postgres locales.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: winzer
+      POSTGRES_PASSWORD: winzer
+      POSTGRES_DB: winzer
+    ports:
+      - '5442:5432'
+    volumes:
+      - winzer-pg:/var/lib/postgresql/data
+      - ./packages/db/docker-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U winzer']
+      interval: 3s
+      retries: 20
+volumes:
+  winzer-pg:

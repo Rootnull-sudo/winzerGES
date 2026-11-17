@@ -1,0 +1,13 @@
+# v1 (scripts clásicos, se mantiene con su propio estilo hasta migrar)
+index.html
+js/
+css/
+assets/
+*.md
+# Generados
+package-lock.json
+packages/db/drizzle/
+**/.next/
+**/test-results/
+**/playwright-report/
+node_modules/

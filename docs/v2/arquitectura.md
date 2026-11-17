@@ -106,12 +106,14 @@ npm workspaces (0004), v1 en la raíz (0005), RLS y sync derivados del esquema (
 Ver [desarrollo.md](desarrollo.md#primera-vez). Resumen: `cp .env.example .env && npm install && npm run db:up &&
 npm run db:migrate && npm run dev`, y en otra terminal `npm run db:seed` (contraseña demo `winzer1234`).
 
-## Próximos pasos (fuera de esta etapa)
+## Próximos pasos
 
-- Migrar los 22 módulos restantes: ver [migrar-modulo.md](migrar-modulo.md).
-- Despliegue: Vercel (región `gru1`) + Neon Postgres (`sa-east-1`), con el rol `winzer_app` y migraciones en CI.
-- Correo transaccional (invitaciones, recuperar contraseña), verificación de email.
-- Jobs en segundo plano (alertas de SO₂, vencimientos tributarios): pg-boss o Inngest.
-- DTE real vía proveedor de facturación; archivos (etiquetas, cartolas) en S3/R2.
-- Planes y facturación por viña; observabilidad (Sentry); backups/PITR de la base.
-- Notificación de cambios en tiempo real (hoy el pull es cada 30 s o al volver a la pestaña).
+Ver [hoja-de-ruta.md](hoja-de-ruta.md). En resumen:
+
+- **F0 · núcleo común**: temporadas, parámetros con vigencia, secuencias, servicios y reacciones de sync, tareas en
+  segundo plano y alertas, adjuntos, planes.
+- **Paridad con v1**: carril A (campo y bodega, offline) y carril B (negocio, online), que convergen en Comercial,
+  Tributario y Finanzas.
+- **Servicio en producción**: cobro, despliegue en Vercel + Neon, observabilidad y onboarding.
+
+El diseño que las sostiene está en [dominio.md](dominio.md), [modelo-datos.md](modelo-datos.md) y los ADR 0010–0014.

@@ -8,13 +8,17 @@ si el área del módulo es offline (`operacion`, `bodega`, `administracion`) u o
 | **Online** | `apps/web/src/app/[org]/clientes/` | Server Component lee con `withOrg`; Server Actions escriben con `upsert` |
 | **Offline** | `apps/web/src/app/[org]/catastro/` | Componente cliente lee con `useEntity`; escribe con `engine.write` |
 
+Antes de empezar, lee la ficha del módulo en [modulos.md](modulos.md) y sus tablas en
+[modelo-datos.md](modelo-datos.md). El issue de la [hoja de ruta](hoja-de-ruta.md) dice qué tablas crea tu PR.
+
 ## Pasos (ambos patrones)
 
 1. **Dominio** — `packages/domain/src/entities/<modulo>.ts`: esquema Zod con los campos de `js/modules/<modulo>/`
    (v1). Usa los mismos nombres de campo que v1 (así el importador es directo). Si el módulo tiene cálculos en
    `js/calc/*`, pórtalos como funciones puras que reciben los datos y la `OrgConfig`, y agrega un test de paridad
    en `packages/domain/test/` con `loadLegacy([...])` (ver `tax.test.ts`).
-2. **Tabla** — en `packages/db/src/schema.ts`, en un bloque propio al final (`/* --- <Módulo> --- */`), con
+2. **Tabla** — las de tu issue, tal como están en [modelo-datos.md](modelo-datos.md) (si algo cambia, actualiza
+   ese documento en el mismo PR). En `packages/db/src/schema.ts`, en un bloque propio al final (`/* --- <Módulo> --- */`), con
    `...base()` y además `...syncCols()` si es offline. **No hay que escribir SQL ni registrar la tabla en listas**:
    al migrar, toda tabla con `org_id` recibe RLS y toda tabla con `xid` queda sincronizable (ver
    [adr/0006](adr/0006-rls-automatica.md)). Genera la migración **al final, justo antes del PR**:
@@ -44,12 +48,18 @@ si el área del módulo es offline (`operacion`, `bodega`, `administracion`) u o
 - Las reacciones entre módulos de v1 (`js/integrations/domain.js`, p. ej. envasado → descuenta bodega) se hacen en el
   **servidor** dentro de la misma transacción del push o de la Server Action, nunca en el cliente.
 
-## Orden sugerido para los 22 restantes
+## Efectos sobre otros módulos
 
-1. **Configuración** (variedades, parámetros tributarios en `organization.settings`) — la usan casi todos.
-2. **Operación** (offline): fenología, insumos y labores, cosecha, calendario, laboratorio.
-3. **Bodega** (offline): estanques y `movBodega` primero; luego vinificación, fermentación, histórico.
-4. **Comercial**: envasado → inventarios → ventas (dependen de bodega) → marca.
-5. **Finanzas**: proveedores y compras, sueldos y gastos, costos, financiero (portar `js/calc/financial.js` e `inventory.js`).
-6. **Tributario**: DTE, conciliación, cumplimiento, F29/PPM/Renta (`tax.f29` ya está portado y probado).
-7. Dashboard gerencial y alertas (cuando existan los datos que resumen).
+Cuando una acción escribe en tablas de otro módulo (envasar descuenta bodega e insumos; vender descuenta stock),
+no lo hagas en la pantalla ni con varias llamadas a `upsert`. Ver [adr/0010](adr/0010-documentos-y-libros.md):
+
+- **Online**: un **servicio** en `packages/db/src/services/<accion>.ts` que recibe `(tx, actor, input)`, valida y
+  escribe todo en la misma transacción. La Server Action solo lo llama.
+- **Offline**: una **reacción** registrada en `REACCIONES[<entidad>]`, que `sync/push` ejecuta en la misma
+  transacción del push. Tiene que ser idempotente (un reintento no duplica movimientos).
+- Stocks y saldos: no los guardes en columnas; usa o crea una vista `v_*` ([modelo-datos.md](modelo-datos.md#vistas-derivadas-sql)).
+
+## Orden
+
+Lo define [hoja-de-ruta.md](hoja-de-ruta.md): F0 núcleo común → carril A (viñedo y bodega) y carril B (compras,
+gastos y personas) en paralelo → comercial → tributario → finanzas y dashboard.

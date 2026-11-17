@@ -11,6 +11,16 @@ Plataforma en la nube multi-viña de Winzer Gestión. v1 (app de escritorio sin 
 | Instalar y correr en tu equipo | [desarrollo.md](desarrollo.md) |
 | Trabajar en paralelo e integrar con PRs | [colaboracion.md](colaboracion.md) |
 | Migrar un módulo de v1 | [migrar-modulo.md](migrar-modulo.md) |
+| Saber qué falta y en qué orden | [hoja-de-ruta.md](hoja-de-ruta.md) |
+
+## Diseño funcional
+
+| Tema | Documento |
+|---|---|
+| El negocio: contextos, glosario, reglas, ciclo del vino, bugs de v1 a corregir | [dominio.md](dominio.md) |
+| Esquema objetivo completo, vistas y mapeo v1 → v2 | [modelo-datos.md](modelo-datos.md) |
+| Ficha de cada uno de los 26 módulos | [modulos.md](modulos.md) |
+| Fases, carriles e issues | [hoja-de-ruta.md](hoja-de-ruta.md) |
 
 ## Referencia
 
@@ -26,7 +36,8 @@ Plataforma en la nube multi-viña de Winzer Gestión. v1 (app de escritorio sin 
 ## Estado de los módulos
 
 La fuente de verdad es `packages/domain/src/modules.ts` (`status: 'v2'`). Hoy: Catastro (offline), Clientes y
-cobranza, Usuarios y permisos, Configuración. El trabajo pendiente se reserva con issues *Migrar módulo*.
+cobranza, Usuarios y permisos, Configuración. El trabajo pendiente está en [hoja-de-ruta.md](hoja-de-ruta.md) y se
+reserva con issues *Migrar módulo*.
 
 ## Glosario
 

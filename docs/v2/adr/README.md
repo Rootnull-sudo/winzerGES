@@ -17,6 +17,11 @@ se registra aquí **antes** de implementarla, en un PR propio `docs(adr): …`. 
 | [0007](0007-trunk-squash.md) | Ramas cortas sobre `main` y squash merge | Aceptado |
 | [0008](0008-direccion-visual-marca-de-fuego.md) | Dirección visual «Marca de fuego» | Reemplazado por 0009 |
 | [0009](0009-direccion-visual-v1-afinado.md) | Dirección visual «v1 afinado» | Aceptado |
+| [0010](0010-documentos-y-libros.md) | Documentos con líneas, libros de movimientos, servicios y reacciones | Propuesto |
+| [0011](0011-temporadas-y-parametros.md) | Temporadas y parámetros con vigencia | Propuesto |
+| [0012](0012-jobs-y-alertas.md) | Tareas en segundo plano con pg-boss; alertas guardadas | Propuesto |
+| [0013](0013-adjuntos.md) | Archivos adjuntos en almacenamiento S3 (Cloudflare R2) | Propuesto |
+| [0014](0014-planes-y-cobro.md) | Planes y cobro por viña | Propuesto |
 
 ## Plantilla
 

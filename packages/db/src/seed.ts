@@ -12,6 +12,8 @@ import { eq } from 'drizzle-orm';
 import { adminDb } from './client';
 import { importV1, type V1Dump } from './import-v1';
 import { member, organization, user } from './schema';
+import { calcularAlertas } from './alertas/motor';
+import { REGLAS } from './alertas/reglas';
 import { cargarIndicadores } from './services/parametros';
 import { asegurarTemporada } from './services/temporadas';
 import { withOrg } from './tenancy';
@@ -89,6 +91,8 @@ async function main() {
       }
     }
   );
+  // Alertas iniciales (en producción las calcula el worker cada hora).
+  for (const o of ['org_demo', 'org_robles']) await calcularAlertas(o, REGLAS);
   console.log('✓ Seed listo', rep.importados);
   process.exit(0);
 }

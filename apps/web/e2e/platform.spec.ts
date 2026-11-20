@@ -198,3 +198,22 @@ test('parámetros con vigencia: cambiar el PPM, ver la historia y volver al valo
   await expect(fila).toContainText('0,25 %');
   await expect(fila).toContainText('Valor por defecto');
 });
+
+test('campana de avisos: el admin ve la temporada sin cerrar; el agrónomo no la ve', async ({ page, browser }) => {
+  await login(page, 'admin@winzer.test');
+  await page.goto('/vina-demo');
+  await page.getByRole('button', { name: /^Avisos/ }).click();
+  const panel = page.getByRole('region', { name: 'Avisos' });
+  await expect(panel.getByText(/Cierra la temporada \d{4}/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Avisos', exact: true })).toBeVisible();
+  await page.screenshot(shots('11-campana'));
+  await panel.getByRole('link', { name: /Cierra la temporada/ }).click();
+  await expect(page).toHaveURL(/\/vina-demo\/configuracion#temporadas$/);
+  await expect(panel).toHaveCount(0);
+
+  const agro = await newSession(browser, 'agronomo@winzer.test');
+  await agro.page.goto('/vina-demo');
+  await agro.page.getByRole('button', { name: /^Avisos/ }).click();
+  await expect(agro.page.getByText('Sin avisos pendientes.')).toBeVisible();
+  await agro.ctx.close();
+});

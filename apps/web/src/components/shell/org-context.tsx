@@ -11,6 +11,16 @@ export interface OrgCtx {
   /** Temporadas de la viña (ADR 0011) y el año de la actual (derivado de la fecha de hoy en el servidor). */
   temporadas: { anio: number; inicio: string; fin: string; estado: 'abierta' | 'cerrada' }[];
   temporadaActual: number | null;
+  /** Alertas abiertas visibles para el rol (ADR 0012), las no vistas primero. */
+  alertas: {
+    id: string;
+    severidad: 'info' | 'warn' | 'bad';
+    titulo: string;
+    mensaje: string | null;
+    ruta: string | null;
+    detectadaEn: string;
+    vista: boolean;
+  }[];
 }
 export const OrgContext = createContext<OrgCtx | null>(null);
 export function useOrg() {

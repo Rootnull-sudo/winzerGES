@@ -26,6 +26,7 @@ npm run check                    # formato, guardas, tipos, migraciones, tests (
 npm run format                   # Prettier
 npm run db:up && npm run db:migrate
 npm run dev                      # http://localhost:3000 ; luego npm run db:seed (contraseña demo winzer1234)
+npm run worker                   # tareas en segundo plano (alertas cada hora); en otra terminal
 npm run db:generate -- --name x  # migración desde schema.ts
 npm run db:rehacer -- x          # rehacer migraciones propias sobre main tras un conflicto
 npm run build && AUTH_RATE_LIMIT=off npm start ; npm run test:e2e

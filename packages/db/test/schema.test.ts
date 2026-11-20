@@ -6,6 +6,8 @@ import { SYNC_ENTITIES } from '@winzer/domain';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { adminDb } from '../src/client';
+import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
+import * as schema from '../src/schema';
 import { NO_RLS_TABLES } from '../src/schema';
 import { syncTables, tableName, tenantTables } from '../src/tables';
 
@@ -32,17 +34,15 @@ describe('esquema multi-viña', () => {
     for (const t of Object.keys(syncTables)) expect(rows.map((r) => r.t)).toContain(t);
   });
 
-  it('tenant tables se derivan del esquema', () => {
-    expect(tenantTables.map(tableName).sort()).toEqual([
-      'audit_log',
-      'cliente',
-      'cobro',
-      'cuartel',
-      'org_role',
-      'parametro_org',
-      'secuencia',
-      'temporada',
-      'variedad'
-    ]);
+  it('tenant tables se derivan del esquema: toda tabla con org_id salvo las excepciones declaradas', () => {
+    // Regla, no lista: así agregar una tabla en un PR no obliga a editar este test (y no hay conflictos en paralelo).
+    const conOrg = (Object.values(schema) as unknown[])
+      .filter((x): x is PgTable => x instanceof PgTable)
+      .filter((t) => getTableConfig(t).columns.some((c) => c.name === 'org_id'))
+      .map(tableName);
+    const esperadas = conOrg.filter((n) => !(schema.NO_RLS_TABLES as readonly string[]).includes(n)).sort();
+    expect(tenantTables.map(tableName).sort()).toEqual(esperadas);
+    expect(esperadas).toEqual(expect.arrayContaining(['audit_log', 'cliente', 'cuartel', 'temporada']));
+    expect(esperadas).not.toContain('member');
   });
 });

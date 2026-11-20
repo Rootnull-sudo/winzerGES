@@ -42,7 +42,7 @@ flowchart LR
 | F0-2 Parámetros con vigencia | `parametro_org` + `indicador` (global, solo lectura para la app), `configVigente(tx, fecha)`, pantalla en Configuración con historia ✅. Pendiente: carga real de indicadores (job en F0-5; el seed usa los valores de v1) | `parametro_org`, `indicador` | M |
 | F0-3 Secuencias | `secuencia` + `siguienteNumero` / `siguienteCodigo` / `ajustarSecuencia` (upsert con bloqueo de fila); test de concurrencia ✅ | `secuencia` | S |
 | F0-4 Servicios y reacciones | Carpeta `services/` (temporadas, secuencias, parámetros); registro `REACCIONES[entidad]` ejecutado por `sync/push` en la misma transacción, con ejemplo en catastro; tests; [migrar-modulo.md](migrar-modulo.md) ✅ | — | M |
-| F0-5 Jobs y alertas | pg-boss (arranque en el servidor, cron por viña), tabla `alerta` y `alerta_vista`, motor de reglas (una regla de ejemplo), campana en la barra superior, `tarea` y bandeja | `alerta`, `alerta_vista`, `tarea` | L |
+| F0-5 Jobs y alertas | Worker pg-boss (`npm run worker`, cron por hora y recálculo tras cada push), `alerta` y `alerta_vista`, motor de reglas con una regla de ejemplo, campana en la barra superior ✅. Pendiente: job de indicadores desde una fuente pública | `alerta`, `alerta_vista` | L |
 | F0-6 Adjuntos | R2 (S3), URL firmada para subir y bajar, `adjunto`, componente `<Adjuntos entidad id>`, límite por plan, borrado en el job | `adjunto` | M |
 | F0-7 Planes y acceso | `plan` (seed piloto/esencial/completo), `suscripcion` (prueba de 30 días al crear la viña), control de módulos y usuarios en `requireOrg` y en el menú | `plan`, `suscripcion` | M |
 | F0-8 Correo | Resend: invitaciones y resumen diario de alertas (opcional por usuario) | — | S |
@@ -63,7 +63,7 @@ flowchart LR
 |---|---|---|
 | F2-1 Lotes, ventanas y calendario (Gantt) + reacción de cosecha | `lote`, `lote_cuartel`, `ventana` | L |
 | F2-2 Estanques y movimientos (entrada, trasiego, merma) + vistas + balance | `estanque`, `mov_bodega` | L |
-| F2-3 Fermentación, seguimiento y SO₂ + reacciones | `fermentacion`, `seguimiento`, `adicion_so2` | L |
+| F2-3 Fermentación, seguimiento y SO₂ + reacciones (+ `tarea` y bandeja personal, que crea la reacción de fin de FA) | `fermentacion`, `seguimiento`, `adicion_so2`, `tarea` | L |
 | F2-4 Vinificación y aditivos (conversión de unidades) | `aditivo` | M |
 | F2-5 Laboratorio (+ adjunto del informe) | `analisis` | S |
 | F2-6 Histórico kg y litros | — | S |

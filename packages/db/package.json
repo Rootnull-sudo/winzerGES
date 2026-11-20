@@ -15,19 +15,21 @@
     "reset": "tsx src/reset.ts",
     "seed": "tsx src/seed.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "worker": "tsx src/jobs/worker.ts"
   },
   "dependencies": {
     "@winzer/domain": "*",
     "drizzle-orm": "^0.45.4",
+    "pg-boss": "^10.4.2",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
+    "@types/node": "^22",
+    "dotenv": "^17",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",
-    "vitest": "^5.1.0",
-    "@types/node": "^22",
-    "dotenv": "^17"
+    "vitest": "^5.1.0"
   }
 }

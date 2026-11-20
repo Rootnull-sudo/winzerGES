@@ -41,6 +41,6 @@ Detalle: [diseno.md](../diseno.md).
 - Hay dos piezas de v1 que H muestra y que se agregan cuando exista su backend, nunca como controles vacíos:
   - el **selector de temporada**, ya implementado en F0-1. Al mirar otra temporada que no es la actual se tiñe de
     vino (`tinto-soft`);
-  - la **campana de avisos**, que llega con las alertas en F0-5.
+  - la **campana de avisos**, ya implementada en F0-5.
 - Si se confirma la licencia web de Agatho, puede reemplazar a Gilda Display cambiando `--font-display` en
   `layout.tsx`.

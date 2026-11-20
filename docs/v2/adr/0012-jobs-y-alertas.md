@@ -17,7 +17,7 @@ cosas que no dependen de que alguien abra la app:
   - Esquema `pgboss` propio y fuera del RLS. Se accede con la conexión de administración, **solo desde el worker**.
   - El worker corre en un proceso Node aparte (`apps/worker`) o, en Vercel, en una ruta llamada por un cron.
   - Cada job que toca datos de una viña usa `withOrg(orgId, …)` como cualquier otra consulta.
-- **Alertas guardadas**: el job `alertas:calcular` corre por viña (cada hora y al terminar un push de sync) y aplica
+- **Alertas guardadas**: el job `alertas.calcular` corre por viña (cada hora, encolado por el cron `alertas.programar`) y aplica
   un **motor de reglas**.
   - Cada regla es `{ id, modulo, severidad, evaluar(tx, ctx) → hallazgos[] }`, portada desde `alerts.js` con su
     test.
@@ -26,7 +26,14 @@ cosas que no dependen de que alguien abra la app:
   - La campana de la barra superior lee `alerta` (abiertas), filtrada por los permisos del rol.
   - `alerta_vista` guarda lo leído por usuario.
 - **Correo** con Resend: invitaciones y un resumen diario opcional de alertas nuevas.
-- **Tareas** (`tarea`): las crean las reacciones y los servicios; se muestran en una bandeja personal.
+- **Tras un push de sync** la ruta del push recalcula las alertas de la viña con `after()` de Next, después de
+  responder. No necesita pg-boss en la web ni la conexión de administración.
+- **Implementación** (F0-5):
+  - `packages/db/src/alertas/motor.ts` y `reglas/<modulo>.ts`, con una línea por módulo en `reglas/index.ts`.
+  - El worker está en `packages/db/src/jobs/worker.ts` (`npm run worker`).
+  - Una regla que falla corre en un savepoint y no bloquea a las demás.
+- **Tareas** (`tarea`): las crean las reacciones y los servicios; se muestran en una bandeja personal. Se crean en
+  F2-3, con la primera reacción que las usa.
 
 ## Consecuencias
 - El costo de las alertas sale de la pantalla y la campana carga al instante.

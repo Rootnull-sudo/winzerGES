@@ -372,3 +372,57 @@ export const indicador = pgTable(
   },
   (t) => [primaryKey({ columns: [t.clave, t.fecha] })]
 );
+
+/* --- Núcleo: alertas calculadas por el job (ADR 0012) --- */
+/**
+ * Hallazgos del motor de reglas. Una abierta por (regla, registro): el job la crea, la actualiza mientras se
+ * cumple y la pasa a `resuelta` cuando deja de cumplirse. La campana de la barra superior lee las abiertas.
+ */
+export const alerta = pgTable(
+  'alerta',
+  {
+    id: text('id').primaryKey(),
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    regla: text('regla').notNull(),
+    /** info | warn | bad */
+    severidad: text('severidad').notNull(),
+    /** Módulo dueño: solo la ven los roles con permiso de ver ese módulo. */
+    modulo: text('modulo').notNull(),
+    entidad: text('entidad'),
+    /** Registro al que apunta ('' si la alerta es de la viña completa). */
+    registroId: text('registro_id').notNull().default(''),
+    titulo: text('titulo').notNull(),
+    mensaje: text('mensaje'),
+    /** Ruta relativa a la viña (`configuracion#temporadas`). */
+    ruta: text('ruta'),
+    /** abierta | resuelta */
+    estado: text('estado').notNull().default('abierta'),
+    detectadaEn: ts('detectada_en').notNull().defaultNow(),
+    actualizadaEn: ts('actualizada_en').notNull().defaultNow(),
+    resueltaEn: ts('resuelta_en')
+  },
+  (t) => [
+    uniqueIndex('alerta_abierta_uq')
+      .on(t.orgId, t.regla, t.registroId)
+      .where(sql`${t.estado} = 'abierta'`),
+    index('alerta_org_estado_idx').on(t.orgId, t.estado)
+  ]
+);
+
+/** Alertas que cada usuario ya vio (para el contador de la campana). */
+export const alertaVista = pgTable(
+  'alerta_vista',
+  {
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    alertaId: text('alerta_id')
+      .notNull()
+      .references(() => alerta.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    vistaEn: ts('vista_en').notNull().defaultNow()
+  },
+  (t) => [primaryKey({ columns: [t.alertaId, t.userId] })]
+);

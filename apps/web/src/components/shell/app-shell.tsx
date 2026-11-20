@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn';
 import { SyncEngine } from '@/lib/offline/engine';
 import { SyncContext, useIssues, useSync, useSyncState } from '@/lib/offline/hooks';
 import { signOutAction } from '@/app/actions';
+import { Campana } from './campana';
 import { CommandPalette } from './command-palette';
 import { ICONS } from './icons';
 import { OrgContext, useCan, useOrg, type OrgCtx } from './org-context';
@@ -73,6 +74,7 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
               </button>
               <div className="ml-auto flex items-center gap-2">
                 <TemporadaSelect />
+                <Campana />
                 <SyncPill />
                 <UserChip />
               </div>

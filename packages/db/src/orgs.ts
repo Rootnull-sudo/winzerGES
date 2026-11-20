@@ -2,11 +2,11 @@
  * Viñas, membresías e invitaciones. Estas tablas NO tienen RLS (son el mapa de quién accede a qué):
  * todas las funciones de aquí filtran explícitamente por usuario y se usan solo desde el servidor.
  */
-import { can, fechaHoy, ROLES, type RoleDef } from '@winzer/domain';
+import { accesoDe, can, fechaHoy, ROLES, suscripcionInicial, type RoleDef } from '@winzer/domain';
 import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { db } from './client';
-import { invitation, member, organization, orgRole, user } from './schema';
+import { invitation, member, organization, orgRole, suscripcion, user } from './schema';
 import type { Actor } from './repo';
 import { asegurarTemporada } from './services/temporadas';
 import { withOrg } from './tenancy';
@@ -36,9 +36,15 @@ export async function actorFor(userId: string, userName: string, slug: string) {
     .where(and(eq(member.userId, userId), eq(organization.slug, slug), eq(member.estado, 'activo')))
     .limit(1);
   if (!row) return null;
-  const customRoles = ROLES[row.role] ? [] : await customRolesOf(row.org.id);
-  const actor: Actor = { orgId: row.org.id, userId, userName, role: row.role, customRoles };
+  const [customRoles, sus] = await Promise.all([ROLES[row.role] ? [] : customRolesOf(row.org.id), suscripcionDe(row.org.id)]);
+  const actor: Actor = { orgId: row.org.id, userId, userName, role: row.role, customRoles, acceso: accesoDe(sus, fechaHoy()) };
   return { actor, org: row.org };
+}
+
+/** Suscripción vigente de la viña (null si se creó antes de F0-7: se trata como piloto). */
+export async function suscripcionDe(orgId: string) {
+  const [s] = await withOrg(orgId, (tx) => tx.select().from(suscripcion).limit(1));
+  return s ?? null;
 }
 
 export async function customRolesOf(orgId: string): Promise<RoleDef[]> {
@@ -74,15 +80,38 @@ export async function createOrganization(userId: string, input: { nombre: string
     // La viña parte con su temporada actual (ADR 0011). temporada tiene RLS: se fija la viña en esta transacción.
     await tx.execute(sql`select set_config('app.org_id', ${id}, true)`);
     await asegurarTemporada(tx, id, fechaHoy());
+    // Prueba de 30 días del plan completo (ADR 0014).
+    await tx.insert(suscripcion).values({ orgId: id, ...suscripcionInicial(fechaHoy()) });
   });
   return { id, slug };
+}
+
+/** Miembros activos + invitaciones vigentes sin aceptar: lo que cuenta para el límite de usuarios del plan. */
+export async function usuariosUsados(orgId: string): Promise<number> {
+  const [m] = await db()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(member)
+    .where(and(eq(member.orgId, orgId), eq(member.estado, 'activo')));
+  const [i] = await db()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(invitation)
+    .where(and(eq(invitation.orgId, orgId), isNull(invitation.acceptedAt), gt(invitation.expiresAt, new Date())));
+  return (m?.n ?? 0) + (i?.n ?? 0);
 }
 
 const hash = (t: string) => createHash('sha256').update(t).digest('hex');
 
 /** Crea una invitación y devuelve el token en claro (solo esta vez) para armar el enlace. */
 export async function createInvitation(actor: Actor, email: string, role: string) {
-  if (!can(actor.role, 'usuarios', 'c', actor.customRoles)) throw Object.assign(new Error('Tu rol no puede invitar usuarios.'), { status: 403 });
+  if (!can(actor.role, 'usuarios', 'c', actor.customRoles, actor.acceso)) throw Object.assign(new Error('Tu rol no puede invitar usuarios.'), { status: 403 });
+  if (actor.acceso) {
+    const usados = await usuariosUsados(actor.orgId);
+    if (usados >= actor.acceso.maxUsuarios)
+      throw Object.assign(
+        new Error(`Tu plan ${actor.acceso.planNombre} permite ${actor.acceso.maxUsuarios} usuarios y ya hay ${usados} (incluye invitaciones pendientes).`),
+        { status: 403 }
+      );
+  }
   const token = randomBytes(24).toString('base64url');
   await db()
     .insert(invitation)
@@ -141,7 +170,7 @@ export async function pendingInvitationsOf(orgId: string) {
 }
 
 export async function setMemberRole(actor: Actor, userId: string, role: string) {
-  if (!can(actor.role, 'usuarios', 'e', actor.customRoles)) throw Object.assign(new Error('Tu rol no puede cambiar permisos.'), { status: 403 });
+  if (!can(actor.role, 'usuarios', 'e', actor.customRoles, actor.acceso)) throw Object.assign(new Error('Tu rol no puede cambiar permisos.'), { status: 403 });
   if (userId === actor.userId && role !== 'admin') throw new Error('No puedes quitarte el rol de administrador a ti mismo.');
   await db()
     .update(member)

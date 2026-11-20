@@ -1,5 +1,5 @@
 'use client';
-import { AREAS, MODULES } from '@winzer/domain';
+import { AREAS, can as canRole, enPlan, MODULES, planQueIncluye } from '@winzer/domain';
 import { moduleHref } from '@/lib/routes';
 import { CalendarRange, Check, ChevronDown, ChevronsUpDown, CloudOff, Lock, LogOut, Menu, Moon, RefreshCw, Search, Sun, WifiOff, X } from 'lucide-react';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ import { signOutAction } from '@/app/actions';
 import { Campana } from './campana';
 import { CommandPalette } from './command-palette';
 import { ICONS } from './icons';
-import { OrgContext, useCan, useOrg, type OrgCtx } from './org-context';
+import { OrgContext, useOrg, type OrgCtx } from './org-context';
 
 export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; memberships: { slug: string; nombre: string }[]; children: React.ReactNode }) {
   // El motor offline solo existe en el navegador: se crea tras montar (sin desajuste de hidratación).
@@ -79,6 +79,7 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
                 <UserChip />
               </div>
             </header>
+            <PlanBanner />
             <IssuesBanner />
             <main className="mx-auto max-w-[1360px] px-4 py-6 sm:px-8">{children}</main>
           </div>
@@ -118,8 +119,9 @@ function OrgSwitcher({ memberships }: { memberships: { slug: string; nombre: str
 }
 
 function Nav() {
-  const { org } = useOrg();
-  const can = useCan();
+  const { org, role, customRoles, acceso } = useOrg();
+  // Se listan los módulos que el ROL puede ver; los que el plan no incluye aparecen con candado ("disponible en …").
+  const can = (id: string) => canRole(role, id, 'v', customRoles);
   const pathname = usePathname();
   // La temporada elegida viaja entre módulos (ADR 0011).
   const t = useSearchParams().get('t');
@@ -144,6 +146,7 @@ function Nav() {
               const active = m.id === 'dashboard' ? pathname === href : pathname.startsWith(href);
               const Icon = ICONS[m.icon] ?? ICONS.badge!;
               const legacy = m.status !== 'v2' && m.id !== 'dashboard';
+              const fuera = !enPlan(acceso, m.id);
               return (
                 <Link
                   key={m.id}
@@ -152,12 +155,17 @@ function Nav() {
                   className={cn(
                     'flex h-9 items-center gap-2.5 rounded-control px-2.5 text-[14px] transition-colors duration-100',
                     active ? 'bg-side-raised font-semibold text-side-ink' : 'text-side-ink-2 hover:bg-side-raised/60 hover:text-side-ink',
-                    legacy && !active && 'text-side-ink-3'
+                    (legacy || fuera) && !active && 'text-side-ink-3'
                   )}
+                  title={fuera ? `Disponible en el plan ${planQueIncluye(m.id).nombre}` : undefined}
                 >
                   <Icon size={17} strokeWidth={1.6} className="shrink-0" />
                   <span className="truncate">{m.name}</span>
-                  {legacy && <span className="ml-auto text-[10px] font-semibold tracking-wide text-side-ink-3 uppercase">v1</span>}
+                  {fuera ? (
+                    <Lock size={12} className="ml-auto text-side-ink-3" aria-label="No incluido en el plan" />
+                  ) : (
+                    legacy && <span className="ml-auto text-[10px] font-semibold tracking-wide text-side-ink-3 uppercase">v1</span>
+                  )}
                 </Link>
               );
             })}
@@ -308,6 +316,24 @@ function SyncPill() {
       <span className="hidden sm:inline">{label}</span>
       {s.error && <span className="sr-only">{s.error}</span>}
     </button>
+  );
+}
+
+/** Aviso de la suscripción: prueba por terminar, periodo vencido o solo lectura (F0-7). */
+function PlanBanner() {
+  const { acceso } = useOrg();
+  if (!acceso.aviso) return null;
+  return (
+    <div
+      role="status"
+      className={cn(
+        'border-b px-4 py-2.5 text-[13px] font-medium sm:px-6',
+        acceso.soloLectura ? 'border-bad/20 bg-bad-soft text-bad' : 'border-warn/20 bg-warn-soft text-warn'
+      )}
+    >
+      {acceso.soloLectura && <Lock size={13} className="mr-1.5 inline -translate-y-px" aria-hidden />}
+      {acceso.aviso}
+    </div>
   );
 }
 

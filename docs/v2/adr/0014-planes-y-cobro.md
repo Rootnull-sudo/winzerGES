@@ -34,6 +34,16 @@ periodo de prueba y cobrar de forma recurrente en CLP, sin amarrar el modelo de 
 
   La facturación de la propia suscripción (DTE de Winzer al cliente) es aparte y queda fuera de alcance.
 
+## Implementación (F0-7)
+- Catálogo `PLANES` y reglas de acceso en `packages/domain/src/planes.ts` (`accesoDe`, `planPermite`). Límites y
+  precios provisorios.
+- `can(rol, módulo, acción, rolesPropios, acceso)` y `assertCan` combinan rol y plan. `actor.acceso` lo calcula
+  `actorFor`, y así lo aplican `repo`, el sync, las páginas (`orgWith`) y la interfaz (`useCan`).
+- Sin suscripción registrada, la viña se trata como piloto activo (viñas creadas antes de F0-7).
+- `npm run plan -- <viña> <plan> [estado] [hasta]` asigna el plan a mano con la conexión de administración.
+- `suscripcion` tiene RLS, pero la app la puede escribir en su viña porque `createOrganization` la crea. Ninguna
+  pantalla ni acción la modifica. Con el cobro real, la escribirá solo el job de webhooks.
+
 ## Consecuencias
 - El control por plan se implementa en F0-7 sin cobro real: los planes se asignan a mano y el cobro llega en F8.
 - Cambiar de proveedor implica implementar otra `ProveedorCobro` y migrar los `id_externo`; el resto no cambia.

@@ -10,8 +10,8 @@ export default async function Pendiente({ params }: { params: Promise<{ org: str
   const { org, modulo } = await params;
   const m = moduleById(modulo);
   if (!m) notFound();
-  const { allowed } = await orgWith(org, m.id);
-  if (!allowed) return <NoAccess modulo={m.name} />;
+  const { allowed, fueraDePlan } = await orgWith(org, m.id);
+  if (!allowed) return <NoAccess modulo={m.name} plan={fueraDePlan} />;
   const area = AREAS.find((a) => a.id === m.area)!;
   return (
     <>

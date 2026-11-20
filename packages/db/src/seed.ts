@@ -13,6 +13,7 @@ import { adminDb } from './client';
 import { importV1, type V1Dump } from './import-v1';
 import { member, organization, user } from './schema';
 import { calcularAlertas } from './alertas/motor';
+import { asignarPlan } from './plan-cli';
 import { REGLAS } from './alertas/reglas';
 import { cargarIndicadores } from './services/parametros';
 import { asegurarTemporada } from './services/temporadas';
@@ -47,13 +48,11 @@ async function ensureOrg(id: string, slug: string, nombre: string, rut: string) 
     .onConflictDoNothing();
   // Temporadas de ejemplo: la anterior, la actual y la siguiente (ADR 0011).
   const hoy = fechaHoy();
-  await withOrg(
-    id,
-    async (tx) => {
-      for (const delta of [-1, 0, 1]) await asegurarTemporada(tx, id, `${Number(hoy.slice(0, 4)) + delta}${hoy.slice(4)}`, { demo: true });
-    },
-    adminDb()
-  );
+  // Con la conexión de la app (sujeta a RLS): la de administración es superusuario y vería las temporadas de
+  // todas las viñas, así que asegurarTemporada creería que ya existen.
+  await withOrg(id, async (tx) => {
+    for (const delta of [-1, 0, 1]) await asegurarTemporada(tx, id, `${Number(hoy.slice(0, 4)) + delta}${hoy.slice(4)}`, { demo: true });
+  });
 }
 
 async function main() {
@@ -91,6 +90,9 @@ async function main() {
       }
     }
   );
+  // Planes: la demo con todo; Los Robles en Esencial para ver módulos fuera del plan.
+  await asignarPlan('vina-demo', 'piloto');
+  await asignarPlan('los-robles', 'esencial');
   // Alertas iniciales (en producción las calcula el worker cada hora).
   for (const o of ['org_demo', 'org_robles']) await calcularAlertas(o, REGLAS);
   console.log('✓ Seed listo', rep.importados);

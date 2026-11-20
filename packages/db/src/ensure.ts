@@ -5,7 +5,8 @@
  */
 import { sql } from 'drizzle-orm';
 import type { DB } from './client';
-import { GLOBAL_READONLY_TABLES } from './schema';
+import { PLANES } from '@winzer/domain';
+import { GLOBAL_READONLY_TABLES, plan } from './schema';
 import { syncTables, tableName, tenantTables } from './tables';
 
 export async function ensureTenancy(db: DB) {
@@ -18,5 +19,10 @@ export async function ensureTenancy(db: DB) {
   await db.execute(sql`grant select, insert, update, delete on all tables in schema public to winzer_app`);
   await db.execute(sql`grant usage, select on all sequences in schema public to winzer_app`);
   for (const t of GLOBAL_READONLY_TABLES) await db.execute(sql.raw(`revoke insert, update, delete, truncate on "${t}" from winzer_app`));
+  // Catálogo de planes: la fuente es PLANES (@winzer/domain); aquí se refleja en la tabla global.
+  for (const p of Object.values(PLANES)) {
+    const fila = { id: p.id, nombre: p.nombre, modulos: p.modulos ? [...p.modulos] : null, maxUsuarios: p.maxUsuarios, maxGb: p.maxGb, precioClp: p.precioClp };
+    await db.insert(plan).values(fila).onConflictDoUpdate({ target: plan.id, set: fila });
+  }
   return { tenant: tenantTables.map(tableName), sync: Object.keys(syncTables) };
 }

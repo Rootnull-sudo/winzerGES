@@ -133,7 +133,7 @@ export async function alertasPara(tx: Tx, actor: Actor): Promise<AlertaVisible[]
     .orderBy(desc(alerta.detectadaEn));
   const orden: Record<string, number> = { bad: 0, warn: 1, info: 2 };
   return (rows as AlertaVisible[])
-    .filter((a) => can(actor.role, a.modulo, 'v', actor.customRoles))
+    .filter((a) => can(actor.role, a.modulo, 'v', actor.customRoles, actor.acceso))
     .sort((a, b) => Number(a.vista) - Number(b.vista) || (orden[a.severidad] ?? 3) - (orden[b.severidad] ?? 3));
 }
 

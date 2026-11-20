@@ -38,8 +38,8 @@ movimientos (solo agregar); **D** = documento con estado.
 | `alerta` | — | `regla`, `severidad` (info/warn/bad), `modulo`, `entidad`, `registro_id` ('' = toda la viña), `titulo`, `mensaje`, `ruta`, `estado` (abierta/resuelta), `detectada_en`, `actualizada_en`, `resuelta_en` | La escribe el motor (`packages/db/src/alertas/`, [adr/0012](adr/0012-jobs-y-alertas.md)). Única abierta por (org, regla, registro_id). Silenciar queda para después |
 | `alerta_vista` | — | `alerta_id`, `user_id`, `vista_en` | Sin RLS por usuario; filtra por org |
 | `tarea` | S | `titulo`, `descripcion`, `fecha`, `rol` o `user_id`, `estado` (pendiente/hecha), `ruta`, `modulo`, `origen_tipo`/`origen_id` | La crean las reacciones (p. ej. trasiego al terminar la FA). Se crea en F2-3, con la primera reacción que la usa |
-| `plan` | G | `id` (piloto/esencial/completo), `nombre`, `modulos` text[], `max_usuarios`, `max_gb`, `precio_clp` | [adr/0014](adr/0014-planes-y-cobro.md) |
-| `suscripcion` | — | `plan_id`, `estado` (prueba/activa/morosa/cancelada), `periodo_inicio`, `periodo_fin`, `proveedor`, `id_externo` | Una vigente por org. La lee `requireOrg` |
+| `plan` | G | `id` (piloto/esencial/completo), `nombre`, `modulos` jsonb (null = todos), `max_usuarios`, `max_gb`, `precio_clp` (null = por definir) | [adr/0014](adr/0014-planes-y-cobro.md). Fuente: `PLANES` en `packages/domain/src/planes.ts`; `npm run db:migrate` la refleja. Solo lectura para la app |
+| `suscripcion` | — | PK `org_id`, `plan_id`, `estado` (prueba/activa/morosa/cancelada), `periodo_inicio`, `periodo_fin`, `proveedor` (manual), `id_externo` | Una por viña. `actorFor` la lee y calcula `actor.acceso` (`accesoDe`). La crea `createOrganization` (prueba de 30 días) y la cambia `npm run plan`. Reemplaza a `organization.plan` (columna en desuso) |
 | `evento_cobro` | — | `proveedor`, `tipo`, `payload` jsonb, `procesado_en` | Webhooks del proveedor de cobro, procesados por un job (idempotente por id externo) |
 
 ## 2. Viñedo (offline)

@@ -18,6 +18,8 @@
    auditor) más roles personalizados por viña (`org_role`).
    - Páginas: `orgWith(slug, modulo)` → `<NoAccess>` si no puede ver.
    - Escrituras: `repo.upsert/softDelete` llaman `assertCan` en el servidor (también en el push de sync).
+   - Plan de la viña: el permiso efectivo es rol ∩ plan (`actor.acceso`, ADR 0014). Fuera del plan no se ve ni se
+     escribe; en solo lectura (suscripción vencida tras la gracia) solo se ve y exporta.
    - UI: `useCan()` solo oculta botones; **nunca es la protección**.
 3. **Aislamiento de datos** — RLS en Postgres ([datos.md](datos.md#cómo-funciona-el-aislamiento-rls)): aunque
    falle 1 o 2, una consulta no puede leer ni escribir datos de otra viña.

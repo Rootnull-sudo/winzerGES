@@ -217,3 +217,15 @@ test('campana de avisos: el admin ve la temporada sin cerrar; el agrónomo no la
   await expect(agro.page.getByText('Sin avisos pendientes.')).toBeVisible();
   await agro.ctx.close();
 });
+
+test('plan Esencial: finanzas aparece con candado y la página explica el plan', async ({ page }) => {
+  await login(page, 'admin@winzer.test');
+  await page.goto('/los-robles');
+  const financiero = page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Financiero' });
+  await expect(financiero).toHaveAttribute('title', 'Disponible en el plan Completo');
+  await financiero.click();
+  await expect(page.getByText('Disponible en el plan Completo')).toBeVisible();
+  await page.screenshot(shots('12-plan-esencial'));
+  await page.goto('/los-robles/configuracion');
+  await expect(page.getByText(/Esencial · Activa/)).toBeVisible();
+});

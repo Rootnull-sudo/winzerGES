@@ -29,7 +29,8 @@
     "db:seed": "npm run seed -w @winzer/db",
     "db:rehacer": "node scripts/rehacer-migraciones.mjs",
     "guardas": "node scripts/guardas.mjs",
-    "worker": "npm run worker -w @winzer/db"
+    "worker": "npm run worker -w @winzer/db",
+    "plan": "npm run plan -w @winzer/db --"
   },
   "devDependencies": {
     "prettier": "^3.10.1",

@@ -16,7 +16,8 @@
     "seed": "tsx src/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
-    "worker": "tsx src/jobs/worker.ts"
+    "worker": "tsx src/jobs/worker.ts",
+    "plan": "tsx src/plan-cli.ts"
   },
   "dependencies": {
     "@winzer/domain": "*",

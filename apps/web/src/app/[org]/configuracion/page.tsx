@@ -1,4 +1,4 @@
-import { IMPORTABLE_ENTITIES, listarIndicadores, listarParametros, withOrg } from '@winzer/db';
+import { IMPORTABLE_ENTITIES, usuariosUsados, listarIndicadores, listarParametros, withOrg } from '@winzer/db';
 import { NoAccess } from '@/components/no-access';
 import { PageHeader } from '@/components/ui/page';
 import { orgWith } from '@/lib/session';
@@ -9,11 +9,15 @@ import { Temporadas } from './temporadas';
 
 export const metadata = { title: 'Configuración y datos' };
 
+const ESTADO = { prueba: 'Prueba', activa: 'Activa', morosa: 'Pago pendiente', cancelada: 'Cancelada' } as const;
+
 export default async function Page({ params }: { params: Promise<{ org: string }> }) {
   const { org: slug } = await params;
-  const { org, allowed, actor } = await orgWith(slug, 'configuracion');
-  if (!allowed) return <NoAccess modulo="la configuración" />;
+  const { org, allowed, fueraDePlan, actor } = await orgWith(slug, 'configuracion');
+  if (!allowed) return <NoAccess modulo="la configuración" plan={fueraDePlan} />;
   const { can } = await import('@winzer/domain');
+  const acceso = actor.acceso!;
+  const usados = await usuariosUsados(org.id);
   const [parametros, indicadores] = await withOrg(org.id, (tx) => Promise.all([listarParametros(tx), listarIndicadores(tx)]));
   return (
     <>
@@ -27,8 +31,22 @@ export default async function Page({ params }: { params: Promise<{ org: string }
         <span className="tabular">{org.rut ?? '—'}</span>
         <span className="text-ink-3">Dirección web</span>
         <span className="font-mono text-[13px]">/{org.slug}</span>
-        <span className="text-ink-3">Plan</span>
-        <span className="capitalize">{org.plan}</span>
+        <span id="plan" className="scroll-mt-20 text-ink-3">
+          Plan
+        </span>
+        <span>
+          <b>{acceso.planNombre}</b> · {ESTADO[acceso.estado]}
+          {acceso.diasRestantes != null && acceso.diasRestantes >= 0 && (
+            <span className="text-ink-3">
+              {' '}
+              · {acceso.estado === 'prueba' ? 'termina' : 'renueva'} en {acceso.diasRestantes} {acceso.diasRestantes === 1 ? 'día' : 'días'}
+            </span>
+          )}
+        </span>
+        <span className="text-ink-3">Usuarios</span>
+        <span className="tabular">
+          {usados} de {acceso.maxUsuarios} <span className="text-ink-3">(incluye invitaciones pendientes)</span>
+        </span>
       </section>
       <section id="temporadas" className="mb-10 max-w-3xl scroll-mt-20">
         <h2 className="font-label text-[20px]">Temporadas</h2>
@@ -52,7 +70,7 @@ export default async function Page({ params }: { params: Promise<{ org: string }
           En la versión de escritorio ve a <i>Configuración › Datos y respaldos › Exportar respaldo</i> y sube aquí el archivo .json. Por ahora se importan:{' '}
           <b>{IMPORTABLE_ENTITIES.join(', ')}</b>. Puedes repetirlo cuando quieras: los registros ya importados se actualizan, no se duplican.
         </p>
-        {can(actor.role, 'configuracion', 'e', actor.customRoles) ? (
+        {can(actor.role, 'configuracion', 'e', actor.customRoles, actor.acceso) ? (
           <ImportV1 slug={slug} />
         ) : (
           <p className="text-[13px] text-ink-3">Solo un administrador puede importar datos.</p>

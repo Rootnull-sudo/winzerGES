@@ -1,5 +1,6 @@
 /**
- * Temporadas de la viña (ADR 0011). Se llama siempre dentro de withOrg(): RLS limita todo a la viña activa.
+ * Temporadas de la viña (ADR 0011). Se llama siempre dentro de withOrg() con la conexión de la app: RLS limita
+ * todo a la viña activa. Con adminDb() (superusuario, sin RLS) las lecturas verían todas las viñas.
  */
 import { anioDeFecha, rangoPorDefecto, seSolapan, temporadaInput, type TemporadaInput, type TemporadaRango } from '@winzer/domain';
 import { asc, isNull } from 'drizzle-orm';

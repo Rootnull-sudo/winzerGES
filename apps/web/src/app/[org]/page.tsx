@@ -11,7 +11,7 @@ import { requireOrg } from '@/lib/session';
 export default async function Inicio({ params }: { params: Promise<{ org: string }> }) {
   const { org: slug } = await params;
   const { actor, org, user } = await requireOrg(slug);
-  const ok = (m: string) => can(actor.role, m, 'v', actor.customRoles);
+  const ok = (m: string) => can(actor.role, m, 'v', actor.customRoles, actor.acceso);
   const mes = today().slice(0, 7);
   const data = await withOrg(actor.orgId, async (tx) => {
     const [cu] = ok('catastro')

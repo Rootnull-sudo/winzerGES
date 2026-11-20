@@ -5,6 +5,7 @@
  * y "administrativo" en la de un cliente. Los roles personalizados viven en la tabla `org_role`.
  */
 import { MODULE_IDS } from './modules';
+import { planPermite, planQueIncluye, type AccesoPlan } from './planes';
 
 export type Action = 'v' | 'c' | 'e' | 'd' | 'x';
 export type PermissionMap = Record<string, string>;
@@ -80,11 +81,18 @@ export const ROLES: Record<string, RoleDef> = {
 export const ROLE_IDS = Object.keys(ROLES);
 
 /** ¿El rol permite la acción en el módulo? `customRoles` = roles personalizados de la viña. */
-export function can(roleId: string | null | undefined, moduleId: string, action: Action = 'v', customRoles: readonly RoleDef[] = []): boolean {
+export function can(
+  roleId: string | null | undefined,
+  moduleId: string,
+  action: Action = 'v',
+  customRoles: readonly RoleDef[] = [],
+  /** Acceso del plan de la viña (F0-7). Sin él solo se evalúa el rol. */
+  acceso?: Pick<AccesoPlan, 'modulos' | 'soloLectura'> | null
+): boolean {
   if (!roleId) return false;
   const r = ROLES[roleId] ?? customRoles.find((x) => x.id === roleId);
   if (!r) return false;
-  return (r.permisos[moduleId] ?? '').includes(action);
+  return (r.permisos[moduleId] ?? '').includes(action) && planPermite(acceso, moduleId, action);
 }
 
 export class PermissionError extends Error {
@@ -96,8 +104,22 @@ export class PermissionError extends Error {
 }
 
 const VERBOS: Record<Action, string> = { v: 'ver', c: 'crear', e: 'editar', d: 'eliminar', x: 'exportar' };
-export function assertCan(roleId: string | null | undefined, moduleId: string, action: Action, label: string, customRoles: readonly RoleDef[] = []): void {
+export function assertCan(
+  roleId: string | null | undefined,
+  moduleId: string,
+  action: Action,
+  label: string,
+  customRoles: readonly RoleDef[] = [],
+  acceso?: Pick<AccesoPlan, 'modulos' | 'soloLectura'> | null
+): void {
   if (!can(roleId, moduleId, action, customRoles)) {
     throw new PermissionError(`Tu rol no tiene permiso para ${VERBOS[action]} ${label}. Pide acceso a un administrador.`);
+  }
+  if (!planPermite(acceso, moduleId, action)) {
+    throw new PermissionError(
+      acceso?.soloLectura
+        ? 'La viña está en solo lectura porque la suscripción venció. Puedes ver y exportar, pero no modificar.'
+        : `Tu plan no incluye este módulo. Está disponible en el plan ${planQueIncluye(moduleId).nombre}.`
+    );
   }
 }

@@ -6,7 +6,7 @@ import { apiActor, errorResponse } from '@/lib/api';
 export async function POST(req: NextRequest, { params }: { params: Promise<{ org: string }> }) {
   const r = await apiActor((await params).org);
   if ('error' in r) return r.error;
-  if (!can(r.actor.role, 'configuracion', 'e', r.actor.customRoles))
+  if (!can(r.actor.role, 'configuracion', 'e', r.actor.customRoles, r.actor.acceso))
     return NextResponse.json({ error: 'Solo un administrador puede importar datos.' }, { status: 403 });
   try {
     const dump = await req.json();

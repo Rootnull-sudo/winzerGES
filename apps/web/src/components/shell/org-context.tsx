@@ -1,5 +1,5 @@
 'use client';
-import { can as canRole, type Action, type RoleDef } from '@winzer/domain';
+import { can as canRole, type AccesoPlan, type Action, type RoleDef } from '@winzer/domain';
 import { createContext, useContext } from 'react';
 
 export interface OrgCtx {
@@ -11,6 +11,8 @@ export interface OrgCtx {
   /** Temporadas de la viña (ADR 0011) y el año de la actual (derivado de la fecha de hoy en el servidor). */
   temporadas: { anio: number; inicio: string; fin: string; estado: 'abierta' | 'cerrada' }[];
   temporadaActual: number | null;
+  /** Plan y estado de la suscripción de la viña (F0-7). */
+  acceso: AccesoPlan;
   /** Alertas abiertas visibles para el rol (ADR 0012), las no vistas primero. */
   alertas: {
     id: string;
@@ -31,5 +33,5 @@ export function useOrg() {
 /** Permisos en la UI (el servidor vuelve a verificar siempre). */
 export function useCan() {
   const c = useOrg();
-  return (moduleId: string, action: Action = 'v') => canRole(c.role, moduleId, action, c.customRoles);
+  return (moduleId: string, action: Action = 'v') => canRole(c.role, moduleId, action, c.customRoles, c.acceso);
 }

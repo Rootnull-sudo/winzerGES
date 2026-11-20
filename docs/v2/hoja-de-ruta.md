@@ -44,7 +44,7 @@ flowchart LR
 | F0-4 Servicios y reacciones | Carpeta `services/` (temporadas, secuencias, parámetros); registro `REACCIONES[entidad]` ejecutado por `sync/push` en la misma transacción, con ejemplo en catastro; tests; [migrar-modulo.md](migrar-modulo.md) ✅ | — | M |
 | F0-5 Jobs y alertas | Worker pg-boss (`npm run worker`, cron por hora y recálculo tras cada push), `alerta` y `alerta_vista`, motor de reglas con una regla de ejemplo, campana en la barra superior ✅. Pendiente: job de indicadores desde una fuente pública | `alerta`, `alerta_vista` | L |
 | F0-6 Adjuntos | R2 (S3), URL firmada para subir y bajar, `adjunto`, componente `<Adjuntos entidad id>`, límite por plan, borrado en el job | `adjunto` | M |
-| F0-7 Planes y acceso | `plan` (seed piloto/esencial/completo), `suscripcion` (prueba de 30 días al crear la viña), control de módulos y usuarios en `requireOrg` y en el menú | `plan`, `suscripcion` | M |
+| F0-7 Planes y acceso | `plan` (piloto/esencial/completo), `suscripcion` (prueba de 30 días al crear la viña), permiso = rol ∩ plan en `can`/`assertCan`, solo lectura tras la gracia, límite de usuarios al invitar, candados en el menú, `npm run plan` ✅ | `plan`, `suscripcion` | M |
 | F0-8 Correo | Resend: invitaciones y resumen diario de alertas (opcional por usuario) | — | S |
 
 ## F1 · Viñedo (carril A)

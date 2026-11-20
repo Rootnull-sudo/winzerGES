@@ -6,7 +6,7 @@
  *  - borra lógicamente (deleted_at) para que el borrado se sincronice offline.
  * Siempre se ejecuta dentro de withOrg(): RLS ya restringe todo a la viña activa.
  */
-import { assertCan, type Action, type RoleDef } from '@winzer/domain';
+import { assertCan, type AccesoPlan, type Action, type RoleDef } from '@winzer/domain';
 import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import type { Tx } from './client';
@@ -18,6 +18,8 @@ export interface Actor {
   userName: string;
   role: string;
   customRoles?: RoleDef[];
+  /** Acceso por plan de la viña (F0-7). Sin él solo se evalúan los permisos del rol (tests, seed, importador). */
+  acceso?: AccesoPlan;
 }
 
 export interface EntityMeta {
@@ -53,7 +55,7 @@ export function stripSystem(data: Record<string, unknown>): Record<string, unkno
 type AnyTable = PgTable & { id: any; orgId: any; version: any; deletedAt: any };
 
 export function can(actor: Actor, meta: EntityMeta, action: Action) {
-  assertCan(actor.role, meta.module, action, meta.label, actor.customRoles);
+  assertCan(actor.role, meta.module, action, meta.label, actor.customRoles, actor.acceso);
 }
 
 async function audit(tx: Tx, actor: Actor, meta: EntityMeta, accion: string, rec: Record<string, unknown>, before?: Record<string, unknown> | null) {

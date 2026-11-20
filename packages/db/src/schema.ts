@@ -180,7 +180,7 @@ export const NO_RLS_TABLES = ['member', 'invitation'] as const;
  * Tablas globales (sin org_id) que la app solo lee: las escriben el seed, las migraciones y los jobs con la conexión
  * de administración. ensure.ts revoca a winzer_app todo permiso salvo SELECT.
  */
-export const GLOBAL_READONLY_TABLES = ['indicador'] as const;
+export const GLOBAL_READONLY_TABLES = ['indicador', 'plan'] as const;
 
 /* ------------------------------------------------------------------ */
 /* Columnas comunes                                                    */
@@ -426,3 +426,38 @@ export const alertaVista = pgTable(
   },
   (t) => [primaryKey({ columns: [t.alertaId, t.userId] })]
 );
+
+/* --- Núcleo: planes y suscripción (ADR 0014) --- */
+/** Catálogo de planes. Global y de solo lectura para la app: migrate.ts lo sincroniza desde PLANES (@winzer/domain). */
+export const plan = pgTable('plan', {
+  id: text('id').primaryKey(),
+  nombre: text('nombre').notNull(),
+  /** null = todos los módulos. */
+  modulos: jsonb('modulos').$type<string[] | null>(),
+  maxUsuarios: integer('max_usuarios').notNull(),
+  maxGb: num('max_gb').notNull(),
+  /** Mensual en CLP; null = por definir. */
+  precioClp: money('precio_clp')
+});
+
+/**
+ * Suscripción vigente de la viña (una por viña). La lee requireOrg para calcular el acceso (accesoDe en
+ * @winzer/domain). La crea createOrganization (prueba de 30 días) y la cambia `npm run plan` hasta que exista el
+ * cobro real (F8-1); ninguna pantalla de la app la modifica.
+ */
+export const suscripcion = pgTable('suscripcion', {
+  orgId: text('org_id')
+    .primaryKey()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  planId: text('plan_id')
+    .notNull()
+    .references(() => plan.id),
+  /** prueba | activa | morosa | cancelada */
+  estado: text('estado').notNull(),
+  periodoInicio: text('periodo_inicio').notNull(),
+  periodoFin: text('periodo_fin'),
+  /** manual | flow | mercadopago | stripe */
+  proveedor: text('proveedor').notNull().default('manual'),
+  idExterno: text('id_externo'),
+  updatedAt: ts('updated_at').notNull().defaultNow()
+});

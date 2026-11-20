@@ -9,8 +9,8 @@ export const metadata = { title: 'Usuarios y permisos' };
 
 export default async function Page({ params }: { params: Promise<{ org: string }> }) {
   const { org } = await params;
-  const { actor, allowed } = await orgWith(org, 'usuarios');
-  if (!allowed) return <NoAccess modulo="usuarios y permisos" />;
+  const { actor, allowed, fueraDePlan } = await orgWith(org, 'usuarios');
+  if (!allowed) return <NoAccess modulo="usuarios y permisos" plan={fueraDePlan} />;
   const [members, invitations] = await Promise.all([membersOf(actor.orgId), pendingInvitationsOf(actor.orgId)]);
   const roles = [...Object.values(ROLES), ...(actor.customRoles ?? [])].map((r) => ({ id: r.id, nombre: r.nombre, descripcion: r.descripcion }));
   return (

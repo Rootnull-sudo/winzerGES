@@ -43,7 +43,7 @@ export async function pull(actor: Actor, cursor: string | null, limit = 500): Pr
     for (const [entity, def] of Object.entries(SYNC_ENTITIES)) {
       const t = tableOf(entity);
       if (!t) continue;
-      if (!def.readAll && !can(actor.role, def.module, 'v', actor.customRoles)) continue;
+      if (!def.readAll && !can(actor.role, def.module, 'v', actor.customRoles, actor.acceso)) continue;
       const rs = (await tx
         .select()
         .from(t)

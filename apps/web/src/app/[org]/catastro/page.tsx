@@ -10,8 +10,8 @@ export const metadata = { title: 'Catastro vitícola' };
  */
 export default async function Page({ params }: { params: Promise<{ org: string }> }) {
   const { org } = await params;
-  const { allowed } = await orgWith(org, 'catastro');
-  if (!allowed) return <NoAccess modulo="el catastro" />;
+  const { allowed, fueraDePlan } = await orgWith(org, 'catastro');
+  if (!allowed) return <NoAccess modulo="el catastro" plan={fueraDePlan} />;
   // El encabezado lo pinta la vista: sus cifras salen de los datos locales (offline).
   return <CatastroView />;
 }

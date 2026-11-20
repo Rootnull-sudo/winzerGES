@@ -9,8 +9,8 @@ export const metadata = { title: 'Clientes y cobranza' };
 
 export default async function Page({ params }: { params: Promise<{ org: string }> }) {
   const { org: slug } = await params;
-  const { actor, allowed } = await orgWith(slug, 'clientes');
-  if (!allowed) return <NoAccess modulo="clientes" />;
+  const { actor, allowed, fueraDePlan } = await orgWith(slug, 'clientes');
+  if (!allowed) return <NoAccess modulo="clientes" plan={fueraDePlan} />;
   // Sin WHERE org_id: la política RLS filtra por la viña activa.
   const [clientes, cobros] = await withOrg(actor.orgId, (tx) =>
     Promise.all([

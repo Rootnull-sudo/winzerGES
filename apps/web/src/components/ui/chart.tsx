@@ -119,7 +119,7 @@ export function BarrasH({
 }
 
 const ALTO = 220;
-const M = { top: 8, right: 8, bottom: 26, left: 40 };
+const M = { top: 8, right: 16, bottom: 26, left: 52 };
 
 /** Barras verticales agrupadas (categoría × serie), p. ej. día de inicio de desborre por cuartel y temporada. */
 export function BarrasAgrupadas({

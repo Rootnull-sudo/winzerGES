@@ -55,7 +55,7 @@ flowchart LR
 | F1-2 Desborre, fenología y clima (+ `repo.upsert` rechaza escribir en una temporada cerrada) ✅ | `fenologia`, `clima` | M |
 | F1-3 Aplicaciones y labores (+ reacción `mov_insumo`, idempotente) ✅ | `aplicacion`, `labor` | M |
 | F1-4 Cosecha y jornales (+ reacción: borrar la cosecha borra sus jornales) ✅ | `cosecha`, `jornal` | M |
-| F1-5 Reglas de alerta del viñedo (carencia, cajones, desborre, stock y vencimiento de insumos) | — | S |
+| F1-5 Reglas de alerta del viñedo (carencia, cajones, desborre, stock y vencimiento de insumos) ✅ | — | S |
 
 ## F2 · Bodega (carril A)
 

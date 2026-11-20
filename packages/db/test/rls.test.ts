@@ -183,7 +183,19 @@ describe('importador v1', () => {
   it('importa el demo, es idempotente y reporta pendientes', async () => {
     const dump = { ...demoDump, data: { ...demoDump.data, venta: [{ id: 'v1' }], estanque: [{ id: 'e1' }, { id: 'e2' }] } };
     const r1 = await importV1(actorB, dump as never);
-    expect(r1.importados).toEqual({ cuartel: 3, cliente: 6, cobro: 2 });
+    expect(r1.importados).toEqual({
+      cuartel: 3,
+      cliente: 6,
+      cobro: 2,
+      insumo: 6,
+      movInsumo: 2,
+      fenologia: 5,
+      clima: 22,
+      aplicacion: 4,
+      labor: 3,
+      cosecha: 3,
+      jornal: 3
+    });
     expect(r1.omitidos).toEqual([]);
     expect(r1.pendientes).toEqual({ venta: 1, estanque: 2 });
     await importV1(actorB, dump as never);
@@ -191,6 +203,9 @@ describe('importador v1', () => {
     expect(n[0]!.n).toBe(3);
     const cob = await withOrg(B, (tx) => tx.execute<{ cliente_id: string }>(sql`select cliente_id from cobro order by fecha limit 1`));
     expect(cob[0]!.cliente_id).toBe(mapId(B, 'cli_dist'));
+    // Reimportar no duplica consumos de aplicaciones ni movimientos: urea = 500 − 150 (aplicación) − 20 (ajuste).
+    const [urea] = await withOrg(B, (tx) => tx.execute<{ stock: string }>(sql`select stock from v_stock_insumo where insumo_id = ${mapId(B, 'ins_urea')}`));
+    expect(Number(urea!.stock)).toBe(330);
   });
 });
 

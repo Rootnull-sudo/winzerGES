@@ -6,7 +6,7 @@ const rutOk = (r: string) => {
   return rutFormat(c + rutDV(c));
 };
 
-/** Subconjunto del demo de v1 (js/data/seed.js) para las entidades ya migradas. */
+/** Subconjunto del demo de v1 (js/data/seed.js) para las entidades ya migradas, más datos ficticios de viñedo (F1). */
 export const demoDump = {
   app: 'vina-gestion',
   data: {
@@ -132,6 +132,282 @@ export const demoDump = {
     cobro: [
       { id: 'cob_1', fecha: '2026-10-10', clienteId: 'cli_dist', monto: 1395000, medio: 'transferencia', _demo: true },
       { id: 'cob_2', fecha: '2026-11-02', clienteId: 'cli_rest', monto: 418500, medio: 'transferencia', _demo: true }
+    ],
+    // --- Viñedo (F1): datos ficticios de dos temporadas (2026 y 2027) ---
+    insumo: [
+      {
+        id: 'ins_azufre',
+        nombre: 'Azufre mojable',
+        categoria: 'agricola',
+        tipo: 'Fungicida',
+        unidad: 'kg',
+        precio: 1850,
+        stockInicial: 200,
+        stockMinimo: 50,
+        carencia: 7,
+        _demo: true
+      },
+      {
+        id: 'ins_cobre',
+        nombre: 'Oxicloruro de cobre',
+        categoria: 'agricola',
+        tipo: 'Fungicida',
+        unidad: 'kg',
+        precio: 5200,
+        stockInicial: 40,
+        stockMinimo: 20,
+        carencia: 14,
+        vencimiento: '2027-03-31',
+        _demo: true
+      },
+      { id: 'ins_urea', nombre: 'Urea', categoria: 'agricola', tipo: 'Fertilizante', unidad: 'kg', precio: 780, stockInicial: 500, npk: '46-0-0', _demo: true },
+      {
+        id: 'ins_mbk',
+        nombre: 'Metabisulfito de potasio',
+        categoria: 'enologico',
+        tipo: 'Sulfitante',
+        unidad: 'kg',
+        precio: 6500,
+        stockInicial: 25,
+        quimico: 'K2S2O5',
+        so2Pct: 57,
+        _demo: true
+      },
+      {
+        id: 'ins_levadura',
+        nombre: 'Levadura seca activa',
+        categoria: 'enologico',
+        tipo: 'Levadura',
+        unidad: 'kg',
+        precio: 98000,
+        stockInicial: 2,
+        vencimiento: '2027-01-15',
+        _demo: true
+      },
+      {
+        id: 'ins_botella',
+        nombre: 'Botella Bordelesa 750 mL',
+        categoria: 'envasado',
+        tipo: 'Envase vidrio',
+        unidad: 'un',
+        precio: 420,
+        stockInicial: 6000,
+        stockMinimo: 2000,
+        plazoEntrega: 15,
+        _demo: true
+      }
+    ],
+    movInsumo: [
+      { id: 'mov_d1', fecha: '2026-09-01', insumoId: 'ins_mbk', cantidad: 10, tipo: 'compra', ref: 'compra:com_d1', costoUnitario: 6500, _demo: true },
+      { id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }
+    ],
+    fenologia: [
+      {
+        id: 'fen_d1',
+        cuartelId: 'cua_c1',
+        temporada: 2026,
+        desborreInicio: '2025-09-12',
+        desborre50: '2025-09-18',
+        desborreFin: '2025-09-26',
+        bbch: 'BBCH 89 — Cosecha',
+        floracion: '2025-11-10',
+        envero: '2026-01-20',
+        _demo: true
+      },
+      {
+        id: 'fen_d2',
+        cuartelId: 'cua_c2',
+        temporada: 2026,
+        desborreInicio: '2025-09-20',
+        desborre50: '2025-09-27',
+        desborreFin: '2025-10-06',
+        bbch: 'BBCH 89 — Cosecha',
+        floracion: '2025-11-18',
+        envero: '2026-01-28',
+        _demo: true
+      },
+      {
+        id: 'fen_d3',
+        cuartelId: 'cua_c3',
+        temporada: 2026,
+        desborreInicio: '2025-09-24',
+        desborre50: '2025-10-01',
+        desborreFin: '2025-10-09',
+        bbch: 'BBCH 89 — Cosecha',
+        floracion: '2025-11-20',
+        envero: '2026-02-02',
+        _demo: true
+      },
+      {
+        id: 'fen_d4',
+        cuartelId: 'cua_c1',
+        temporada: 2027,
+        desborreInicio: '2026-09-08',
+        desborre50: '2026-09-15',
+        desborreFin: '2026-09-22',
+        bbch: 'BBCH 61 — Inicio floración',
+        _demo: true
+      },
+      {
+        id: 'fen_d5',
+        cuartelId: 'cua_c2',
+        temporada: 2027,
+        desborreInicio: '2026-09-29',
+        desborre50: '2026-10-06',
+        bbch: 'BBCH 53 — Racimos visibles',
+        _demo: true
+      }
+    ],
+    clima: climaDemo(),
+    aplicacion: [
+      {
+        id: 'apl_d1',
+        fecha: '2025-11-15',
+        temporada: 2026,
+        cuartelId: 'cua_c1',
+        insumoId: 'ins_azufre',
+        dosis: 4,
+        cantidad: 10,
+        carencia: 7,
+        costo: 18500,
+        responsable: 'Encargado de campo',
+        _demo: true
+      },
+      {
+        id: 'apl_d2',
+        fecha: '2026-01-10',
+        temporada: 2026,
+        cuartelId: 'cua_c2',
+        insumoId: 'ins_cobre',
+        dosis: 2,
+        cantidad: 6.4,
+        carencia: 14,
+        costo: 33280,
+        _demo: true
+      },
+      {
+        id: 'apl_d3',
+        fecha: '2026-10-28',
+        temporada: 2027,
+        cuartelId: 'cua_c2',
+        insumoId: 'ins_azufre',
+        dosis: 4,
+        cantidad: 12.8,
+        carencia: 7,
+        costo: 23680,
+        _demo: true
+      },
+      { id: 'apl_d4', fecha: '2026-11-05', temporada: 2027, cuartelId: 'cua_c1', insumoId: 'ins_urea', dosis: 60, cantidad: 150, costo: 117000, _demo: true }
+    ],
+    labor: [
+      { id: 'lab_d1', fecha: '2026-07-20', temporada: 2027, cuartelId: 'cua_c1', tipo: 'Poda', jornadas: 6, valorJornada: 30000, _demo: true },
+      {
+        id: 'lab_d2',
+        fecha: '2026-08-10',
+        temporada: 2027,
+        cuartelId: 'cua_c2',
+        tipo: 'Amarra',
+        jornadas: 4,
+        valorJornada: 30000,
+        otrosCostos: 15000,
+        _demo: true
+      },
+      { id: 'lab_d3', fecha: '2026-10-20', temporada: 2027, cuartelId: 'cua_c3', tipo: 'Desbrote', jornadas: 3, valorJornada: 32000, _demo: true }
+    ],
+    cosecha: [
+      {
+        id: 'cos_d1',
+        fecha: '2026-03-10',
+        temporada: 2026,
+        cuartelId: 'cua_c1',
+        cajones: 210,
+        kg: 3990,
+        destino: 'Vinificación propia',
+        costoBins: 42000,
+        costoTransporte: 30000,
+        costoAlimentacion: 24000,
+        _demo: true
+      },
+      {
+        id: 'cos_d2',
+        fecha: '2026-03-25',
+        temporada: 2026,
+        cuartelId: 'cua_c2',
+        cajones: 300,
+        kg: 5850,
+        destino: 'Vinificación propia',
+        costoBins: 60000,
+        costoTransporte: 45000,
+        costoAlimentacion: 36000,
+        _demo: true
+      },
+      {
+        id: 'cos_d3',
+        fecha: '2026-04-02',
+        temporada: 2026,
+        cuartelId: 'cua_c3',
+        cajones: 150,
+        kg: 2880,
+        destino: 'Venta de uva',
+        costoTransporte: 20000,
+        _demo: true
+      }
+    ],
+    jornal: [
+      {
+        id: 'jor_d1',
+        cosechaId: 'cos_d1',
+        nombre: 'Cuadrilla Los Aromos',
+        trabajadores: 7,
+        horas: 8,
+        tarifaTipo: 'cajon',
+        tarifa: 650,
+        cajones: 210,
+        _demo: true
+      },
+      { id: 'jor_d2', cosechaId: 'cos_d2', nombre: 'Cuadrilla Los Aromos', trabajadores: 9, horas: 8, tarifaTipo: 'kg', tarifa: 35, kg: 5850, _demo: true },
+      {
+        id: 'jor_d3',
+        cosechaId: 'cos_d3',
+        nombre: 'Jornaleros de temporada',
+        trabajadores: 4,
+        horas: 8,
+        tarifaTipo: 'dia',
+        tarifa: 35000,
+        jornadas: 4,
+        _demo: true
+      }
     ]
   }
 };
+
+/**
+ * Temperaturas ficticias: dos registros por mes de septiembre a abril (temporada 2026) y de septiembre a noviembre
+ * (temporada 2027), con una curva de estación simple. Suficiente para ver grados día y Winkler.
+ */
+function climaDemo() {
+  const meses = [
+    ['2025-09', 2026, 17, 4],
+    ['2025-10', 2026, 21, 6],
+    ['2025-11', 2026, 25, 8],
+    ['2025-12', 2026, 28, 10],
+    ['2026-01', 2026, 31, 12],
+    ['2026-02', 2026, 30, 12],
+    ['2026-03', 2026, 27, 9],
+    ['2026-04', 2026, 22, 6],
+    ['2026-09', 2027, 18, 4],
+    ['2026-10', 2027, 22, 7],
+    ['2026-11', 2027, 26, 9]
+  ] as const;
+  return meses.flatMap(([mes, temporada, tmax, tmin], i) =>
+    [10, 20].map((dia, k) => ({
+      id: `cli_d${i}_${k}`,
+      fecha: `${mes}-${dia}`,
+      temporada,
+      tmax: tmax + k,
+      tmin: tmin + (k ? 1 : 0),
+      estacion: 'Estación propia',
+      _demo: true
+    }))
+  );
+}

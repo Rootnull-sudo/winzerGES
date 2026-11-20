@@ -356,3 +356,17 @@ v1 recalcula todo en cada lectura (`js/core/alerts.js`). En v2, un **job** por v
 11. **Dashboard**: mezcla filtros por temporada y por año calendario.
 12. **XML de DTE**: declara ISO-8859-1 pero se genera en UTF-8 (`dte.js:114`).
 13. **Temperatura de fermentación**: la ayuda dice "aviso" pero bloquea el guardado.
+
+Corregidos al migrar el viñedo (F1):
+
+14. **Borrados que dejan huérfanos**: el borrado masivo no llamaba `afterRemove`, así que quedaban consumos de
+    aplicaciones (y el stock bajo) y jornales sin cosecha. → Reacciones de sync idempotentes.
+15. **Consumos duplicados**: el seed escribía consumos sin id de aplicación y editar sumaba otro. → Id derivado de
+    la aplicación.
+16. **Costo de la labor desactualizado**: solo se calculaba si estaba vacío. → Siempre jornadas × valor + otros.
+17. **Grados día de todo el año**: la pantalla decía "desde el 1 de septiembre" y sumaba todo. → 1 sep – 30 abr.
+18. **Desborre faltante dibujado como 0** en el gráfico. → Se omite.
+19. **Historial de precios sin el precio inicial** y nunca visible. → `insumo_precio` con el inicial, en el diálogo.
+20. **Jornal por día sin jornadas pagaba 1 día**. → Es obligatorio.
+21. **Alertas de carencia de todas las temporadas** y umbral de vencimiento fijo en la lista. → Temporada actual y
+    el parámetro de la viña.

@@ -31,13 +31,13 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 ## Operación (offline)
 
 ### Catastro vitícola · ✅
+- **Hecho en F1**: las variedades del formulario vienen del maestro `variedad` (con su tipo).
 - **Falta**:
-  - leer las variedades desde la tabla `variedad`;
   - ficha del cuartel con historial por temporada (kg, kg/ha, costo, margen; `financial.rentabilidadCuarteles`);
   - adjuntar fotos.
   - Va en F1 y F7.
 
-### Desborre y fenología · ⬜ · F1 · M
+### Desborre y fenología · ✅ (F1-2)
 - **Tablas**: `fenologia`, `clima`.
 - **Pantallas**:
   - registros por cuartel y temporada, con gráfico del inicio de desborre en las últimas 3 temporadas;
@@ -47,7 +47,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   octubre.
 - **Hecho cuando**: se registran el desborre y el clima sin conexión, y Winkler coincide con v1.
 
-### Insumos y labores · ⬜ · F1 · L
+### Insumos y labores · ✅ (F1-1, F1-3)
 - **Tablas**: `insumo`, `insumo_precio`, `mov_insumo`, `aplicacion`, `labor`.
 - **Pantallas**:
   - maestro de insumos, con campos que dependen de la categoría;
@@ -59,7 +59,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Nota**: es la base de vinificación, fermentación, envasado y compras.
 - **Hecho cuando**: una aplicación hecha offline descuenta stock al sincronizar y `v_stock_insumo` coincide con v1.
 
-### Cosecha · ⬜ · F1 · M
+### Cosecha · ✅ (F1-4; la reacción con el lote llega en F2-1)
 - **Tablas**: `cosecha`, `jornal`.
 - **Pantallas**:
   - registros con kg/cajón, kg/ha y costo/kg en vivo;

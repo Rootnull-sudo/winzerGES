@@ -199,7 +199,7 @@ test('parámetros con vigencia: cambiar el PPM, ver la historia y volver al valo
   await expect(fila).toContainText('Valor por defecto');
 });
 
-test('campana de avisos: el admin ve la temporada sin cerrar; el agrónomo no la ve', async ({ page, browser }) => {
+test('campana de avisos: el admin ve la temporada sin cerrar; el agrónomo solo ve los de sus módulos', async ({ page, browser }) => {
   await login(page, 'admin@winzer.test');
   await page.goto('/vina-demo');
   await page.getByRole('button', { name: /^Avisos/ }).click();
@@ -214,7 +214,9 @@ test('campana de avisos: el admin ve la temporada sin cerrar; el agrónomo no la
   const agro = await newSession(browser, 'agronomo@winzer.test');
   await agro.page.goto('/vina-demo');
   await agro.page.getByRole('button', { name: /^Avisos/ }).click();
-  await expect(agro.page.getByText('Sin avisos pendientes.')).toBeVisible();
+  const panelAgro = agro.page.getByRole('region', { name: 'Avisos' });
+  await expect(panelAgro.getByText(/desborre/).first()).toBeVisible(); // fenología (datos de demo)
+  await expect(panelAgro.getByText(/Cierra la temporada/)).toHaveCount(0); // configuración: no es de su rol
   await agro.ctx.close();
 });
 
@@ -410,6 +412,21 @@ test('aplicaciones: una aplicación sin conexión descuenta el stock al sincroni
   await waitSynced(page);
   await page.getByRole('tab', { name: 'Insumos', exact: true }).click();
   await expect.poll(stockDe, { timeout: 20_000 }).toBe(Math.round((antes - cantidad) * 100) / 100);
+  // El servidor recalcula las alertas tras el push: aparece la carencia vigente en la campana.
+  await expect
+    .poll(
+      async () => {
+        await page.reload();
+        await page.getByRole('button', { name: /^Avisos/ }).click();
+        return page
+          .getByRole('region', { name: 'Avisos' })
+          .getByText(/Carencia vigente en/)
+          .count();
+      },
+      { timeout: 20_000 }
+    )
+    .toBeGreaterThan(0);
+  await page.keyboard.press('Escape');
 
   // Limpieza: borrar la aplicación devuelve el stock.
   await page.getByRole('tab', { name: 'Aplicaciones' }).click();

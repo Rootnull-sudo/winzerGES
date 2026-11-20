@@ -11,6 +11,7 @@
 import type { z } from 'zod';
 import { cuartelInput, variedadInput } from './entities/catastro';
 import { aplicacionInput, laborInput } from './entities/aplicacion';
+import { cosechaInput, jornalInput } from './entities/cosecha';
 import { climaInput, fenologiaInput } from './entities/fenologia';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
@@ -72,6 +73,8 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
   },
   aplicacion: { entity: 'aplicacion', module: 'insumos', label: 'aplicaciones', schema: aplicacionInput },
   labor: { entity: 'labor', module: 'insumos', label: 'labores', schema: laborInput },
+  cosecha: { entity: 'cosecha', module: 'cosecha', label: 'cosechas', schema: cosechaInput },
+  jornal: { entity: 'jornal', module: 'cosecha', label: 'jornales', schema: jornalInput, sensitive: true },
   clima: {
     entity: 'clima',
     module: 'fenologia',

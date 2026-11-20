@@ -659,3 +659,56 @@ export const labor = pgTable(
   },
   (t) => [index('labor_cuartel_idx').on(t.orgId, t.cuartelId, t.fecha), index('labor_sync_idx').on(t.orgId, t.seq)]
 );
+
+/* --- Cosecha y jornales (F1-4, offline) --- */
+export const cosecha = pgTable(
+  'cosecha',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    temporadaId: text('temporada_id')
+      .notNull()
+      .references(() => temporada.id),
+    cuartelId: text('cuartel_id')
+      .notNull()
+      .references(() => cuartel.id),
+    /** Lote de bodega: la FK y la reacción "lote → En vendimia" llegan con F2-1. */
+    loteId: text('lote_id'),
+    cajones: integer('cajones').notNull(),
+    kg: num('kg').notNull(),
+    /** propia | venta | descarte */
+    destino: text('destino').notNull().default('propia'),
+    costoBins: money('costo_bins'),
+    costoTransporte: money('costo_transporte'),
+    costoAlimentacion: money('costo_alimentacion'),
+    otrosCostos: money('otros_costos'),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('cosecha_cuartel_idx').on(t.orgId, t.cuartelId, t.fecha), index('cosecha_sync_idx').on(t.orgId, t.seq)]
+);
+
+export const jornal = pgTable(
+  'jornal',
+  {
+    ...base(),
+    ...syncCols(),
+    cosechaId: text('cosecha_id')
+      .notNull()
+      .references(() => cosecha.id),
+    nombre: text('nombre').notNull(),
+    rut: text('rut'),
+    cuadrilla: text('cuadrilla'),
+    trabajadores: integer('trabajadores').notNull().default(1),
+    horas: num('horas'),
+    /** kg | cajon | dia */
+    tarifaTipo: text('tarifa_tipo').notNull(),
+    tarifa: money('tarifa').notNull(),
+    kg: num('kg'),
+    cajones: integer('cajones'),
+    jornadas: num('jornadas'),
+    /** tarifa × cantidad, calculado al guardar. */
+    pago: money('pago').notNull().default(0)
+  },
+  (t) => [index('jornal_cosecha_idx').on(t.orgId, t.cosechaId), index('jornal_sync_idx').on(t.orgId, t.seq)]
+);

@@ -13,9 +13,11 @@ import {
   clienteInput,
   climaInput,
   cobroInput,
+  cosechaInput,
   cuartelInput,
   fenologiaInput,
   insumoInput,
+  jornalInput,
   laborInput,
   movInsumoInput,
   rangoPorDefecto,
@@ -29,7 +31,7 @@ import { reaccionar } from './reacciones';
 import { upsert, type Actor, type EntityMeta } from './repo';
 import { asegurarTemporada, listarTemporadas } from './services/temporadas';
 import type { Tx } from './client';
-import { aplicacion, cliente, clima, cobro, cuartel, fenologia, insumo, insumoPrecio, labor, movInsumo, variedad } from './schema';
+import { aplicacion, cliente, clima, cobro, cosecha, cuartel, fenologia, insumo, insumoPrecio, jornal, labor, movInsumo, variedad } from './schema';
 import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { withOrg } from './tenancy';
 
@@ -121,6 +123,21 @@ const IMPORTERS: Record<string, Importer> = {
     adaptar: ({ unidadDosis: _u, ...r }) => ({ ...r, costo: Math.round(Number(r.costo) || 0) })
   },
   labor: { table: labor, schema: laborInput, meta: { entity: 'labor', module: 'insumos', label: 'labores' }, refs: ['cuartelId'], temporada: true },
+  cosecha: {
+    table: cosecha,
+    schema: cosechaInput,
+    meta: { entity: 'cosecha', module: 'cosecha', label: 'cosechas' },
+    refs: ['cuartelId', 'loteId'],
+    temporada: true
+  },
+  // `fecha` del jornal es la de su cosecha y `pago` se recalcula: no se importan.
+  jornal: {
+    table: jornal,
+    schema: jornalInput,
+    meta: { entity: 'jornal', module: 'cosecha', label: 'jornales' },
+    refs: ['cosechaId'],
+    adaptar: ({ fecha: _f, pago: _p, ...r }) => r
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,

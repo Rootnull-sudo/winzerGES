@@ -423,3 +423,47 @@ test('aplicaciones: una aplicación sin conexión descuenta el stock al sincroni
   await page.getByRole('tab', { name: 'Insumos', exact: true }).click();
   await expect.poll(stockDe, { timeout: 20_000 }).toBe(antes);
 });
+
+test('cosecha: una cuadrilla registrada sin señal queda con su pago calculado', async ({ page, context }) => {
+  const cuadrilla = 'Cuadrilla E2E ' + Date.now().toString(36).slice(-4);
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo/cosecha');
+  await waitSynced(page);
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Registrar cosecha' }).click();
+  const d = page.getByRole('dialog');
+  await d.getByLabel('Cuartel').selectOption({ index: 1 });
+  await d.getByLabel('Cajones').fill('100');
+  await d.getByLabel(/^Kg\b/).fill('2500');
+  await d.getByRole('button', { name: 'Guardar y agregar personal' }).click();
+  await expect(d.getByText(/fuera del rango/)).toBeVisible(); // 25 kg/cajón: se corrige antes de guardar
+  await d.getByLabel(/^Kg\b/).fill('1900');
+  await d.getByRole('button', { name: 'Guardar y agregar personal' }).click();
+
+  const personal = page.getByRole('dialog').getByRole('region', { name: 'Personal y pagos' });
+  await expect(personal).toBeVisible();
+  const form = personal.getByRole('form', { name: 'Agregar personal' });
+  await form.getByLabel('Nombre o cuadrilla').fill(cuadrilla);
+  await form.getByLabel('Trabajadores').fill('6');
+  await form.getByLabel('Cajones').fill('100');
+  await expect(form.getByText('$65.000')).toBeVisible();
+  await form.getByRole('button', { name: 'Agregar' }).click();
+  await expect(personal.getByText(cuadrilla)).toBeVisible();
+  await expect(personal.getByText(/Total\s*\$65\.000/)).toBeVisible();
+  await page.screenshot(shots('17-cosecha-offline'));
+
+  await context.setOffline(false);
+  await waitSynced(page);
+  await page.keyboard.press('Escape');
+  await page.getByRole('tab', { name: 'Personal y pagos' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(cuadrilla) })).toContainText('$65.000');
+
+  // Limpieza: borrar la cosecha borra su personal.
+  await page.getByRole('row', { name: new RegExp(cuadrilla) }).click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await waitSynced(page);
+  await expect(page.getByRole('row', { name: new RegExp(cuadrilla) })).toHaveCount(0);
+});

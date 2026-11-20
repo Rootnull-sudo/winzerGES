@@ -8,15 +8,17 @@
  * Jobs:
  *  - `alertas.programar` (cron cada hora): encola un `alertas.calcular` por viña.
  *  - `alertas.calcular` { orgId }: evalúa las reglas (motor.ts) para esa viña.
+ *  - `adjuntos.purgar` (domingos 3:00): borra del almacenamiento los adjuntos eliminados hace más de 30 días.
  */
 import 'dotenv/config';
 import PgBoss from 'pg-boss';
 import { calcularAlertas } from '../alertas/motor';
 import { REGLAS } from '../alertas/reglas';
 import { db } from '../client';
+import { purgarAdjuntos } from '../services/adjuntos';
 import { organization } from '../schema';
 
-export const COLAS = { programar: 'alertas.programar', calcular: 'alertas.calcular' } as const;
+export const COLAS = { programar: 'alertas.programar', calcular: 'alertas.calcular', purgar: 'adjuntos.purgar' } as const;
 
 export async function iniciarWorker() {
   const url = process.env.DATABASE_URL_ADMIN;
@@ -37,7 +39,16 @@ export async function iniciarWorker() {
       if (r.nuevas || r.resueltas || r.errores.length) console.log(`[alertas] ${j.data.orgId}`, r);
     }
   });
+  await boss.work(COLAS.purgar, async () => {
+    const orgs = await db().select({ id: organization.id }).from(organization);
+    for (const o of orgs) {
+      const n = await purgarAdjuntos(o.id);
+      if (n) console.log(`[adjuntos] ${o.id}: ${n} archivos eliminados`);
+    }
+  });
   await boss.schedule(COLAS.programar, '0 * * * *', {}, { tz: 'America/Santiago' });
+  // Domingo 3:00: archivos de adjuntos borrados hace más de 30 días (ADR 0013).
+  await boss.schedule(COLAS.purgar, '0 3 * * 0', {}, { tz: 'America/Santiago' });
   // Al partir, un cálculo inmediato para no esperar a la próxima hora.
   await boss.send(COLAS.programar, {});
   console.log('✓ Worker listo: alertas cada hora (America/Santiago)');

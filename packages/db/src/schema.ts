@@ -461,3 +461,20 @@ export const suscripcion = pgTable('suscripcion', {
   idExterno: text('id_externo'),
   updatedAt: ts('updated_at').notNull().defaultNow()
 });
+
+/* --- Núcleo: adjuntos (online, ADR 0013) --- */
+/** Metadatos de un archivo guardado en el almacenamiento S3 (R2). El archivo nunca pasa por Postgres. */
+export const adjunto = pgTable(
+  'adjunto',
+  {
+    ...base(),
+    entidad: text('entidad').notNull(),
+    registroId: text('registro_id').notNull(),
+    /** `org_id/entidad/registro_id/uuid-nombre`. */
+    claveObjeto: text('clave_objeto').notNull(),
+    nombre: text('nombre').notNull(),
+    mime: text('mime').notNull(),
+    bytes: bigint('bytes', { mode: 'number' }).notNull()
+  },
+  (t) => [index('adjunto_registro_idx').on(t.orgId, t.entidad, t.registroId)]
+);

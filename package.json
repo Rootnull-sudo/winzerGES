@@ -21,7 +21,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run format:check && npm run guardas && npm run typecheck && npm run db:check && npm test",
-    "db:up": "docker compose up -d db",
+    "db:up": "docker compose up -d db s3",
     "db:migrate": "npm run migrate -w @winzer/db",
     "db:generate": "npm run generate -w @winzer/db --",
     "db:check": "npm run check -w @winzer/db",

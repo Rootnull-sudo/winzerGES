@@ -15,5 +15,11 @@ services:
       test: ['CMD-SHELL', 'pg_isready -U winzer']
       interval: 3s
       retries: 20
+  # Almacenamiento de adjuntos compatible con S3 (ADR 0013). En producción: Cloudflare R2.
+  # s3mock acepta cualquier credencial y no valida firmas: solo para desarrollo y CI.
+  s3:
+    image: adobe/s3mock:4.4.0
+    ports:
+      - '9442:9090'
 volumes:
   winzer-pg:

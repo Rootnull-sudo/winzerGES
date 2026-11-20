@@ -7,6 +7,7 @@ import { useCan, useOrg } from '@/components/shell/org-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { Adjuntos } from '@/components/adjuntos';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input, Select } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/page';
@@ -289,6 +290,7 @@ function ClienteDialog({ cliente, onClose, onCobro }: { cliente: ClienteRow | nu
           </p>
         )}
       </form>
+      {c && <Adjuntos entidad="cliente" registroId={c.id} />}
     </Dialog>
   );
 }

@@ -9,4 +9,5 @@ export * from './planes';
 export * from './entities/cliente';
 export * from './entities/catastro';
 export * from './entities/temporada';
+export * from './entities/adjunto';
 export * from './sync';

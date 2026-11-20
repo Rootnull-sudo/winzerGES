@@ -59,6 +59,12 @@ Todo listado, KPI o reporte se filtra por la temporada elegida en la barra super
 - **Comercial, finanzas y tributario** no guardan temporada: filtran `fecha` entre `t.inicio` y `t.fin`.
 - Enlaces internos: conserva `?t=` (el menú ya lo hace).
 
+## Adjuntos
+
+Si el módulo necesita archivos (facturas, informes, fotos), agrega la entidad a `ADJUNTABLES`
+(`packages/domain/src/entities/adjunto.ts`) con su módulo dueño y usa `<Adjuntos entidad="…" registroId={id} />`
+en la ficha. Requiere conexión ([adr/0013](adr/0013-adjuntos.md)).
+
 ## Efectos sobre otros módulos
 
 Cuando una acción escribe en tablas de otro módulo (envasar descuenta bodega e insumos; vender descuenta stock),

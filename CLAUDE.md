@@ -24,7 +24,7 @@ negocio y reglas → `docs/v2/dominio.md` · tablas objetivo → `docs/v2/modelo
 ```bash
 npm run check                    # formato, guardas, tipos, migraciones, tests (lo mismo que el CI salvo E2E)
 npm run format                   # Prettier
-npm run db:up && npm run db:migrate
+npm run db:up && npm run db:migrate    # Postgres + s3mock (adjuntos)
 npm run dev                      # http://localhost:3000 ; luego npm run db:seed (contraseña demo winzer1234)
 npm run worker                   # tareas en segundo plano (alertas cada hora); en otra terminal
 npm run plan -- <viña> <plan>    # asignar plan a mano (piloto/esencial/completo) mientras no hay cobro

@@ -229,3 +229,32 @@ test('plan Esencial: finanzas aparece con candado y la página explica el plan',
   await page.goto('/los-robles/configuracion');
   await expect(page.getByText(/Esencial · Activa/)).toBeVisible();
 });
+
+test('adjuntos: subir un PDF a un cliente, descargarlo y quitarlo', async ({ page, browser }) => {
+  await login(page, 'admin@winzer.test');
+  await page.goto('/vina-demo/clientes');
+  await page.getByRole('row').nth(1).click();
+  const dialogo = page.getByRole('dialog');
+  const adjuntos = dialogo.getByRole('region', { name: 'Adjuntos' });
+  const nombre = `contrato-${Date.now().toString(36)}.pdf`;
+  await adjuntos.locator('input[type=file]').setInputFiles({ name: nombre, mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 contrato de prueba') });
+  await expect(adjuntos.getByText(nombre)).toBeVisible();
+  await page.screenshot(shots('13-adjuntos'));
+
+  // Ventas (clientes: ver, crear, editar, exportar) puede descargar pero no quitar.
+  const ventas = await newSession(browser, 'ventas@winzer.test');
+  await ventas.page.goto('/vina-demo/clientes');
+  const cliente = await dialogo.getByRole('heading').first().innerText();
+  await ventas.page.getByRole('cell', { name: cliente, exact: true }).first().click();
+  const adjVentas = ventas.page.getByRole('dialog').getByRole('region', { name: 'Adjuntos' });
+  await expect(adjVentas.getByRole('button', { name: `Descargar ${nombre}` })).toBeVisible();
+  await expect(adjVentas.getByRole('button', { name: `Quitar ${nombre}` })).toHaveCount(0);
+  await ventas.ctx.close();
+
+  const [descarga] = await Promise.all([page.waitForEvent('download'), adjuntos.getByRole('button', { name: `Descargar ${nombre}` }).click()]);
+  expect(descarga.suggestedFilename()).toBe(nombre);
+
+  page.once('dialog', (d) => d.accept());
+  await adjuntos.getByRole('button', { name: `Quitar ${nombre}` }).click();
+  await expect(adjuntos.getByText(nombre)).toHaveCount(0);
+});

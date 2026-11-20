@@ -6,7 +6,7 @@
  * terminaron; ninguna transacción futura puede tener un xid menor. Se ordena por (xid, seq) y el
  * cursor es "xid:seq" de la última fila entregada. Así una transacción lenta no se "salta".
  */
-import { can, SYNC_ENTITIES, type Mutation, type PullResponse, type PushResult, type SyncRecord } from '@winzer/domain';
+import { can, claveUnica, SYNC_ENTITIES, type Mutation, type PullResponse, type PushResult, type SyncRecord } from '@winzer/domain';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Tx } from './client';
 import { reaccionar } from './reacciones';
@@ -81,6 +81,10 @@ export async function push(actor: Actor, mutations: Mutation[]): Promise<PushRes
       out.push({ mutationId: m.mutationId, status: 'rejected', message: `Entidad no sincronizable: ${m.entity}` });
       continue;
     }
+    if (def.soloLectura) {
+      out.push({ mutationId: m.mutationId, status: 'rejected', message: `Las ${def.label} se editan con conexión.` });
+      continue;
+    }
     const meta = { entity: def.entity, module: def.module, label: def.label, sensitive: def.sensitive };
     try {
       const rec = await withOrg(actor.orgId, async (tx: Tx) => {
@@ -94,15 +98,15 @@ export async function push(actor: Actor, mutations: Mutation[]): Promise<PushRes
         const parsed = def.schema.safeParse({ ...(m.data ?? {}), id: m.id });
         if (!parsed.success) throw Object.assign(new Error(parsed.error.issues.map((i) => i.message).join(' ')), { status: 422 });
         const data = parsed.data as Record<string, unknown> & { id: string };
-        if (def.unique) {
-          for (const k of def.unique) {
-            const dup = await tx
-              .select({ id: t.id })
-              .from(t)
-              .where(and(sql`lower(${(t as any)[k]}::text) = lower(${String(data[k])})`, sql`${t.id} <> ${m.id}`, sql`${t.deletedAt} is null`))
-              .limit(1);
-            if (dup.length) throw Object.assign(new Error(`Ya existe un registro con ${k} "${data[k]}".`), { status: 422 });
-          }
+        for (const u of def.unique ?? []) {
+          const { campos, mensaje } = claveUnica(u, data);
+          const iguales = campos.map((k) => sql`lower(coalesce(${(t as any)[k]}::text, '')) = lower(${String(data[k] ?? '')})`);
+          const dup = await tx
+            .select({ id: t.id })
+            .from(t)
+            .where(and(...iguales, sql`${t.id} <> ${m.id}`, sql`${t.deletedAt} is null`))
+            .limit(1);
+          if (dup.length) throw Object.assign(new Error(mensaje), { status: 422 });
         }
         // Reintento de una mutación ya aplicada (se perdió la respuesta): mismo contenido, versión +1.
         if (m.baseVersion != null) {

@@ -7,10 +7,10 @@
  * Siempre se ejecuta dentro de withOrg(): RLS ya restringe todo a la viña activa.
  */
 import { assertCan, type AccesoPlan, type Action, type RoleDef } from '@winzer/domain';
-import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, inArray, isNull, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import type { Tx } from './client';
-import { auditLog } from './schema';
+import { auditLog, temporada } from './schema';
 
 export interface Actor {
   orgId: string;
@@ -43,6 +43,41 @@ export class ConflictError extends Error {
 }
 export class NotFoundError extends Error {
   readonly status = 404;
+}
+/** Regla de negocio incumplida (422): el mensaje se muestra tal cual al usuario. */
+export class ReglaError extends Error {
+  readonly status = 422;
+  constructor(message: string) {
+    super(message);
+    this.name = 'ReglaError';
+  }
+}
+
+/**
+ * Guarda de temporada (ADR 0011) para tablas con `temporadaId`:
+ *  - la temporada del registro (antes y después) debe existir y estar abierta: una cerrada es de solo lectura;
+ *  - si el registro tiene `fecha`, debe caer dentro del rango de su temporada.
+ */
+async function guardaTemporada(tx: Tx, table: PgTable, before: Record<string, unknown> | null | undefined, nuevo: Record<string, unknown> | null) {
+  if (!('temporadaId' in getTableColumns(table))) return;
+  const ids = [...new Set([before?.temporadaId, nuevo?.temporadaId].filter(Boolean).map(String))];
+  if (nuevo && !nuevo.temporadaId) throw new ReglaError('Falta la temporada del registro.');
+  const filas = ids.length
+    ? await tx
+        .select({ id: temporada.id, anio: temporada.anio, inicio: temporada.inicio, fin: temporada.fin, estado: temporada.estado })
+        .from(temporada)
+        .where(and(inArray(temporada.id, ids), isNull(temporada.deletedAt)))
+    : [];
+  for (const id of ids) {
+    const t = filas.find((f) => f.id === id);
+    if (!t) throw new ReglaError('La temporada del registro no existe. Revisa las temporadas en Configuración.');
+    if (t.estado === 'cerrada') throw new ReglaError(`La temporada ${t.anio} está cerrada: sus registros son de solo lectura.`);
+  }
+  const fecha = nuevo?.fecha ? String(nuevo.fecha) : null;
+  const t = nuevo ? filas.find((f) => f.id === String(nuevo.temporadaId)) : undefined;
+  if (fecha && t && (fecha < t.inicio || fecha > t.fin)) {
+    throw new ReglaError(`La fecha ${fecha.split('-').reverse().join('-')} no corresponde a la temporada ${t.anio} (${t.inicio} a ${t.fin}).`);
+  }
 }
 
 /** Columnas que el cliente nunca puede fijar. */
@@ -94,6 +129,7 @@ export async function upsert<T extends AnyTable>(
   const clean = stripSystem(data);
   if (before && before.deletedAt) throw new ConflictError(`El registro fue eliminado por otro usuario.`, before);
   can(actor, meta, before ? 'e' : 'c');
+  await guardaTemporada(tx, t, before, { ...before, ...clean });
 
   if (before) {
     if (opts.checkVersion && opts.baseVersion != null && Number(before.version) !== opts.baseVersion) {
@@ -122,6 +158,10 @@ export async function upsert<T extends AnyTable>(
 export async function softDelete<T extends AnyTable>(tx: Tx, table: T, actor: Actor, meta: EntityMeta, id: string): Promise<Record<string, unknown> | null> {
   const t = table as AnyTable;
   can(actor, meta, 'd');
+  if ('temporadaId' in getTableColumns(t)) {
+    const [before] = (await tx.select().from(t).where(eq(t.id, id))) as Record<string, unknown>[];
+    await guardaTemporada(tx, t, before, null);
+  }
   const [rec] = (await tx
     .update(t)
     .set({ deletedAt: new Date(), version: sql`${t.version} + 1`, updatedAt: new Date(), updatedBy: actor.userId } as never)

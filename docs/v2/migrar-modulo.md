@@ -41,6 +41,11 @@ Antes de empezar, lee la ficha del módulo en [modulos.md](modulos.md) y sus tab
 
 - Registra la entidad en `SYNC_ENTITIES` (`packages/domain/src/sync.ts`) con su `module`, `schema` y `unique`
   (un test verifica que coincida con las tablas que tienen `syncCols()`).
+  - `unique` acepta un campo (`'codigo'`) o una combinación con su mensaje:
+    `{ campos: ['cuartelId', 'temporadaId'], mensaje: '…' }`.
+  - `soloLectura: true`: se sincroniza para leer sin señal, pero se escribe solo en línea con un servicio (p. ej.
+    el maestro de insumos). El motor offline y el push rechazan escribirla.
+  - `readAll: true`: maestro que reciben todos los roles (p. ej. temporadas).
 - Lee con `useEntity<T>('<entidad>')` (devuelve `undefined` mientras carga: muestra un esqueleto).
 - Escribe con `useSync()?.write('<entidad>', 'upsert' | 'delete', id | null, data)`. Lanza `Error` con el mensaje
   de Zod si los datos son inválidos; muéstralo junto al campo.
@@ -54,10 +59,21 @@ Todo listado, KPI o reporte se filtra por la temporada elegida en la barra super
 
 - **Página (servidor)**: `const t = await temporadaDe(slug, await searchParams)` (`apps/web/src/lib/temporada.ts`)
   devuelve `{ anio, inicio, fin }`.
-- **Viñedo y bodega** guardan `temporadaId` (FK a `temporada`). Al crear un registro, propón la temporada de su
-  fecha con `temporadaDeFecha(temporadas, fecha)`; offline las temporadas están en `useEntity('temporada')`.
+- **Viñedo y bodega** guardan `temporadaId` (FK a `temporada`).
+  - En el cliente: `useTemporadaElegida()` da la temporada de la página (filtra por su `id`).
+    `useTemporadaParaFecha()(fecha)` propone la de una fecha y avisa si no existe o está cerrada.
+  - En el servidor, `repo.upsert/softDelete` aplica la guarda: la temporada debe estar abierta y la `fecha` dentro de
+    su rango (`ReglaError`, 422).
 - **Comercial, finanzas y tributario** no guardan temporada: filtran `fecha` entre `t.inicio` y `t.fin`.
 - Enlaces internos: conserva `?t=` (el menú ya lo hace).
+
+## Gráficos
+
+`components/ui/chart.tsx` tiene tres gráficos: `BarrasH` (una serie), `BarrasAgrupadas` y `Lineas` (series por
+temporada con `color: 't0' | 't1' | 't2'`), dentro de un `ChartCard`.
+- Son SVG con tokens, sin librería.
+- Los colores por temporada son una escala ordinal validada con la skill `dataviz`, en claro y oscuro.
+- La tabla de la página es la vista accesible de los datos.
 
 ## Adjuntos
 

@@ -24,7 +24,7 @@ export default async function OrgLayout({ children, params }: { children: React.
         customRoles: actor.customRoles ?? [],
         acceso: actor.acceso!,
         resumenAlertas,
-        temporadas: temporadas.map(({ anio, inicio, fin, estado }) => ({ anio, inicio, fin, estado })),
+        temporadas: temporadas.map(({ id, anio, inicio, fin, estado }) => ({ id, anio, inicio, fin, estado })),
         temporadaActual: temporadaActual(temporadas, fechaHoy())?.anio ?? null,
         alertas: alertas.map(({ id, severidad, titulo, mensaje, ruta, detectadaEn, vista }) => ({
           id,

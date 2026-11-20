@@ -12,6 +12,21 @@ import type { z } from 'zod';
 import { cuartelInput, variedadInput } from './entities/catastro';
 import { temporadaInput } from './entities/temporada';
 
+export interface ClaveUnica {
+  campos: readonly string[];
+  mensaje: string;
+}
+
+/** Normaliza una regla de unicidad a { campos, mensaje }. */
+export function claveUnica(u: string | ClaveUnica, data: Record<string, unknown>): ClaveUnica {
+  return typeof u === 'string' ? { campos: [u], mensaje: `Ya existe un registro con ${u} "${String(data[u] ?? '')}".` } : u;
+}
+
+/** ¿`a` y `b` coinciden en todos los campos de la clave? (texto, sin mayúsculas; vacío = ''). */
+export function mismaClave(campos: readonly string[], a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  return campos.every((k) => String(a[k] ?? '').toLowerCase() === String(b[k] ?? '').toLowerCase());
+}
+
 export interface SyncEntityDef {
   /** Nombre de la entidad (igual que en v1: js/data/schema.js). */
   entity: string;
@@ -20,8 +35,17 @@ export interface SyncEntityDef {
   schema: z.ZodType;
   /** Registra cambios en audit_log. */
   sensitive?: boolean;
-  /** Campos únicos por viña (validados en servidor; en cliente solo como ayuda). */
-  unique?: string[];
+  /**
+   * Unicidad por viña (validada en servidor; en cliente solo como ayuda). Un campo, o una combinación con su
+   * mensaje: `{ campos: ['cuartelId', 'temporadaId'], mensaje: 'Ya hay un registro de ese cuartel en la temporada.' }`.
+   * Compara como texto sin distinguir mayúsculas; un campo vacío cuenta como ''.
+   */
+  unique?: (string | ClaveUnica)[];
+  /**
+   * Se sincroniza para LEER sin conexión, pero se escribe solo en línea (Server Actions y servicios): p. ej. el
+   * maestro de insumos y su libro de movimientos. El motor offline y el push rechazan escribirla.
+   */
+  soloLectura?: boolean;
   /**
    * Maestro transversal: lo reciben offline todos los miembros aunque no puedan ver su módulo
    * (p. ej. las temporadas, que usan viñedo y bodega). Escribirlo sigue exigiendo permiso en `module`.

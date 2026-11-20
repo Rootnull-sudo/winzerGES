@@ -42,6 +42,10 @@
   /* Acento vino: tipo de uva y gráficos. Siempre con texto, nunca como único indicador. */
   --tinto: #7a1f35;
   --tinto-soft: #f5e8eb;
+  /* Gráficos por temporada (escala ordinal de un tono, validada con dataviz): t0 = elegida, t1 = anterior, t2 = dos atrás. */
+  --serie-t0: #7a1f35;
+  --serie-t1: #b4566b;
+  --serie-t2: #e3a5b4;
   --blanco: #6b5714;
   --blanco-soft: #f6f0dc;
   --blanco-fill: #d9c27a; /* relleno de gráficos (no para texto) */
@@ -79,6 +83,9 @@
     --info-soft: #17222c;
     --tinto: #d97a8f;
     --tinto-soft: #2e1820;
+    --serie-t0: #e895a8;
+    --serie-t1: #b35a6f;
+    --serie-t2: #7d3646;
     --blanco: #e3d08a;
     --blanco-soft: #2a2512;
     --blanco-fill: #b9a45c;
@@ -115,6 +122,9 @@
   --info-soft: #17222c;
   --tinto: #d97a8f;
   --tinto-soft: #2e1820;
+  --serie-t0: #e895a8;
+  --serie-t1: #b35a6f;
+  --serie-t2: #7d3646;
   --blanco: #e3d08a;
   --blanco-soft: #2a2512;
   --blanco-fill: #b9a45c;
@@ -142,6 +152,9 @@
   --color-info-soft: var(--info-soft);
   --color-tinto: var(--tinto);
   --color-tinto-soft: var(--tinto-soft);
+  --color-serie-t0: var(--serie-t0);
+  --color-serie-t1: var(--serie-t1);
+  --color-serie-t2: var(--serie-t2);
   --color-blanco: var(--blanco);
   --color-blanco-soft: var(--blanco-soft);
   --color-blanco-fill: var(--blanco-fill);

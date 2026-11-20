@@ -7,7 +7,7 @@
  * Lectura: pull() trae los cambios desde el cursor. Se sincroniza al abrir, al recuperar la
  * conexión, al volver a la pestaña y cada 30 s.
  */
-import { SYNC_ENTITIES, type Mutation, type PullResponse, type PushResponse, type SyncRecord } from '@winzer/domain';
+import { claveUnica, mismaClave, SYNC_ENTITIES, type Mutation, type PullResponse, type PushResponse, type SyncRecord } from '@winzer/domain';
 import { orgStore, type LocalRecord, type OrgStore } from './store';
 
 /** `ready`: ya terminó una sincronización completa en esta sesión (antes de eso no se puede decir "al día"). */
@@ -78,6 +78,7 @@ export class SyncEngine {
   async write(entity: string, op: 'upsert' | 'delete', id: string | null, data?: Record<string, unknown>) {
     const def = SYNC_ENTITIES[entity];
     if (!def) throw new Error(`Entidad no disponible offline: ${entity}`);
+    if (def.soloLectura) throw new Error(`Las ${def.label} se editan con conexión. Sin señal solo se pueden consultar.`);
     const recId = id ?? uuid();
     let clean: Record<string, unknown> | undefined;
     if (op === 'upsert') {
@@ -92,9 +93,9 @@ export class SyncEngine {
             .filter((x) => !x.deleted && x.id !== recId)
             .toArray()
         : [];
-      for (const k of def.unique ?? []) {
-        const dup = others.find((x) => String(x.data[k] ?? '').toLowerCase() === String(clean![k] ?? '').toLowerCase());
-        if (dup) throw Object.assign(new Error(`Ya existe un registro con ${k} "${clean[k]}".`), { field: k });
+      for (const u of def.unique ?? []) {
+        const { campos, mensaje } = claveUnica(u, clean);
+        if (others.some((x) => mismaClave(campos, x.data, clean!))) throw Object.assign(new Error(mensaje), { field: campos[campos.length - 1] });
       }
     }
     await this.db.transaction('rw', this.db.records, this.db.outbox, async () => {

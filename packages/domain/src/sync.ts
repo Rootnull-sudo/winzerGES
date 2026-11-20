@@ -10,6 +10,7 @@
  */
 import type { z } from 'zod';
 import { cuartelInput, variedadInput } from './entities/catastro';
+import { aplicacionInput, laborInput } from './entities/aplicacion';
 import { climaInput, fenologiaInput } from './entities/fenologia';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
@@ -69,6 +70,8 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
     schema: fenologiaInput,
     unique: [{ campos: ['cuartelId', 'temporadaId'], mensaje: 'Ese cuartel ya tiene un registro de fenología en la temporada: edítalo.' }]
   },
+  aplicacion: { entity: 'aplicacion', module: 'insumos', label: 'aplicaciones', schema: aplicacionInput },
+  labor: { entity: 'labor', module: 'insumos', label: 'labores', schema: laborInput },
   clima: {
     entity: 'clima',
     module: 'fenologia',

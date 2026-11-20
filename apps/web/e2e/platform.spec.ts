@@ -323,9 +323,12 @@ test('fenología: desborre y temperatura sin conexión, con grados día y Winkle
   await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
   await page.getByRole('button', { name: 'Registrar desborre' }).click();
   const d = page.getByRole('dialog', { name: 'Registrar desborre' });
-  await d.getByLabel('Cuartel').selectOption({ label: 'C-01 · Sauvignon Blanc' });
+  // El primer cuartel sin registro en la temporada (si una corrida anterior falló a mitad, no choca).
+  const libre = d.getByLabel('Cuartel').locator('option:not([disabled])').first();
+  const codigo = ((await libre.innerText()).split(' · ')[0] ?? '').trim();
+  await d.getByLabel('Cuartel').selectOption(await libre.getAttribute('value'));
   await d.getByRole('button', { name: 'Guardar' }).click();
-  const fila = page.getByRole('row', { name: /C-01/ });
+  const fila = page.getByRole('row', { name: new RegExp(codigo) });
   await expect(fila).toBeVisible();
   await expect(fila.getByLabel('Pendiente de sincronizar')).toBeVisible();
 
@@ -354,4 +357,69 @@ test('fenología: desborre y temperatura sin conexión, con grados día y Winkle
   page.once('dialog', (x) => x.accept());
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(fila).toHaveCount(0);
+});
+
+test('aplicaciones: una aplicación sin conexión descuenta el stock al sincronizar', async ({ page, context }) => {
+  const insumo = 'Azufre E2E';
+  const stockDe = async () =>
+    Number(
+      (
+        (
+          await page
+            .getByRole('row', { name: new RegExp(insumo) })
+            .getByRole('cell')
+            .nth(4)
+            .innerText()
+        ).split(' ')[0] ?? '0'
+      )
+        .replace(/\./g, '')
+        .replace(',', '.')
+    );
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo/insumos');
+  await waitSynced(page);
+  if ((await page.getByRole('row', { name: new RegExp(insumo) }).count()) === 0) {
+    await page.getByRole('button', { name: 'Nuevo insumo' }).first().click();
+    const d = page.getByRole('dialog');
+    await d.getByLabel('Nombre').fill(insumo);
+    await d.getByLabel(/Precio por unidad/).fill('1800');
+    await d.getByLabel('Stock inicial').fill('50');
+    await d.getByLabel(/Carencia/).fill('7');
+    await d.getByRole('button', { name: 'Guardar' }).click();
+    await expect(page.getByRole('row', { name: new RegExp(insumo) })).toBeVisible();
+  }
+  const antes = await stockDe();
+
+  await page.getByRole('tab', { name: 'Aplicaciones' }).click();
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Registrar aplicación' }).click();
+  const d = page.getByRole('dialog', { name: 'Registrar aplicación' });
+  await d.getByLabel('Cuartel').selectOption({ index: 1 });
+  await d.getByLabel('Insumo').selectOption({ label: `${insumo} (kg)` });
+  await expect(d.getByLabel(/Carencia/)).toHaveValue('7');
+  await d.getByLabel(/Dosis por hectárea/).fill('2');
+  const cantidad = Number(await d.getByLabel(/Cantidad aplicada/).inputValue());
+  expect(cantidad).toBeGreaterThan(0);
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: new RegExp(insumo) });
+  await expect(fila.getByLabel('Pendiente de sincronizar')).toBeVisible();
+  await page.screenshot(shots('16-aplicacion-offline'));
+
+  await context.setOffline(false);
+  await waitSynced(page);
+  await page.getByRole('tab', { name: 'Insumos', exact: true }).click();
+  await expect.poll(stockDe, { timeout: 20_000 }).toBe(Math.round((antes - cantidad) * 100) / 100);
+
+  // Limpieza: borrar la aplicación devuelve el stock.
+  await page.getByRole('tab', { name: 'Aplicaciones' }).click();
+  await page
+    .getByRole('row', { name: new RegExp(insumo) })
+    .first()
+    .click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await waitSynced(page);
+  await page.getByRole('tab', { name: 'Insumos', exact: true }).click();
+  await expect.poll(stockDe, { timeout: 20_000 }).toBe(antes);
 });

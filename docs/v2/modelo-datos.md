@@ -50,8 +50,8 @@ movimientos (solo agregar); **D** = documento con estado.
 | `variedad` | S | (existe) `nombre`, `tipo` | El formulario de cuartel debe leer de aquí (v1 usaba una lista fija) |
 | `fenologia` | S | `cuartel_id`, `temporada_id`, `desborre_inicio`, `desborre_50`, `desborre_fin`, `bbch`, `floracion`, `envero`, `observaciones` | Única por (cuartel, temporada) |
 | `clima` | S | `fecha`, `temporada_id`, `tmax`, `tmin`, `estacion` | Única por (fecha, estación, sin mayúsculas). La fecha debe caer en su temporada (guarda de `repo`). GD solo del 1 sep al 30 abr |
-| `aplicacion` | S | `fecha`, `temporada_id`, `cuartel_id`, `insumo_id`, `dosis_ha`, `cantidad`, `carencia_dias`, `costo`, `responsable` | Reacción: `mov_insumo` −cantidad |
-| `labor` | S | `fecha`, `temporada_id`, `cuartel_id`, `tipo`, `jornadas`, `valor_jornada`, `otros_costos`, `costo`, `responsable` | |
+| `aplicacion` | S | `fecha`, `temporada_id`, `cuartel_id`, `insumo_id`, `dosis` (por ha), `cantidad`, `carencia` (días, foto), `costo` (foto: cantidad × precio), `responsable`, `observaciones` | Reacción `reacciones/insumos.ts`: `mov_insumo` −cantidad con id derivado (editar o reintentar no duplica; borrar lo borra) |
+| `labor` | S | `fecha`, `temporada_id`, `cuartel_id`, `tipo`, `jornadas`, `valor_jornada` (por defecto el parámetro `remuneraciones.valorJornada`), `otros_costos`, `costo`, `responsable` | Costo = jornadas × valor + otros, recalculado siempre |
 | `cosecha` | S | `fecha`, `temporada_id`, `cuartel_id`, `lote_id`, `cajones`, `kg`, `destino` (propia/venta/descarte), `costo_bins`, `costo_transporte`, `costo_alimentacion`, `otros_costos` | Reacción: lote → En vendimia |
 | `jornal` | S | `cosecha_id` (FK, en cascada), `nombre`, `rut`, `cuadrilla`, `trabajadores`, `horas`, `tarifa_tipo` (kg/cajon/dia), `tarifa`, `kg`, `cajones`, `jornadas`, `pago` | |
 

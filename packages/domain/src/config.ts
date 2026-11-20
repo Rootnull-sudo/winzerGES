@@ -35,6 +35,8 @@ export interface OrgConfig {
     cesantiaEmpleador: number;
     sis: number;
     aporteEmpleadorPension: number;
+    /** Valor de una jornada de campo por defecto en labores (v1 lo tenía fijo en 30.000). */
+    valorJornada: number;
   };
   enologia: {
     so2Blanco: RangoSO2;
@@ -72,7 +74,8 @@ export const DEFAULT_CONFIG: OrgConfig = {
     cesantiaTrabajador: 0.006,
     cesantiaEmpleador: 0.024,
     sis: 0.0154,
-    aporteEmpleadorPension: 0.01
+    aporteEmpleadorPension: 0.01,
+    valorJornada: 30_000
   },
   enologia: {
     so2Blanco: { min: 25, max: 35, alerta: 40 },

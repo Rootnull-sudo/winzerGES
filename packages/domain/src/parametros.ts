@@ -58,6 +58,7 @@ export const PARAMETROS: readonly ParametroDef[] = [
   p('remuneraciones.cesantiaEmpleador', 'Seguro de cesantía (empleador)', 'tasa'),
   p('remuneraciones.sis', 'SIS', 'tasa'),
   p('remuneraciones.aporteEmpleadorPension', 'Aporte del empleador a pensión', 'tasa'),
+  p('remuneraciones.valorJornada', 'Valor de la jornada de campo', 'clp', { ayuda: 'Valor por defecto al registrar labores.' }),
   p('enologia.so2Blanco', 'SO₂ libre en blancos', 'rango_so2', { unidad: 'mg/L' }),
   p('enologia.so2Tinto', 'SO₂ libre en tintos', 'rango_so2', { unidad: 'mg/L' }),
   p('enologia.intervaloMinHoras', 'Intervalo mínimo entre adiciones de SO₂', 'numero', { unidad: 'h' }),

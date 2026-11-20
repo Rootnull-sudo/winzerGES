@@ -9,25 +9,27 @@
  */
 import {
   anioDeFecha,
+  aplicacionInput,
   clienteInput,
   climaInput,
   cobroInput,
   cuartelInput,
   fenologiaInput,
   insumoInput,
+  laborInput,
   movInsumoInput,
   rangoPorDefecto,
   variedadInput
 } from '@winzer/domain';
 import { eq } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
-import { createHash } from 'node:crypto';
+import { idDerivado } from './ids';
 import type { z } from 'zod';
 import { reaccionar } from './reacciones';
 import { upsert, type Actor, type EntityMeta } from './repo';
 import { asegurarTemporada, listarTemporadas } from './services/temporadas';
 import type { Tx } from './client';
-import { cliente, clima, cobro, cuartel, fenologia, insumo, insumoPrecio, movInsumo, variedad } from './schema';
+import { aplicacion, cliente, clima, cobro, cuartel, fenologia, insumo, insumoPrecio, labor, movInsumo, variedad } from './schema';
 import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { withOrg } from './tenancy';
 
@@ -44,10 +46,7 @@ export interface ImportReport {
 }
 
 /** UUID determinista (formato v8) a partir de viña + id de v1. */
-export function mapId(orgId: string, legacyId: string): string {
-  const h = createHash('sha256').update(`winzer-v1|${orgId}|${legacyId}`).digest('hex');
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-8${h.slice(13, 16)}-${((parseInt(h[16]!, 16) & 0x3) | 0x8).toString(16)}${h.slice(17, 20)}-${h.slice(20, 32)}`;
-}
+export const mapId = (orgId: string, legacyId: string): string => idDerivado(orgId, legacyId);
 
 interface Importer {
   table: PgTable & { id: any; orgId: any; version: any; deletedAt: any; demo: any };
@@ -112,6 +111,16 @@ const IMPORTERS: Record<string, Importer> = {
     temporada: true
   },
   clima: { table: clima, schema: climaInput, meta: { entity: 'clima', module: 'fenologia', label: 'registros de temperatura' }, temporada: true },
+  aplicacion: {
+    table: aplicacion,
+    schema: aplicacionInput,
+    meta: { entity: 'aplicacion', module: 'insumos', label: 'aplicaciones' },
+    refs: ['cuartelId', 'insumoId'],
+    temporada: true,
+    // `unidadDosis` del seed de v1 no existe en el formulario; el costo se redondea a pesos.
+    adaptar: ({ unidadDosis: _u, ...r }) => ({ ...r, costo: Math.round(Number(r.costo) || 0) })
+  },
+  labor: { table: labor, schema: laborInput, meta: { entity: 'labor', module: 'insumos', label: 'labores' }, refs: ['cuartelId'], temporada: true },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,

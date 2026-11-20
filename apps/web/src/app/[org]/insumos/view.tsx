@@ -28,21 +28,9 @@ import { useToast } from '@/components/ui/toast';
 import { useOrg } from '@/components/shell/org-context';
 import { useEntity, useSync, useSyncState } from '@/lib/offline/hooks';
 import { ajustarStockAction, deleteInsumo, preciosDe, saveInsumo, type Result } from './actions';
+import { AplicacionesTab, LaboresTab } from './campo';
+import { CATEGORIA, TIPO_MOV, TONO_CATEGORIA, useStock, type InsumoRow, type MovRow } from './comun';
 
-type InsumoRow = Insumo & { _pending: boolean; _version: number };
-type MovRow = MovInsumo & { _pending: boolean };
-
-export const CATEGORIA = Object.fromEntries(CATEGORIAS_INSUMO) as Record<string, string>;
-const TONO_CATEGORIA: Record<string, 'ok' | 'info' | 'neutral'> = { agricola: 'ok', enologico: 'info' };
-export const TIPO_MOV: Record<string, string> = {
-  compra: 'Compra',
-  aplicacion: 'Aplicación',
-  aditivo: 'Aditivo',
-  so2: 'SO₂',
-  consumo_envasado: 'Envasado',
-  ajuste: 'Ajuste',
-  nota_credito: 'Nota de crédito'
-};
 const nf = (v: number) => v.toLocaleString('es-CL', { maximumFractionDigits: 2 });
 const fecha = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -52,8 +40,9 @@ const TABS = [
   { id: 'labores', label: 'Labores' }
 ] as const;
 
-export function InsumosView({ diasAvisoVencimiento }: { diasAvisoVencimiento: number }) {
+export function InsumosView({ diasAvisoVencimiento, valorJornada }: { diasAvisoVencimiento: number; valorJornada: number }) {
   const [tab, setTab] = useTab(TABS);
+  const tabs = (acciones: React.ReactNode) => <Tabs tabs={TABS} actual={tab} onChange={setTab} acciones={acciones} />;
   return (
     <>
       <PageHeader
@@ -62,26 +51,10 @@ export function InsumosView({ diasAvisoVencimiento }: { diasAvisoVencimiento: nu
         description="Maestro de insumos con su stock, aplicaciones en el cuartel y labores de campo. Aplicaciones y labores funcionan sin señal; el maestro se consulta sin señal y se edita con conexión."
       />
       {tab === 'insumos' && <InsumosTab tabs={<Tabs tabs={TABS} actual={tab} onChange={setTab} />} diasAviso={diasAvisoVencimiento} />}
-      {tab !== 'insumos' && (
-        <>
-          <Tabs tabs={TABS} actual={tab} onChange={setTab} />
-          <EmptyState title="Disponible pronto" text="Esta pestaña se habilita en el siguiente paso de la migración." />
-        </>
-      )}
+      {tab === 'aplicaciones' && <AplicacionesTab tabs={tabs} />}
+      {tab === 'labores' && <LaboresTab tabs={tabs} valorJornada={valorJornada} />}
     </>
   );
-}
-
-/** Stock de cada insumo calculado con los movimientos locales (funciona sin señal). */
-export function useStock() {
-  const insumos = useEntity<Insumo>('insumo') as InsumoRow[] | undefined;
-  const movs = useEntity<MovInsumo>('mov_insumo') as MovRow[] | undefined;
-  const stock = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const i of insumos ?? []) m.set(i.id, stockInsumo(i, movs ?? []));
-    return m;
-  }, [insumos, movs]);
-  return { insumos, movs, stock };
 }
 
 function InsumosTab({ tabs, diasAviso }: { tabs: React.ReactNode; diasAviso: number }) {

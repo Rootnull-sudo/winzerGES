@@ -607,3 +607,55 @@ export const clima = pgTable(
     index('clima_sync_idx').on(t.orgId, t.seq)
   ]
 );
+
+/* --- Aplicaciones y labores (F1-3, offline) --- */
+export const aplicacion = pgTable(
+  'aplicacion',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    temporadaId: text('temporada_id')
+      .notNull()
+      .references(() => temporada.id),
+    cuartelId: text('cuartel_id')
+      .notNull()
+      .references(() => cuartel.id),
+    insumoId: text('insumo_id')
+      .notNull()
+      .references(() => insumo.id),
+    /** Por hectárea, en la unidad del insumo. */
+    dosis: num('dosis').notNull(),
+    cantidad: num('cantidad').notNull(),
+    /** Foto de la carencia del insumo (días). */
+    carencia: integer('carencia'),
+    /** Foto: cantidad × precio del insumo al registrar. */
+    costo: money('costo').notNull().default(0),
+    responsable: text('responsable'),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('aplicacion_cuartel_idx').on(t.orgId, t.cuartelId, t.fecha), index('aplicacion_sync_idx').on(t.orgId, t.seq)]
+);
+
+export const labor = pgTable(
+  'labor',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    temporadaId: text('temporada_id')
+      .notNull()
+      .references(() => temporada.id),
+    cuartelId: text('cuartel_id')
+      .notNull()
+      .references(() => cuartel.id),
+    tipo: text('tipo').notNull(),
+    jornadas: num('jornadas'),
+    valorJornada: money('valor_jornada'),
+    otrosCostos: money('otros_costos'),
+    /** jornadas × valor + otros (calculado al guardar). */
+    costo: money('costo').notNull().default(0),
+    responsable: text('responsable')
+  },
+  (t) => [index('labor_cuartel_idx').on(t.orgId, t.cuartelId, t.fecha), index('labor_sync_idx').on(t.orgId, t.seq)]
+);

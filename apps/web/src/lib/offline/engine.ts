@@ -20,6 +20,7 @@ export class SyncEngine {
   private listeners = new Set<(s: SyncState) => void>();
   private timer: ReturnType<typeof setInterval> | null = null;
   private running: Promise<void> | null = null;
+  private otraVuelta = false;
   state: SyncState = {
     online: typeof navigator === 'undefined' ? true : navigator.onLine,
     syncing: false,
@@ -141,14 +142,25 @@ export class SyncEngine {
     return recId;
   }
 
-  /** Sincroniza (push y luego pull). Llamadas concurrentes se unen a la que está en curso. */
+  /**
+   * Sincroniza (push y luego pull). Una llamada durante una sincronización en curso no se pierde: se une a ella y
+   * provoca una vuelta más al terminar, porque los datos que la motivaron (p. ej. una importación o una escritura en
+   * línea) pueden ser posteriores al pull que ya estaba corriendo.
+   */
   sync(): Promise<void> {
     if (!this.state.online && typeof navigator !== 'undefined' && !navigator.onLine) return Promise.resolve();
-    this.running ??= (async () => {
+    if (this.running) {
+      this.otraVuelta = true;
+      return this.running;
+    }
+    this.running = (async () => {
       this.set({ syncing: true, error: null });
       try {
-        await this.flush();
-        await this.pull();
+        do {
+          this.otraVuelta = false;
+          await this.flush();
+          await this.pull();
+        } while (this.otraVuelta);
         const now = new Date().toISOString();
         await this.db.meta.put({ key: 'lastSync', value: now });
         this.set({ lastSync: now, online: true, ready: true });

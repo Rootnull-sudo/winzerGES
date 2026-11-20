@@ -201,6 +201,14 @@ function CuartelDialog({ cuartel, existing, onClose }: { cuartel: Row | null; ex
   const c = cuartel;
   const [variedad, setVariedad] = useState(c?.variedad ?? '');
   const [tipo, setTipo] = useState<string>(c?.tipo ?? 'tinto');
+  // Variedades: las del maestro de la viña (con su tipo) más la lista base de v1, sin repetir.
+  const maestro = useEntity<{ nombre: string; tipo: string }>('variedad');
+  const variedades = useMemo(() => {
+    const vistas = new Set<string>();
+    return [...(maestro ?? []).map((v) => ({ nombre: v.nombre, tipo: v.tipo as string | null })), ...VARIEDADES.map((nombre) => ({ nombre, tipo: null }))]
+      .filter((v) => !vistas.has(v.nombre.toLowerCase()) && vistas.add(v.nombre.toLowerCase()))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  }, [maestro]);
   const [sup, setSup] = useState(c?.superficie != null ? String(c.superficie).replace('.', ',') : '');
   const [densidad, setDensidad] = useState(c?.densidad != null ? String(c.densidad) : '');
   const [error, setError] = useState<{ field?: string; message: string } | null>(null);
@@ -273,12 +281,13 @@ function CuartelDialog({ cuartel, existing, onClose }: { cuartel: Row | null; ex
                 required
                 onChange={(e) => {
                   setVariedad(e.target.value);
-                  setTipo(tipoUvaDe(e.target.value, tipo));
+                  const m = variedades.find((v) => v.nombre.toLowerCase() === e.target.value.trim().toLowerCase());
+                  setTipo(m?.tipo ?? tipoUvaDe(e.target.value, tipo));
                 }}
               />
               <datalist id="variedades">
-                {VARIEDADES.map((v) => (
-                  <option key={v} value={v} />
+                {variedades.map((v) => (
+                  <option key={v.nombre} value={v.nombre} />
                 ))}
               </datalist>
             </>

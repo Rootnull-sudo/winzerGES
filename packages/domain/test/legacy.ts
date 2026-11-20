@@ -25,7 +25,8 @@ export function loadLegacy(files: string[], config = DEFAULT_CONFIG, data: Recor
   VG.store = { config: () => config, state: { season: 2026 } };
   VG.db = {
     list: (e: string, fn?: (r: any) => boolean) => (data[e] ?? []).filter(fn ?? (() => true)),
-    find: (e: string, fn: (r: any) => boolean) => (data[e] ?? []).find(fn) ?? null
+    find: (e: string, fn: (r: any) => boolean) => (data[e] ?? []).find(fn) ?? null,
+    get: (e: string, id: string) => (data[e] ?? []).find((r: any) => r.id === id) ?? null
   };
   return VG;
 }

@@ -9,4 +9,16 @@ export interface Vista {
   sql: string;
 }
 
-export const VISTAS: Vista[] = [];
+export const VISTAS: Vista[] = [
+  {
+    // Stock y valorización de cada insumo (v1: inventory.js stockInsumo / valorInventarioInsumos).
+    nombre: 'v_stock_insumo',
+    sql: `select i.org_id, i.id as insumo_id, i.nombre, i.unidad, i.precio, i.stock_minimo, i.vencimiento,
+            coalesce(i.stock_inicial, 0) + coalesce(sum(m.cantidad), 0) as stock,
+            greatest(coalesce(i.stock_inicial, 0) + coalesce(sum(m.cantidad), 0), 0) * i.precio as valor
+          from insumo i
+          left join mov_insumo m on m.insumo_id = i.id and m.deleted_at is null
+          where i.deleted_at is null
+          group by i.id`
+  }
+];

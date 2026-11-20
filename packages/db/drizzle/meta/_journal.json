@@ -64,6 +64,13 @@
       "when": 1795188138978,
       "tag": "0008_correo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795192020895,
+      "tag": "0009_insumos",
+      "breakpoints": true
     }
   ]
 }

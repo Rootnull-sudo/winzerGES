@@ -10,6 +10,7 @@
  */
 import type { z } from 'zod';
 import { cuartelInput, variedadInput } from './entities/catastro';
+import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
 
 export interface ClaveUnica {
@@ -57,7 +58,9 @@ export interface SyncEntityDef {
 export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
   cuartel: { entity: 'cuartel', module: 'catastro', label: 'cuarteles', schema: cuartelInput, unique: ['codigo'] },
   variedad: { entity: 'variedad', module: 'configuracion', label: 'variedades', schema: variedadInput, unique: ['nombre'] },
-  temporada: { entity: 'temporada', module: 'configuracion', label: 'temporadas', schema: temporadaInput, unique: ['anio'], readAll: true, sensitive: true }
+  temporada: { entity: 'temporada', module: 'configuracion', label: 'temporadas', schema: temporadaInput, unique: ['anio'], readAll: true, sensitive: true },
+  insumo: { entity: 'insumo', module: 'insumos', label: 'insumos', schema: insumoInput, unique: ['nombre'], soloLectura: true, sensitive: true },
+  mov_insumo: { entity: 'mov_insumo', module: 'insumos', label: 'movimientos de insumos', schema: movInsumoInput, soloLectura: true }
 };
 
 export type MutationOp = 'upsert' | 'delete';

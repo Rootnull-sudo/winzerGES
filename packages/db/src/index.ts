@@ -9,6 +9,7 @@ export * from './services/temporadas';
 export * from './services/secuencias';
 export * from './services/parametros';
 export * from './services/adjuntos';
+export * from './services/insumos';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

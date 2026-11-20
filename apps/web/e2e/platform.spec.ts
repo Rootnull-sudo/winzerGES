@@ -273,3 +273,42 @@ test('resumen diario por correo: se activa desde la campana y se recuerda', asyn
   await casilla.uncheck();
   await page.waitForTimeout(500);
 });
+
+test('insumos: crear en línea, ajustar stock y consultar sin conexión (sin poder editar)', async ({ page, context }) => {
+  const nombre = 'Azufre E2E';
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo/insumos');
+  await waitSynced(page);
+  const fila = page.getByRole('row', { name: new RegExp(nombre) });
+  // Idempotente: el insumo se crea la primera vez (tiene movimientos, así que no se puede borrar).
+  if ((await fila.count()) === 0) {
+    await page.getByRole('button', { name: 'Nuevo insumo' }).first().click();
+    const d = page.getByRole('dialog');
+    await d.getByLabel('Nombre').fill(nombre);
+    await d.getByLabel('Tipo').selectOption('Fungicida');
+    await d.getByLabel(/Precio por unidad/).fill('1800');
+    await d.getByLabel('Stock inicial').fill('50');
+    await d.getByLabel(/Carencia/).fill('7');
+    await d.getByRole('button', { name: 'Guardar' }).click();
+    await expect(fila).toBeVisible();
+  }
+  const stockAntes = Number(((await fila.getByRole('cell').nth(4).innerText()).split(' ')[0] ?? '0').replace(/\./g, '').replace(',', '.'));
+  await fila.click();
+  await page.getByRole('button', { name: 'Ajustar stock' }).click();
+  const aj = page.getByRole('dialog', { name: /Ajustar stock/ });
+  await aj.getByLabel('Cómo ajustar').selectOption('diferencia');
+  await aj.getByLabel('Diferencia').fill('1');
+  await aj.getByLabel('Motivo').fill('Ingreso sin compra');
+  await aj.getByRole('button', { name: 'Registrar ajuste' }).click();
+  await expect(fila.getByRole('cell').nth(4)).toContainText(String(stockAntes + 1).replace('.', ','));
+  await page.screenshot(shots('14-insumos'));
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await expect(page.getByText(/crear, editar o ajustar insumos requiere señal/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Nuevo insumo' }).first()).toBeDisabled();
+  await fila.click();
+  await expect(page.getByRole('dialog').getByLabel('Nombre')).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await context.setOffline(false);
+});

@@ -74,9 +74,9 @@ movimientos (solo agregar); **D** = documento con estado.
 
 | Tabla | Tipo | Columnas clave | Notas |
 |---|---|---|---|
-| `insumo` | S | `nombre`, `categoria` (agricola/enologico/envasado/etiquetado), `tipo`, `unidad` (kg/g/L/mL/un/caja/rollo), `npk`, `precio`, `proveedor_id`, `stock_minimo`, `stock_inicial`, `vencimiento`, `carencia_dias`, `quimico`, `so2_pct`, `plazo_entrega`, `condiciones` | Sincronizable porque Viñedo y Bodega lo usan offline (escribirlo sí requiere conexión) |
-| `insumo_precio` | — | `insumo_id`, `fecha`, `precio`, `proveedor_id`, `compra_id` | Reemplaza `historialPrecios` (JSON) |
-| `mov_insumo` | S·L | `fecha`, `insumo_id`, `cantidad` (con signo, en la unidad del insumo), `tipo` (compra/aplicacion/aditivo/so2/consumo_envasado/ajuste/nota_credito), `costo_unitario`, `motivo`, `origen_tipo`, `origen_id` | |
+| `insumo` | S | `nombre`, `categoria` (agricola/enologico/envasado/etiquetado), `tipo`, `unidad` (kg/g/L/mL/un/caja/rollo), `npk`, `precio`, `proveedor_id` (FK en F3-1), `stock_minimo`, `stock_inicial`, `vencimiento`, `carencia` (días), `quimico`, `so2_pct`, `plazo_entrega`, `condiciones` | `soloLectura`: se sincroniza para leer offline; se escribe en línea (`services/insumos.ts`). Único por nombre |
+| `insumo_precio` | — | `insumo_id`, `fecha`, `precio`, `proveedor_id`, `origen` (manual/compra), `compra_id` | Reemplaza `historialPrecios` (JSON). Incluye el precio inicial |
+| `mov_insumo` | S·L | `fecha`, `insumo_id`, `cantidad` (con signo, en la unidad del insumo), `tipo` (compra/aplicacion/aditivo/so2/consumo_envasado/ajuste/nota_credito), `costo_unitario`, `motivo`, `origen_tipo`, `origen_id` | `soloLectura`: lo escriben servicios (ajustes) y reacciones (aplicación). Stock en `v_stock_insumo` |
 | `formato` | — | `nombre`, `litros`, `envase`, `unidades_caja`, `stock_minimo` | Seed de 4 formatos |
 | `mov_producto` | L | `fecha`, `orden_envasado_id`, `formato_id`, `lote_id`, `unidades` (con signo), `tipo` (envasado/venta/anulacion/ajuste/muestra/quiebre), `costo_unitario`, `venta_linea_id`, `motivo` | **Nuevo**: stock de botellas por orden (v1 lo derivaba de las ventas) |
 

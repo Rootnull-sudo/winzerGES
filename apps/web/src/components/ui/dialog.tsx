@@ -1,6 +1,6 @@
 'use client';
 import { X } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 /**
@@ -25,6 +25,7 @@ export function Dialog({
   size?: 'md' | 'lg';
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const id = useId();
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -34,6 +35,8 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={`${id}-t`}
+      aria-describedby={description ? `${id}-d` : undefined}
       onClose={onClose}
       onCancel={(e) => {
         e.preventDefault();
@@ -50,8 +53,14 @@ export function Dialog({
         <div className="flex max-h-[88dvh] flex-col">
           <header className="flex items-start justify-between gap-4 border-b border-rule px-6 py-5">
             <div>
-              <h2 className="font-label text-[24px] leading-tight">{title}</h2>
-              {description && <p className="mt-1 text-[13px] text-ink-3">{description}</p>}
+              <h2 id={`${id}-t`} className="font-label text-[24px] leading-tight">
+                {title}
+              </h2>
+              {description && (
+                <p id={`${id}-d`} className="mt-1 text-[13px] text-ink-3">
+                  {description}
+                </p>
+              )}
             </div>
             <button
               onClick={onClose}

@@ -7,7 +7,7 @@
  *   transforman en un UUID determinista por viña: reimportar el mismo archivo actualiza en vez de duplicar.
  * - Cada registro se valida con el mismo esquema Zod que usa la app; los inválidos se reportan y se omiten.
  */
-import { anioDeFecha, clienteInput, cobroInput, cuartelInput, rangoPorDefecto, variedadInput } from '@winzer/domain';
+import { anioDeFecha, clienteInput, cobroInput, cuartelInput, insumoInput, movInsumoInput, rangoPorDefecto, variedadInput } from '@winzer/domain';
 import { eq } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { createHash } from 'node:crypto';
@@ -15,7 +15,9 @@ import type { z } from 'zod';
 import { reaccionar } from './reacciones';
 import { upsert, type Actor, type EntityMeta } from './repo';
 import { asegurarTemporada, listarTemporadas } from './services/temporadas';
-import { cliente, cobro, cuartel, variedad } from './schema';
+import type { Tx } from './client';
+import { cliente, cobro, cuartel, insumo, insumoPrecio, movInsumo, variedad } from './schema';
+import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -48,6 +50,14 @@ interface Importer {
   adaptar?: (r: Record<string, unknown>, orgId: string) => Record<string, unknown> | null;
   /** Entidad de v2 si el nombre cambia (p. ej. movInsumo → mov_insumo); por defecto, la misma clave. */
   entidadV2?: string;
+  /** Escrituras extra después de importar el registro (p. ej. historial de precios). */
+  despues?: (tx: Tx, actor: Actor, r: Record<string, unknown>, id: string) => Promise<void>;
+}
+
+/** `ref` de v1 ("aplicacion:apl_1") → origen de v2 con el id remapeado. */
+function origenDeRef(ref: unknown, orgId: string) {
+  const [tipo, id] = String(ref ?? '').split(':');
+  return tipo && id ? { origenTipo: tipo, origenId: mapId(orgId, id) } : { origenTipo: null, origenId: null };
 }
 
 /** Orden importa: primero los maestros, después lo que los referencia. */
@@ -55,7 +65,44 @@ const IMPORTERS: Record<string, Importer> = {
   variedad: { table: variedad, schema: variedadInput, meta: { entity: 'variedad', module: 'configuracion', label: 'variedades' } },
   cuartel: { table: cuartel, schema: cuartelInput, meta: { entity: 'cuartel', module: 'catastro', label: 'cuarteles' } },
   cliente: { table: cliente, schema: clienteInput, meta: { entity: 'cliente', module: 'clientes', label: 'clientes' } },
-  cobro: { table: cobro, schema: cobroInput, meta: { entity: 'cobro', module: 'clientes', label: 'cobros' }, refs: ['clienteId', 'ventaId'] }
+  cobro: { table: cobro, schema: cobroInput, meta: { entity: 'cobro', module: 'clientes', label: 'cobros' }, refs: ['clienteId', 'ventaId'] },
+  insumo: {
+    table: insumo,
+    schema: insumoInput,
+    meta: metaInsumo,
+    refs: ['proveedorId'],
+    adaptar: ({ historialPrecios: _h, ...r }) => r,
+    // historialPrecios (JSON en v1) → filas de insumo_precio. v1 no guardaba el precio inicial: se agrega el actual.
+    despues: async (tx, actor, r, id) => {
+      await tx.delete(insumoPrecio).where(eq(insumoPrecio.insumoId, id));
+      const hist = (Array.isArray(r.historialPrecios) ? r.historialPrecios : []) as { fecha?: string; precio?: number; proveedorId?: string }[];
+      const filas = hist.filter((h) => h.fecha && h.precio != null);
+      if (!filas.length) filas.push({ fecha: String(r.updatedAt ?? r.createdAt ?? new Date().toISOString()).slice(0, 10), precio: Number(r.precio) || 0 });
+      await tx.insert(insumoPrecio).values(
+        filas.map((h) => ({
+          id: mapId(actor.orgId, `precio|${r.id}|${h.fecha}|${h.precio}`),
+          orgId: actor.orgId,
+          insumoId: id,
+          fecha: String(h.fecha).slice(0, 10),
+          precio: Math.round(Number(h.precio)),
+          proveedorId: h.proveedorId ? mapId(actor.orgId, h.proveedorId) : null,
+          origen: 'compra',
+          createdBy: actor.userId,
+          updatedBy: actor.userId
+        }))
+      );
+    }
+  },
+  movInsumo: {
+    table: movInsumo,
+    schema: movInsumoInput,
+    meta: metaMovInsumo,
+    entidadV2: 'mov_insumo',
+    refs: ['insumoId'],
+    // Los consumos de aplicaciones los vuelve a generar la reacción al importar `aplicacion` (no se duplican).
+    adaptar: (r, orgId) =>
+      r.tipo === 'aplicacion' ? null : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
+  }
 };
 export const IMPORTABLE_ENTITIES = Object.keys(IMPORTERS);
 
@@ -102,6 +149,7 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
           const rec = await upsert(tx, imp.table, actor, imp.meta, parsed.data as Record<string, unknown> & { id: string });
           // Mismos efectos que si llegara por sync (p. ej. aplicación → movimiento de insumo).
           await reaccionar(tx, actor, { entity: imp.entidadV2 ?? entidad, op: 'upsert', previo: previo ?? null, registro: rec });
+          if (imp.despues) await imp.despues(tx, actor, r0, String(rec.id));
           if (r._demo)
             await tx
               .update(imp.table)

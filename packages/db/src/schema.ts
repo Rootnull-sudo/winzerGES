@@ -480,3 +480,81 @@ export const adjunto = pgTable(
   },
   (t) => [index('adjunto_registro_idx').on(t.orgId, t.entidad, t.registroId)]
 );
+
+/* --- Insumos (F1-1): maestro offline de solo lectura, historial de precios y libro de movimientos --- */
+export const insumo = pgTable(
+  'insumo',
+  {
+    ...base(),
+    ...syncCols(),
+    nombre: text('nombre').notNull(),
+    categoria: text('categoria').notNull(),
+    tipo: text('tipo'),
+    unidad: text('unidad').notNull(),
+    npk: text('npk'),
+    /** Último precio por unidad (CLP). La historia está en insumo_precio. */
+    precio: money('precio').notNull().default(0),
+    /** FK a proveedor: la agrega F3-1 (Proveedores) cuando exista la tabla. */
+    proveedorId: text('proveedor_id'),
+    stockMinimo: num('stock_minimo'),
+    stockInicial: num('stock_inicial'),
+    vencimiento: text('vencimiento'),
+    /** Días de carencia (agrícolas). */
+    carencia: integer('carencia'),
+    quimico: text('quimico'),
+    so2Pct: num('so2_pct'),
+    plazoEntrega: integer('plazo_entrega'),
+    condiciones: text('condiciones')
+  },
+  (t) => [
+    uniqueIndex('insumo_nombre_uq')
+      .on(t.orgId, sql`lower(${t.nombre})`)
+      .where(sql`${t.deletedAt} is null`),
+    index('insumo_sync_idx').on(t.orgId, t.seq)
+  ]
+);
+
+/** Historial de precios de un insumo (reemplaza historialPrecios de v1). */
+export const insumoPrecio = pgTable(
+  'insumo_precio',
+  {
+    ...base(),
+    insumoId: text('insumo_id')
+      .notNull()
+      .references(() => insumo.id),
+    fecha: text('fecha').notNull(),
+    precio: money('precio').notNull(),
+    proveedorId: text('proveedor_id'),
+    /** manual | compra */
+    origen: text('origen').notNull().default('manual'),
+    compraId: text('compra_id')
+  },
+  (t) => [index('insumo_precio_insumo_idx').on(t.orgId, t.insumoId, t.fecha)]
+);
+
+/** Libro de movimientos de insumos (solo agregar). Stock = stock_inicial + Σ cantidad (v_stock_insumo). */
+export const movInsumo = pgTable(
+  'mov_insumo',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    insumoId: text('insumo_id')
+      .notNull()
+      .references(() => insumo.id),
+    /** Con signo, en la unidad del insumo. */
+    cantidad: num('cantidad').notNull(),
+    /** compra | aplicacion | aditivo | so2 | consumo_envasado | ajuste | nota_credito */
+    tipo: text('tipo').notNull(),
+    costoUnitario: num('costo_unitario'),
+    motivo: text('motivo'),
+    /** Documento que lo originó (p. ej. aplicacion + su id): las reacciones lo reescriben por aquí. */
+    origenTipo: text('origen_tipo'),
+    origenId: text('origen_id')
+  },
+  (t) => [
+    index('mov_insumo_insumo_idx').on(t.orgId, t.insumoId),
+    index('mov_insumo_origen_idx').on(t.orgId, t.origenTipo, t.origenId),
+    index('mov_insumo_sync_idx').on(t.orgId, t.seq)
+  ]
+);

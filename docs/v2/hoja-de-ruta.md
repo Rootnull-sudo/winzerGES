@@ -51,7 +51,7 @@ flowchart LR
 
 | Issue | Tablas | Tamaño |
 |---|---|---|
-| F1-1 Maestros: variedades en el formulario de cuartel, insumos + movimientos + historial de precios | `insumo`, `insumo_precio`, `mov_insumo` | L |
+| F1-1 Maestros: variedades en el formulario de cuartel, insumos (leer offline, editar online) + movimientos + historial de precios + ajustes de stock + `v_stock_insumo` ✅ | `insumo`, `insumo_precio`, `mov_insumo` | L |
 | F1-2 Desborre, fenología y clima (+ `repo.upsert` rechaza escribir en una temporada cerrada) | `fenologia`, `clima` | M |
 | F1-3 Aplicaciones y labores (+ reacción `mov_insumo`) | `aplicacion`, `labor` | M |
 | F1-4 Cosecha y jornales | `cosecha`, `jornal` | M |
@@ -73,7 +73,7 @@ flowchart LR
 
 | Issue | Tablas | Tamaño |
 |---|---|---|
-| F3-1 Proveedores | `proveedor` | S |
+| F3-1 Proveedores (+ FK `insumo.proveedor_id` e `insumo_precio.proveedor_id` → `proveedor`, hoy texto sin FK; selector de proveedor en el insumo) | `proveedor` | S |
 | F3-2 Compras con líneas + servicio `registrarCompra` (requiere F1-1) | `compra`, `compra_linea` | L |
 | F3-3 Pagos aplicados y cuentas por pagar | `pago`, `pago_aplicacion` | M |
 | F3-4 Gastos y presupuesto | `gasto`, `presupuesto` | M |

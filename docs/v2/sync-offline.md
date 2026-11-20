@@ -47,7 +47,9 @@ que el shell muestra en una franja ("Conflicto · C-04: otro usuario modificó�
 ## Pull — `GET /api/<viña>/sync/pull?since=<cursor>`
 
 Devuelve `{ records, cursor, hasMore }` con cambios (incluidos borrados) de todas las entidades offline que el
-rol puede **ver**. El cliente pide páginas hasta `hasMore: false` y guarda el cursor en `meta`.
+rol puede **ver**. El cliente pide páginas hasta `hasMore: false` y guarda el cursor en `meta`. Los maestros
+transversales marcados `readAll` en `SYNC_ENTITIES` (p. ej. `temporada`) llegan a todos los roles; escribirlos sigue
+exigiendo permiso en su módulo.
 
 ### Por qué el cursor es `xid:seq` y no solo `seq`
 

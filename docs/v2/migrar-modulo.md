@@ -48,6 +48,17 @@ Antes de empezar, lee la ficha del módulo en [modulos.md](modulos.md) y sus tab
 - Las reacciones entre módulos de v1 (`js/integrations/domain.js`, p. ej. envasado → descuenta bodega) se hacen en el
   **servidor** dentro de la misma transacción del push o de la Server Action, nunca en el cliente.
 
+## Temporada
+
+Todo listado, KPI o reporte se filtra por la temporada elegida en la barra superior ([adr/0011](adr/0011-temporadas-y-parametros.md)):
+
+- **Página (servidor)**: `const t = await temporadaDe(slug, await searchParams)` (`apps/web/src/lib/temporada.ts`)
+  devuelve `{ anio, inicio, fin }`.
+- **Viñedo y bodega** guardan `temporadaId` (FK a `temporada`). Al crear un registro, propón la temporada de su
+  fecha con `temporadaDeFecha(temporadas, fecha)`; offline las temporadas están en `useEntity('temporada')`.
+- **Comercial, finanzas y tributario** no guardan temporada: filtran `fecha` entre `t.inicio` y `t.fin`.
+- Enlaces internos: conserva `?t=` (el menú ya lo hace).
+
 ## Efectos sobre otros módulos
 
 Cuando una acción escribe en tablas de otro módulo (envasar descuenta bodega e insumos; vender descuenta stock),

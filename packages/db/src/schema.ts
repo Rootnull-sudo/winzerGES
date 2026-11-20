@@ -294,3 +294,24 @@ export const variedad = pgTable(
     index('variedad_sync_idx').on(t.orgId, t.seq)
   ]
 );
+
+/* --- Núcleo: temporadas (offline, ADR 0011) --- */
+export const temporada = pgTable(
+  'temporada',
+  {
+    ...base(),
+    ...syncCols(),
+    /** Año de la vendimia: la temporada 2026 va por defecto de 2025-07-01 a 2026-06-30. */
+    anio: integer('anio').notNull(),
+    inicio: text('inicio').notNull(),
+    fin: text('fin').notNull(),
+    /** abierta | cerrada (cerrada = solo lectura para los registros de esa temporada). */
+    estado: text('estado').notNull().default('abierta')
+  },
+  (t) => [
+    uniqueIndex('temporada_anio_uq')
+      .on(t.orgId, t.anio)
+      .where(sql`${t.deletedAt} is null`),
+    index('temporada_sync_idx').on(t.orgId, t.seq)
+  ]
+);

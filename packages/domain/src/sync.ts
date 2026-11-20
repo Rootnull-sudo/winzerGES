@@ -10,6 +10,7 @@
  */
 import type { z } from 'zod';
 import { cuartelInput, variedadInput } from './entities/catastro';
+import { temporadaInput } from './entities/temporada';
 
 export interface SyncEntityDef {
   /** Nombre de la entidad (igual que en v1: js/data/schema.js). */
@@ -21,12 +22,18 @@ export interface SyncEntityDef {
   sensitive?: boolean;
   /** Campos únicos por viña (validados en servidor; en cliente solo como ayuda). */
   unique?: string[];
+  /**
+   * Maestro transversal: lo reciben offline todos los miembros aunque no puedan ver su módulo
+   * (p. ej. las temporadas, que usan viñedo y bodega). Escribirlo sigue exigiendo permiso en `module`.
+   */
+  readAll?: boolean;
 }
 
 /** Entidades que funcionan sin conexión. Agregar aquí al migrar un módulo offline (ver docs/v2/migrar-modulo.md). */
 export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
   cuartel: { entity: 'cuartel', module: 'catastro', label: 'cuarteles', schema: cuartelInput, unique: ['codigo'] },
-  variedad: { entity: 'variedad', module: 'configuracion', label: 'variedades', schema: variedadInput, unique: ['nombre'] }
+  variedad: { entity: 'variedad', module: 'configuracion', label: 'variedades', schema: variedadInput, unique: ['nombre'] },
+  temporada: { entity: 'temporada', module: 'configuracion', label: 'temporadas', schema: temporadaInput, unique: ['anio'], readAll: true, sensitive: true }
 };
 
 export type MutationOp = 'upsert' | 'delete';

@@ -15,13 +15,17 @@
 
 ## Decisión
 - **`temporada`** por viña:
-  - Año de vendimia, inicio, fin (por defecto del 1 de julio al 30 de junio), estado abierta o cerrada, y una
-    marcada como actual.
+  - Año de vendimia, inicio, fin (por defecto del 1 de julio al 30 de junio) y estado abierta o cerrada.
+  - La **actual no se guarda**: es la que contiene la fecha de hoy en Chile (`temporadaActual()`). Así no hay una
+    marca única que mantener ni que reaccionar al cambiar de temporada.
+  - Es un maestro offline que reciben **todos los roles** (`readAll` en `SYNC_ENTITIES`), porque viñedo y bodega
+    la necesitan sin señal. Crearla o cerrarla exige permiso en Configuración.
   - Las tablas de viñedo y bodega guardan `temporada_id`. Las comerciales, financieras y tributarias se filtran por
     `fecha` dentro del rango de la temporada.
   - Hay un **selector global** en la barra superior, con el estado en la URL (`?t=2026`). Todos los listados, KPIs
-    y reportes usan `rangoTemporada()`.
-  - Una temporada cerrada es de solo lectura (validado en `repo.upsert`).
+    y reportes usan `temporadaDe()` (`apps/web/src/lib/temporada.ts`).
+  - Una temporada cerrada es de solo lectura: lo valida `repo.upsert` en las tablas con `temporada_id` (se agrega con
+    la primera de ellas, en F1-2).
 - **`indicador`** es una tabla **global**, sin RLS:
   - Guarda `clave` + `fecha` + `valor`: UF diaria, UTM e IMM mensuales, topes en UF, tasa de retención de honorarios
     y tramos del impuesto único.

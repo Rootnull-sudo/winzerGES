@@ -6,4 +6,5 @@ export * from './modules';
 export * from './permissions';
 export * from './entities/cliente';
 export * from './entities/catastro';
+export * from './entities/temporada';
 export * from './sync';

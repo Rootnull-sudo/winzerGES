@@ -8,6 +8,9 @@ export interface OrgCtx {
   role: string;
   roleName: string;
   customRoles: RoleDef[];
+  /** Temporadas de la viña (ADR 0011) y el año de la actual (derivado de la fecha de hoy en el servidor). */
+  temporadas: { anio: number; inicio: string; fin: string; estado: 'abierta' | 'cerrada' }[];
+  temporadaActual: number | null;
 }
 export const OrgContext = createContext<OrgCtx | null>(null);
 export function useOrg() {

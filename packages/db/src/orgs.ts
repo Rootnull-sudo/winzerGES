@@ -2,12 +2,13 @@
  * Viñas, membresías e invitaciones. Estas tablas NO tienen RLS (son el mapa de quién accede a qué):
  * todas las funciones de aquí filtran explícitamente por usuario y se usan solo desde el servidor.
  */
-import { can, ROLES, type RoleDef } from '@winzer/domain';
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { can, fechaHoy, ROLES, type RoleDef } from '@winzer/domain';
+import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { db } from './client';
 import { invitation, member, organization, orgRole, user } from './schema';
 import type { Actor } from './repo';
+import { asegurarTemporada } from './services/temporadas';
 import { withOrg } from './tenancy';
 
 export interface Membership {
@@ -70,6 +71,9 @@ export async function createOrganization(userId: string, input: { nombre: string
   await db().transaction(async (tx) => {
     await tx.insert(organization).values({ id, slug, nombre: input.nombre, rut: input.rut ?? null, razonSocial: input.razonSocial ?? null });
     await tx.insert(member).values({ orgId: id, userId, role: 'admin' });
+    // La viña parte con su temporada actual (ADR 0011). temporada tiene RLS: se fija la viña en esta transacción.
+    await tx.execute(sql`select set_config('app.org_id', ${id}, true)`);
+    await asegurarTemporada(tx, id, fechaHoy());
   });
   return { id, slug };
 }

@@ -1,9 +1,9 @@
 'use client';
 import { AREAS, MODULES } from '@winzer/domain';
 import { moduleHref } from '@/lib/routes';
-import { Check, ChevronsUpDown, CloudOff, LogOut, Menu, Moon, RefreshCw, Search, Sun, WifiOff, X } from 'lucide-react';
+import { CalendarRange, Check, ChevronDown, ChevronsUpDown, CloudOff, Lock, LogOut, Menu, Moon, RefreshCw, Search, Sun, WifiOff, X } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { SyncEngine } from '@/lib/offline/engine';
@@ -72,6 +72,7 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
                 <kbd className="ml-auto hidden rounded border border-rule px-1.5 font-sans text-[11px] text-ink-3 sm:inline">Ctrl K</kbd>
               </button>
               <div className="ml-auto flex items-center gap-2">
+                <TemporadaSelect />
                 <SyncPill />
                 <UserChip />
               </div>
@@ -118,6 +119,8 @@ function Nav() {
   const { org } = useOrg();
   const can = useCan();
   const pathname = usePathname();
+  // La temporada elegida viaja entre módulos (ADR 0011).
+  const t = useSearchParams().get('t');
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Módulos">
       {AREAS.map((a) => {
@@ -142,7 +145,7 @@ function Nav() {
               return (
                 <Link
                   key={m.id}
-                  href={href}
+                  href={t ? `${href}?t=${encodeURIComponent(t)}` : href}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex h-9 items-center gap-2.5 rounded-control px-2.5 text-[14px] transition-colors duration-100',
@@ -222,6 +225,58 @@ function UserChip() {
         <span className="block text-[13px] font-semibold">{user.name.split(' ')[0]}</span>
         <span className="block text-[12px] text-ink-3">{roleName}</span>
       </span>
+    </span>
+  );
+}
+
+/**
+ * Selector de temporada (ADR 0011). El estado vive en la URL (`?t=2026`) para que un enlace compartido muestre lo
+ * mismo; sin `?t` se ve la temporada actual. Ver otra temporada tiñe el control para que no pase inadvertido.
+ */
+function TemporadaSelect() {
+  const { temporadas, temporadaActual } = useOrg();
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  if (!temporadas.length) return null;
+  const pedida = Number(sp.get('t'));
+  const valor = temporadas.some((x) => x.anio === pedida) ? pedida : (temporadaActual ?? temporadas.at(-1)!.anio);
+  const elegida = temporadas.find((x) => x.anio === valor);
+  const otra = valor !== temporadaActual;
+  function cambiar(anio: number) {
+    const q = new URLSearchParams(sp);
+    if (anio === temporadaActual) q.delete('t');
+    else q.set('t', String(anio));
+    const qs = q.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  }
+  return (
+    <span
+      className={cn(
+        'relative inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ink/20',
+        otra ? 'border-tinto/30 bg-tinto-soft text-tinto' : 'border-rule-strong text-ink-2 hover:bg-sunken'
+      )}
+    >
+      <CalendarRange size={14} aria-hidden />
+      <span className="hidden sm:inline">Temporada</span>
+      <span className="tabular">{valor}</span>
+      {elegida?.estado === 'cerrada' && <Lock size={12} aria-hidden />}
+      <ChevronDown size={13} aria-hidden className="opacity-60" />
+      <select
+        aria-label="Temporada"
+        title={elegida ? `${elegida.inicio} a ${elegida.fin}` : undefined}
+        value={valor}
+        onChange={(e) => cambiar(Number(e.target.value))}
+        className="absolute inset-0 cursor-pointer appearance-none opacity-0"
+      >
+        {[...temporadas].reverse().map((x) => (
+          <option key={x.anio} value={x.anio}>
+            {x.anio}
+            {x.anio === temporadaActual ? ' (actual)' : ''}
+            {x.estado === 'cerrada' ? ' · cerrada' : ''}
+          </option>
+        ))}
+      </select>
     </span>
   );
 }

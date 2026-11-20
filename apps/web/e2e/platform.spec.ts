@@ -148,3 +148,30 @@ test('móvil: catastro en tarjetas y menú lateral @mobile', async ({ page }) =>
   await expect(page.getByRole('navigation', { name: 'Módulos' })).toBeInViewport();
   await page.screenshot(shots('07-movil-menu'));
 });
+
+test('temporadas: selector en la barra superior y validación en configuración', async ({ page, browser }) => {
+  // Temporada actual = año de la vendimia que contiene hoy (julio en adelante → año siguiente). El seed crea anterior, actual y siguiente.
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+  const actual = Number(hoy.slice(0, 4)) + (Number(hoy.slice(5, 7)) >= 7 ? 1 : 0);
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo/catastro');
+  const selector = page.getByLabel('Temporada', { exact: true });
+  await expect(selector).toHaveValue(String(actual));
+  await selector.selectOption(String(actual - 1));
+  await expect(page).toHaveURL(new RegExp(`/vina-demo/catastro\\?t=${actual - 1}$`));
+  // La temporada elegida viaja al cambiar de módulo.
+  await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Dashboard' }).click();
+  await expect(page).toHaveURL(new RegExp(`/vina-demo\\?t=${actual - 1}$`));
+  await expect(page.getByLabel('Temporada', { exact: true })).toHaveValue(String(actual - 1));
+  await page.screenshot(shots('08-temporada-anterior'));
+
+  const admin = await newSession(browser, 'admin@winzer.test');
+  await admin.page.goto('/vina-demo/configuracion');
+  await expect(admin.page.getByRole('row', { name: new RegExp(`${actual}.*Actual`) })).toBeVisible();
+  await admin.page.screenshot(shots('09-temporadas-config'));
+  await admin.page.getByRole('button', { name: 'Nueva temporada' }).click();
+  await admin.page.getByLabel('Año de vendimia').fill(String(actual));
+  await admin.page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(admin.page.getByRole('dialog').getByRole('alert')).toContainText(`Ya existe la temporada ${actual}`);
+  await admin.ctx.close();
+});

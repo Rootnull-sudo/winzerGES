@@ -30,7 +30,7 @@ movimientos (solo agregar); **D** = documento con estado.
 | Tabla | Tipo | Columnas clave | Notas |
 |---|---|---|---|
 | `organization` · `member` · `invitation` · `org_role` · `audit_log` | — | (existen) | [seguridad.md](seguridad.md) |
-| `temporada` | S | `anio` int, `inicio` date, `fin` date, `estado` (abierta/cerrada), `actual` bool | Única por (org, anio). La temporada 2026 = 2025-07-01 a 2026-06-30 por defecto. Cerrada = solo lectura |
+| `temporada` | S | `anio` int, `inicio` date, `fin` date, `estado` (abierta/cerrada) | Única por (org, anio), sin fechas cruzadas. La temporada 2026 = 2025-07-01 a 2026-06-30 por defecto. La actual se deriva de la fecha (no se guarda). Cerrada = solo lectura. La reciben offline todos los roles |
 | `parametro_org` | S | `clave` text, `valor` jsonb, `vigente_desde` date | Tasas (IVA, ILA, PPM, IDPC), régimen, umbrales de enología (rangos de SO₂, kg/cajón, Tbase, días de desviación), rendimientos esperados, rangos de laboratorio. Única por (org, clave, vigente_desde). `organization.settings` queda para preferencias de interfaz |
 | `indicador` | G | `clave` (uf/utm/imm/tope_imponible_uf/tope_afc_uf/retencion_honorarios/tramos_iusc), `fecha` date, `valor` numeric o jsonb | Histórico. Lo cargan un job y el seed. Lo leen liquidaciones y F29 por fecha |
 | `secuencia` | — | `clave` text (venta, orden_envasado, dte_33…), `prefijo`, `siguiente` bigint | PK (org, clave). Se toma con `SELECT … FOR UPDATE` dentro del servicio |

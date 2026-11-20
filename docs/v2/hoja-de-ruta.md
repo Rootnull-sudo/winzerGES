@@ -38,7 +38,7 @@ flowchart LR
 
 | Issue | Alcance | Tablas | Tamaño |
 |---|---|---|---|
-| F0-1 Temporadas | Tabla, temporada actual por viña, **selector en la barra superior** (estado en la URL `?t=2026`), helper `rangoTemporada()`, seed | `temporada` | M |
+| F0-1 Temporadas | Tabla, temporada actual por viña, **selector en la barra superior** (estado en la URL `?t=2026`), helpers `temporadaDe()` / `temporadaActual()`, seed, alta al crear la viña ✅ | `temporada` | M |
 | F0-2 Parámetros con vigencia | `parametro_org` + `indicador` (global, seed de UF/UTM/IMM 2024–2026, tramos del impuesto único), `getParametro(clave, fecha)`, pantalla en Configuración; mover los valores de negocio desde `organization.settings` | `parametro_org`, `indicador` | M |
 | F0-3 Secuencias | `secuencia` + `siguiente(tx, clave)` con `FOR UPDATE`; test de concurrencia | `secuencia` | S |
 | F0-4 Servicios y reacciones | Carpeta `services/` con un servicio de ejemplo; registro `REACCIONES[entidad]` ejecutado por `sync/push` en la misma transacción; tests; actualizar [migrar-modulo.md](migrar-modulo.md) | — | M |
@@ -52,7 +52,7 @@ flowchart LR
 | Issue | Tablas | Tamaño |
 |---|---|---|
 | F1-1 Maestros: variedades en el formulario de cuartel, insumos + movimientos + historial de precios | `insumo`, `insumo_precio`, `mov_insumo` | L |
-| F1-2 Desborre, fenología y clima | `fenologia`, `clima` | M |
+| F1-2 Desborre, fenología y clima (+ `repo.upsert` rechaza escribir en una temporada cerrada) | `fenologia`, `clima` | M |
 | F1-3 Aplicaciones y labores (+ reacción `mov_insumo`) | `aplicacion`, `labor` | M |
 | F1-4 Cosecha y jornales | `cosecha`, `jornal` | M |
 | F1-5 Reglas de alerta del viñedo (carencia, cajones, desborre, stock y vencimiento de insumos) | — | S |

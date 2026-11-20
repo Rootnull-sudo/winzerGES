@@ -92,6 +92,8 @@ Los tokens se redefinen; los componentes no cambian.
 
 - **Página de módulo**: `PageHeader` → `StatGrid` con 4 cifras útiles → `DataTable` → `Dialog` de formulario.
 - **Inicio**: saludo, grilla de cifras por área, módulos agrupados en tarjetas por área.
+- **Barra superior**: buscador (Ctrl K), selector de temporada (`?t=`; neutro en la actual, `tinto-soft` en otra),
+  estado de sincronización y usuario.
 - **Formularios**: secciones con título `font-label`, grilla de 2–3 columnas en escritorio, 1 en móvil;
   validación al enviar con error junto al campo; cálculos en vivo como ayuda del campo; coma decimal.
 - **Estados obligatorios**: cargando (`animate-pulse bg-sunken`), vacío (`EmptyState`), error (mensaje

@@ -42,7 +42,7 @@ export async function pull(actor: Actor, cursor: string | null, limit = 500): Pr
     for (const [entity, def] of Object.entries(SYNC_ENTITIES)) {
       const t = tableOf(entity);
       if (!t) continue;
-      if (!can(actor.role, def.module, 'v', actor.customRoles)) continue;
+      if (!def.readAll && !can(actor.role, def.module, 'v', actor.customRoles)) continue;
       const rs = (await tx
         .select()
         .from(t)
@@ -96,7 +96,7 @@ export async function push(actor: Actor, mutations: Mutation[]): Promise<PushRes
             const dup = await tx
               .select({ id: t.id })
               .from(t)
-              .where(and(sql`lower(${(t as any)[k]}) = lower(${String(data[k])})`, sql`${t.id} <> ${m.id}`, sql`${t.deletedAt} is null`))
+              .where(and(sql`lower(${(t as any)[k]}::text) = lower(${String(data[k])})`, sql`${t.id} <> ${m.id}`, sql`${t.deletedAt} is null`))
               .limit(1);
             if (dup.length) throw Object.assign(new Error(`Ya existe un registro con ${k} "${data[k]}".`), { status: 422 });
           }

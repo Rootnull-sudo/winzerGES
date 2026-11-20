@@ -2,7 +2,9 @@ import { IMPORTABLE_ENTITIES } from '@winzer/db';
 import { NoAccess } from '@/components/no-access';
 import { PageHeader } from '@/components/ui/page';
 import { orgWith } from '@/lib/session';
+import { getTemporadas } from '@/lib/temporada';
 import { ImportV1 } from './import';
+import { Temporadas } from './temporadas';
 
 export const metadata = { title: 'Configuración y datos' };
 
@@ -25,6 +27,14 @@ export default async function Page({ params }: { params: Promise<{ org: string }
         <span className="font-mono text-[13px]">/{org.slug}</span>
         <span className="text-ink-3">Plan</span>
         <span className="capitalize">{org.plan}</span>
+      </section>
+      <section id="temporadas" className="mb-10 max-w-3xl scroll-mt-20">
+        <h2 className="font-label text-[20px]">Temporadas</h2>
+        <p className="mt-1 mb-4 text-[14px] text-ink-2">
+          Cada temporada se nombra por el año de la vendimia y agrupa el trabajo de viñedo y bodega. La actual se elige sola según la fecha; en la barra
+          superior puedes revisar otra. Cierra una temporada cuando termines de registrarla para que quede de solo lectura.
+        </p>
+        <Temporadas rows={await getTemporadas(org.id)} />
       </section>
       <section id="importar" className="max-w-2xl scroll-mt-20">
         <h2 className="font-label text-[20px]">Importar desde Winzer de escritorio (v1)</h2>

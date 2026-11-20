@@ -7,10 +7,13 @@
  * Uso: npm run db:seed  (requiere que la app NO esté corriendo con otros usuarios; es idempotente)
  */
 import 'dotenv/config';
+import { fechaHoy } from '@winzer/domain';
 import { eq } from 'drizzle-orm';
 import { adminDb } from './client';
 import { importV1, type V1Dump } from './import-v1';
 import { member, organization, user } from './schema';
+import { asegurarTemporada } from './services/temporadas';
+import { withOrg } from './tenancy';
 
 const BASE = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000';
 
@@ -39,6 +42,15 @@ async function ensureOrg(id: string, slug: string, nombre: string, rut: string) 
     .insert(organization)
     .values({ id, slug, nombre, rut, razonSocial: nombre + ' SpA' })
     .onConflictDoNothing();
+  // Temporadas de ejemplo: la anterior, la actual y la siguiente (ADR 0011).
+  const hoy = fechaHoy();
+  await withOrg(
+    id,
+    async (tx) => {
+      for (const delta of [-1, 0, 1]) await asegurarTemporada(tx, id, `${Number(hoy.slice(0, 4)) + delta}${hoy.slice(4)}`, { demo: true });
+    },
+    adminDb()
+  );
 }
 
 async function main() {

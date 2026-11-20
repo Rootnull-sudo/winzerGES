@@ -29,7 +29,7 @@ const m = (id: string, name: string, area: AreaId, icon: string, status: ModuleD
 export const MODULES: readonly ModuleDef[] = [
   m('dashboard', 'Dashboard', 'inicio', 'layout-dashboard'),
   m('catastro', 'Catastro vitícola', 'operacion', 'map', 'v2'),
-  m('fenologia', 'Desborre y fenología', 'operacion', 'sprout'),
+  m('fenologia', 'Desborre y fenología', 'operacion', 'sprout', 'v2'),
   m('insumos', 'Insumos y labores', 'operacion', 'flask-conical', 'v2'),
   m('cosecha', 'Cosecha', 'operacion', 'grape'),
   m('calendario', 'Calendario de vendimia', 'operacion', 'calendar'),

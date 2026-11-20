@@ -258,7 +258,10 @@ function TemporadaSelect() {
     if (anio === temporadaActual) q.delete('t');
     else q.set('t', String(anio));
     const qs = q.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    const url = qs ? `${pathname}?${qs}` : pathname;
+    // Sin señal no se puede pedir la página al servidor: se cambia solo la URL (las vistas offline filtran en el cliente).
+    if (!navigator.onLine) window.history.pushState(null, '', url);
+    else router.push(url);
   }
   return (
     <span

@@ -1,5 +1,5 @@
 'use client';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -15,7 +15,6 @@ export interface Tab<T extends string> {
  */
 export function useTab<T extends string>(tabs: readonly Tab<T>[]): [T, (t: T) => void] {
   const sp = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const pedida = sp.get('tab') as T | null;
   const actual = tabs.find((t) => t.id === pedida)?.id ?? tabs[0]!.id;
@@ -24,7 +23,9 @@ export function useTab<T extends string>(tabs: readonly Tab<T>[]): [T, (t: T) =>
     if (t === tabs[0]!.id) q.delete('tab');
     else q.set('tab', t);
     const qs = q.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    // Solo cambia la URL en el cliente (Next sincroniza useSearchParams con history): sin viaje al servidor, así
+    // funciona sin señal.
+    window.history.replaceState(null, '', qs ? `${pathname}?${qs}` : pathname);
   }
   return [actual, cambiar];
 }

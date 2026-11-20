@@ -7,7 +7,18 @@
  *   transforman en un UUID determinista por viña: reimportar el mismo archivo actualiza en vez de duplicar.
  * - Cada registro se valida con el mismo esquema Zod que usa la app; los inválidos se reportan y se omiten.
  */
-import { anioDeFecha, clienteInput, cobroInput, cuartelInput, insumoInput, movInsumoInput, rangoPorDefecto, variedadInput } from '@winzer/domain';
+import {
+  anioDeFecha,
+  clienteInput,
+  climaInput,
+  cobroInput,
+  cuartelInput,
+  fenologiaInput,
+  insumoInput,
+  movInsumoInput,
+  rangoPorDefecto,
+  variedadInput
+} from '@winzer/domain';
 import { eq } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { createHash } from 'node:crypto';
@@ -16,7 +27,7 @@ import { reaccionar } from './reacciones';
 import { upsert, type Actor, type EntityMeta } from './repo';
 import { asegurarTemporada, listarTemporadas } from './services/temporadas';
 import type { Tx } from './client';
-import { cliente, cobro, cuartel, insumo, insumoPrecio, movInsumo, variedad } from './schema';
+import { cliente, clima, cobro, cuartel, fenologia, insumo, insumoPrecio, movInsumo, variedad } from './schema';
 import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { withOrg } from './tenancy';
 
@@ -93,6 +104,14 @@ const IMPORTERS: Record<string, Importer> = {
       );
     }
   },
+  fenologia: {
+    table: fenologia,
+    schema: fenologiaInput,
+    meta: { entity: 'fenologia', module: 'fenologia', label: 'registros de fenología' },
+    refs: ['cuartelId'],
+    temporada: true
+  },
+  clima: { table: clima, schema: climaInput, meta: { entity: 'clima', module: 'fenologia', label: 'registros de temperatura' }, temporada: true },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,

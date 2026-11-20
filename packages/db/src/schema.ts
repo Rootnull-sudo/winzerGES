@@ -558,3 +558,52 @@ export const movInsumo = pgTable(
     index('mov_insumo_sync_idx').on(t.orgId, t.seq)
   ]
 );
+
+/* --- Desborre, fenología y clima (F1-2, offline) --- */
+export const fenologia = pgTable(
+  'fenologia',
+  {
+    ...base(),
+    ...syncCols(),
+    cuartelId: text('cuartel_id')
+      .notNull()
+      .references(() => cuartel.id),
+    temporadaId: text('temporada_id')
+      .notNull()
+      .references(() => temporada.id),
+    desborreInicio: text('desborre_inicio').notNull(),
+    desborre50: text('desborre_50'),
+    desborreFin: text('desborre_fin'),
+    bbch: text('bbch'),
+    floracion: text('floracion'),
+    envero: text('envero'),
+    observaciones: text('observaciones')
+  },
+  (t) => [
+    uniqueIndex('fenologia_cuartel_temporada_uq')
+      .on(t.orgId, t.cuartelId, t.temporadaId)
+      .where(sql`${t.deletedAt} is null`),
+    index('fenologia_sync_idx').on(t.orgId, t.seq)
+  ]
+);
+
+export const clima = pgTable(
+  'clima',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    temporadaId: text('temporada_id')
+      .notNull()
+      .references(() => temporada.id),
+    tmax: num('tmax').notNull(),
+    tmin: num('tmin').notNull(),
+    estacion: text('estacion')
+  },
+  (t) => [
+    uniqueIndex('clima_fecha_estacion_uq')
+      .on(t.orgId, t.fecha, sql`lower(coalesce(${t.estacion}, ''))`)
+      .where(sql`${t.deletedAt} is null`),
+    index('clima_sync_idx').on(t.orgId, t.seq)
+  ]
+);

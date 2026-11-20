@@ -312,3 +312,46 @@ test('insumos: crear en línea, ajustar stock y consultar sin conexión (sin pod
   await page.keyboard.press('Escape');
   await context.setOffline(false);
 });
+
+test('fenología: desborre y temperatura sin conexión, con grados día y Winkler', async ({ page, context }) => {
+  const estacion = 'E2E-' + Date.now().toString(36).slice(-5);
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo/fenologia');
+  await waitSynced(page);
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Registrar desborre' }).click();
+  const d = page.getByRole('dialog', { name: 'Registrar desborre' });
+  await d.getByLabel('Cuartel').selectOption({ label: 'C-01 · Sauvignon Blanc' });
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /C-01/ });
+  await expect(fila).toBeVisible();
+  await expect(fila.getByLabel('Pendiente de sincronizar')).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Temperaturas y grados día' }).click();
+  await page.getByRole('button', { name: 'Registrar día' }).click();
+  const c = page.getByRole('dialog', { name: 'Registrar día' });
+  await c.getByLabel('Estación').fill(estacion);
+  await c.getByLabel('Temperatura máxima').fill('28');
+  await c.getByLabel('Temperatura mínima').fill('12');
+  await expect(c.getByText('10,0')).toBeVisible();
+  await c.getByRole('button', { name: 'Guardar' }).click();
+  const dia = page.getByRole('row', { name: new RegExp(estacion) });
+  await expect(dia).toBeVisible();
+  await expect(page.getByText(/Región I|Región II|Región III|Región IV|Región V/).first()).toBeVisible();
+  await page.screenshot(shots('15-clima-offline'));
+
+  await context.setOffline(false);
+  await waitSynced(page);
+  // Limpieza (para poder repetir la prueba).
+  await dia.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(dia).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Desborre y fenología' }).click();
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
+});

@@ -44,7 +44,8 @@ function escala(max: number) {
   if (max <= 0) return { tope: 1, marcas: [0, 1] };
   const paso0 = max / 4;
   const pot = 10 ** Math.floor(Math.log10(paso0));
-  const paso = [1, 2, 2.5, 5, 10].map((m) => m * pot).find((p) => p >= paso0)!;
+  // Pasos 1-2-5 (sin 2,5: al formatear sin decimales mostraría marcas desiguales).
+  const paso = [1, 2, 5, 10].map((m) => m * pot).find((p) => p >= paso0)!;
   const tope = Math.ceil(max / paso) * paso;
   return { tope, marcas: Array.from({ length: Math.round(tope / paso) + 1 }, (_, i) => i * paso) };
 }
@@ -262,6 +263,12 @@ export function Lineas({
               return (
                 <g key={s.id}>
                   <path d={d} fill="none" className={STROKE[s.color]} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+                  {/* Un punto sin vecinos no forma línea: se marca para que no desaparezca. */}
+                  {pts.map((p, i) =>
+                    p && !pts[i - 1] && !pts[i + 1] && hover !== i ? (
+                      <circle key={i} cx={p[0]} cy={p[1]} r={4} className={cn(FILL[s.color], 'stroke-raised')} strokeWidth={2} />
+                    ) : null
+                  )}
                   {hover != null && pts[hover] && (
                     <circle cx={pts[hover]![0]} cy={pts[hover]![1]} r={4} className={cn(FILL[s.color], 'stroke-raised')} strokeWidth={2} />
                   )}

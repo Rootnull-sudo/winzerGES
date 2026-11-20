@@ -49,7 +49,7 @@ movimientos (solo agregar); **D** = documento con estado.
 | `cuartel` | S | (existe) | Agregar `superficie` como numeric (ya está), `rendimiento_esperado` kg/ha opcional |
 | `variedad` | S | (existe) `nombre`, `tipo` | El formulario de cuartel debe leer de aquí (v1 usaba una lista fija) |
 | `fenologia` | S | `cuartel_id`, `temporada_id`, `desborre_inicio`, `desborre_50`, `desborre_fin`, `bbch`, `floracion`, `envero`, `observaciones` | Única por (cuartel, temporada) |
-| `clima` | S | `fecha`, `temporada_id`, `tmax`, `tmin`, `estacion` | Única por (fecha, estación) |
+| `clima` | S | `fecha`, `temporada_id`, `tmax`, `tmin`, `estacion` | Única por (fecha, estación, sin mayúsculas). La fecha debe caer en su temporada (guarda de `repo`). GD solo del 1 sep al 30 abr |
 | `aplicacion` | S | `fecha`, `temporada_id`, `cuartel_id`, `insumo_id`, `dosis_ha`, `cantidad`, `carencia_dias`, `costo`, `responsable` | Reacción: `mov_insumo` −cantidad |
 | `labor` | S | `fecha`, `temporada_id`, `cuartel_id`, `tipo`, `jornadas`, `valor_jornada`, `otros_costos`, `costo`, `responsable` | |
 | `cosecha` | S | `fecha`, `temporada_id`, `cuartel_id`, `lote_id`, `cajones`, `kg`, `destino` (propia/venta/descarte), `costo_bins`, `costo_transporte`, `costo_alimentacion`, `otros_costos` | Reacción: lote → En vendimia |

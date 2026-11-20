@@ -10,6 +10,7 @@
  */
 import type { z } from 'zod';
 import { cuartelInput, variedadInput } from './entities/catastro';
+import { climaInput, fenologiaInput } from './entities/fenologia';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
 
@@ -60,7 +61,21 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
   variedad: { entity: 'variedad', module: 'configuracion', label: 'variedades', schema: variedadInput, unique: ['nombre'] },
   temporada: { entity: 'temporada', module: 'configuracion', label: 'temporadas', schema: temporadaInput, unique: ['anio'], readAll: true, sensitive: true },
   insumo: { entity: 'insumo', module: 'insumos', label: 'insumos', schema: insumoInput, unique: ['nombre'], soloLectura: true, sensitive: true },
-  mov_insumo: { entity: 'mov_insumo', module: 'insumos', label: 'movimientos de insumos', schema: movInsumoInput, soloLectura: true }
+  mov_insumo: { entity: 'mov_insumo', module: 'insumos', label: 'movimientos de insumos', schema: movInsumoInput, soloLectura: true },
+  fenologia: {
+    entity: 'fenologia',
+    module: 'fenologia',
+    label: 'registros de fenología',
+    schema: fenologiaInput,
+    unique: [{ campos: ['cuartelId', 'temporadaId'], mensaje: 'Ese cuartel ya tiene un registro de fenología en la temporada: edítalo.' }]
+  },
+  clima: {
+    entity: 'clima',
+    module: 'fenologia',
+    label: 'registros de temperatura',
+    schema: climaInput,
+    unique: [{ campos: ['fecha', 'estacion'], mensaje: 'Ya hay un registro de temperatura de esa fecha en esa estación.' }]
+  }
 };
 
 export type MutationOp = 'upsert' | 'delete';

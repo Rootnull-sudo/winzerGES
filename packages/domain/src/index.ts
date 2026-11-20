@@ -11,4 +11,5 @@ export * from './entities/catastro';
 export * from './entities/temporada';
 export * from './entities/adjunto';
 export * from './entities/insumo';
+export * from './entities/fenologia';
 export * from './sync';

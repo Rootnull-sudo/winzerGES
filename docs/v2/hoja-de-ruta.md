@@ -52,7 +52,7 @@ flowchart LR
 | Issue | Tablas | Tamaño |
 |---|---|---|
 | F1-1 Maestros: variedades en el formulario de cuartel, insumos (leer offline, editar online) + movimientos + historial de precios + ajustes de stock + `v_stock_insumo` ✅ | `insumo`, `insumo_precio`, `mov_insumo` | L |
-| F1-2 Desborre, fenología y clima (+ `repo.upsert` rechaza escribir en una temporada cerrada) | `fenologia`, `clima` | M |
+| F1-2 Desborre, fenología y clima (+ `repo.upsert` rechaza escribir en una temporada cerrada) ✅ | `fenologia`, `clima` | M |
 | F1-3 Aplicaciones y labores (+ reacción `mov_insumo`) | `aplicacion`, `labor` | M |
 | F1-4 Cosecha y jornales | `cosecha`, `jornal` | M |
 | F1-5 Reglas de alerta del viñedo (carencia, cajones, desborre, stock y vencimiento de insumos) | — | S |

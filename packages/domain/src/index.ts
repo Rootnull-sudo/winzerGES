@@ -1,5 +1,6 @@
 export * from './num';
 export * from './config';
+export * from './parametros';
 export * as oenology from './oenology';
 export * as tax from './tax';
 export * from './modules';

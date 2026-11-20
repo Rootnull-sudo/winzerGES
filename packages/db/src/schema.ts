@@ -176,6 +176,12 @@ export const auditLog = pgTable(
  */
 export const NO_RLS_TABLES = ['member', 'invitation'] as const;
 
+/**
+ * Tablas globales (sin org_id) que la app solo lee: las escriben el seed, las migraciones y los jobs con la conexión
+ * de administración. ensure.ts revoca a winzer_app todo permiso salvo SELECT.
+ */
+export const GLOBAL_READONLY_TABLES = ['indicador'] as const;
+
 /* ------------------------------------------------------------------ */
 /* Columnas comunes                                                    */
 /* ------------------------------------------------------------------ */
@@ -334,4 +340,35 @@ export const secuencia = pgTable(
     updatedAt: ts('updated_at').notNull().defaultNow()
   },
   (t) => [primaryKey({ columns: [t.orgId, t.clave] })]
+);
+
+/* --- Núcleo: parámetros con vigencia (online, ADR 0011) --- */
+/** Valor de un parámetro de la viña desde una fecha. Un cambio es una fila nueva: la historia no se pisa. */
+export const parametroOrg = pgTable(
+  'parametro_org',
+  {
+    ...base(),
+    /** `grupo.campo` del catálogo PARAMETROS (@winzer/domain). */
+    clave: text('clave').notNull(),
+    valor: jsonb('valor').notNull(),
+    vigenteDesde: text('vigente_desde').notNull()
+  },
+  (t) => [
+    uniqueIndex('parametro_org_vigencia_uq')
+      .on(t.orgId, t.clave, t.vigenteDesde)
+      .where(sql`${t.deletedAt} is null`)
+  ]
+);
+
+/** Indicadores públicos (UF, UTM, IMM, retención de honorarios) por fecha. Global: sin org_id ni RLS, solo lectura para la app. */
+export const indicador = pgTable(
+  'indicador',
+  {
+    clave: text('clave').notNull(),
+    fecha: text('fecha').notNull(),
+    valor: num('valor').notNull(),
+    fuente: text('fuente'),
+    updatedAt: ts('updated_at').notNull().defaultNow()
+  },
+  (t) => [primaryKey({ columns: [t.clave, t.fecha] })]
 );

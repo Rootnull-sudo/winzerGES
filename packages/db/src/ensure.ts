@@ -5,6 +5,7 @@
  */
 import { sql } from 'drizzle-orm';
 import type { DB } from './client';
+import { GLOBAL_READONLY_TABLES } from './schema';
 import { syncTables, tableName, tenantTables } from './tables';
 
 export async function ensureTenancy(db: DB) {
@@ -16,5 +17,6 @@ export async function ensureTenancy(db: DB) {
   // Las tablas nuevas heredan permisos por ALTER DEFAULT PRIVILEGES; esto cubre bases creadas antes.
   await db.execute(sql`grant select, insert, update, delete on all tables in schema public to winzer_app`);
   await db.execute(sql`grant usage, select on all sequences in schema public to winzer_app`);
+  for (const t of GLOBAL_READONLY_TABLES) await db.execute(sql.raw(`revoke insert, update, delete, truncate on "${t}" from winzer_app`));
   return { tenant: tenantTables.map(tableName), sync: Object.keys(syncTables) };
 }

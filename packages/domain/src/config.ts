@@ -1,6 +1,7 @@
 /**
  * Configuración por viña (organización). En v1 vivía en la entidad `config` (js/core/store.js);
- * en v2 se guarda en `organization.settings` (jsonb) y se mezcla con estos valores por defecto.
+ * en v2 son los valores por defecto: los de cada viña viven en `parametro_org` y los indicadores (UF, UTM, IMM) en
+ * `indicador`, ambos con vigencia. `configVigente(tx, fecha)` (@winzer/db) arma la configuración de una fecha.
  * Los cálculos reciben la configuración como parámetro: nunca leen estado global.
  */
 

@@ -1,9 +1,10 @@
-import { IMPORTABLE_ENTITIES } from '@winzer/db';
+import { IMPORTABLE_ENTITIES, listarIndicadores, listarParametros, withOrg } from '@winzer/db';
 import { NoAccess } from '@/components/no-access';
 import { PageHeader } from '@/components/ui/page';
 import { orgWith } from '@/lib/session';
 import { getTemporadas } from '@/lib/temporada';
 import { ImportV1 } from './import';
+import { Parametros } from './parametros';
 import { Temporadas } from './temporadas';
 
 export const metadata = { title: 'Configuración y datos' };
@@ -13,6 +14,7 @@ export default async function Page({ params }: { params: Promise<{ org: string }
   const { org, allowed, actor } = await orgWith(slug, 'configuracion');
   if (!allowed) return <NoAccess modulo="la configuración" />;
   const { can } = await import('@winzer/domain');
+  const [parametros, indicadores] = await withOrg(org.id, (tx) => Promise.all([listarParametros(tx), listarIndicadores(tx)]));
   return (
     <>
       <PageHeader area="Administración" title="Configuración y datos" />
@@ -35,6 +37,14 @@ export default async function Page({ params }: { params: Promise<{ org: string }
           superior puedes revisar otra. Cierra una temporada cuando termines de registrarla para que quede de solo lectura.
         </p>
         <Temporadas rows={await getTemporadas(org.id)} />
+      </section>
+      <section id="parametros" className="mb-10 scroll-mt-20">
+        <h2 className="font-label text-[20px]">Parámetros</h2>
+        <p className="mt-1 mb-4 max-w-3xl text-[14px] text-ink-2">
+          Tasas, umbrales y valores de referencia que usan los cálculos. Cada cambio rige desde una fecha y guarda la historia: una liquidación o un F29 de un
+          mes pasado se recalcula con los valores de ese mes.
+        </p>
+        <Parametros filas={parametros} indicadores={indicadores} />
       </section>
       <section id="importar" className="max-w-2xl scroll-mt-20">
         <h2 className="font-label text-[20px]">Importar desde Winzer de escritorio (v1)</h2>

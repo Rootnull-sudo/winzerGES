@@ -175,3 +175,26 @@ test('temporadas: selector en la barra superior y validación en configuración'
   await expect(admin.page.getByRole('dialog').getByRole('alert')).toContainText(`Ya existe la temporada ${actual}`);
   await admin.ctx.close();
 });
+
+test('parámetros con vigencia: cambiar el PPM, ver la historia y volver al valor por defecto', async ({ page }) => {
+  await login(page, 'admin@winzer.test');
+  await page.goto('/vina-demo/configuracion');
+  const fila = page.getByRole('listitem').filter({ hasText: /^PPM/ });
+  await expect(fila).toContainText('0,25 %');
+  await page.getByRole('button', { name: 'Cambiar PPM' }).click();
+  const dialogo = page.getByRole('dialog');
+  await dialogo.getByLabel('Valor').fill('150');
+  await dialogo.getByRole('button', { name: 'Guardar' }).click();
+  await expect(dialogo.getByText('Una tasa va entre 0 y 100 %.')).toBeVisible();
+  await dialogo.getByLabel('Valor').fill('0,3');
+  await dialogo.getByRole('button', { name: 'Guardar' }).click();
+  await expect(fila).toContainText('0,3 %');
+  await expect(fila).toContainText('Desde el');
+  await page.screenshot(shots('10-parametros'));
+
+  await page.getByRole('button', { name: 'Cambiar PPM' }).click();
+  await dialogo.getByRole('button', { name: /Quitar el valor desde/ }).click();
+  await dialogo.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(fila).toContainText('0,25 %');
+  await expect(fila).toContainText('Valor por defecto');
+});

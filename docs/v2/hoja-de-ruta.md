@@ -39,7 +39,7 @@ flowchart LR
 | Issue | Alcance | Tablas | Tamaño |
 |---|---|---|---|
 | F0-1 Temporadas | Tabla, temporada actual por viña, **selector en la barra superior** (estado en la URL `?t=2026`), helpers `temporadaDe()` / `temporadaActual()`, seed, alta al crear la viña ✅ | `temporada` | M |
-| F0-2 Parámetros con vigencia | `parametro_org` + `indicador` (global, seed de UF/UTM/IMM 2024–2026, tramos del impuesto único), `getParametro(clave, fecha)`, pantalla en Configuración; mover los valores de negocio desde `organization.settings` | `parametro_org`, `indicador` | M |
+| F0-2 Parámetros con vigencia | `parametro_org` + `indicador` (global, solo lectura para la app), `configVigente(tx, fecha)`, pantalla en Configuración con historia ✅. Pendiente: carga real de indicadores (job en F0-5; el seed usa los valores de v1) | `parametro_org`, `indicador` | M |
 | F0-3 Secuencias | `secuencia` + `siguienteNumero` / `siguienteCodigo` / `ajustarSecuencia` (upsert con bloqueo de fila); test de concurrencia ✅ | `secuencia` | S |
 | F0-4 Servicios y reacciones | Carpeta `services/` con un servicio de ejemplo; registro `REACCIONES[entidad]` ejecutado por `sync/push` en la misma transacción; tests; actualizar [migrar-modulo.md](migrar-modulo.md) | — | M |
 | F0-5 Jobs y alertas | pg-boss (arranque en el servidor, cron por viña), tabla `alerta` y `alerta_vista`, motor de reglas (una regla de ejemplo), campana en la barra superior, `tarea` y bandeja | `alerta`, `alerta_vista`, `tarea` | L |

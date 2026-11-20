@@ -32,7 +32,8 @@
   - La carga un job desde una fuente pública. Un seed cubre los años de demo.
 - **`parametro_org`** por viña:
   - Guarda `clave` + `valor` + `vigente_desde`: tasas, régimen, umbrales de enología y rendimientos esperados.
-  - Se lee con `getParametro(clave, fecha)`.
+  - Se lee con `configVigente(tx, fecha)`, que devuelve la `OrgConfig` completa de esa fecha (parámetros +
+    indicadores + valores por defecto). Los cálculos de `packages/domain` la reciben como argumento.
 - **Foto de valores**: los cálculos que generan un documento (liquidación, F29, renta, costo congelado de un
   envasado) guardan en el documento los valores que usaron.
 

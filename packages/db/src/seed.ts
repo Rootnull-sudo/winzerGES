@@ -7,11 +7,12 @@
  * Uso: npm run db:seed  (requiere que la app NO esté corriendo con otros usuarios; es idempotente)
  */
 import 'dotenv/config';
-import { fechaHoy } from '@winzer/domain';
+import { DEFAULT_CONFIG, fechaHoy } from '@winzer/domain';
 import { eq } from 'drizzle-orm';
 import { adminDb } from './client';
 import { importV1, type V1Dump } from './import-v1';
 import { member, organization, user } from './schema';
+import { cargarIndicadores } from './services/parametros';
 import { asegurarTemporada } from './services/temporadas';
 import { withOrg } from './tenancy';
 
@@ -55,6 +56,16 @@ async function ensureOrg(id: string, slug: string, nombre: string, rut: string) 
 
 async function main() {
   const [admin, agro, ventas] = await Promise.all(SEED_USERS.map(ensureUser));
+  // Indicadores de ejemplo: los mismos valores por defecto de v1, fechados al inicio del año. NO son la serie oficial;
+  // la carga real desde una fuente pública llega con el job de indicadores (F0-5).
+  const inicioAnio = `${fechaHoy().slice(0, 4)}-01-01`;
+  const ej = 'ejemplo (valores por defecto de v1)';
+  await cargarIndicadores(adminDb(), [
+    { clave: 'uf', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.uf, fuente: ej },
+    { clave: 'utm', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.utm, fuente: ej },
+    { clave: 'imm', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.imm, fuente: ej },
+    { clave: 'retencion_honorarios', fecha: inicioAnio, valor: DEFAULT_CONFIG.tributario.retencionHonorarios, fuente: ej }
+  ]);
   await ensureOrg('org_demo', 'vina-demo', 'Viña Demo', '76.123.456-0');
   await ensureOrg('org_robles', 'los-robles', 'Viña Los Robles', '77.555.444-3');
   const add = (orgId: string, userId: string, role: string) => adminDb().insert(member).values({ orgId, userId, role }).onConflictDoNothing();

@@ -6,4 +6,5 @@ export * as sync from './sync';
 export * from './import-v1';
 export * from './services/temporadas';
 export * from './services/secuencias';
+export * from './services/parametros';
 export * as schema from './schema';

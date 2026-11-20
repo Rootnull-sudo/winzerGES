@@ -1,0 +1,1 @@
+ALTER TABLE "member" ADD COLUMN "resumen_alertas" boolean DEFAULT false NOT NULL;

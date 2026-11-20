@@ -1,21 +1,24 @@
 'use server';
-import { createInvitation, setMemberRole } from '@winzer/db';
+import { createInvitation, enviarInvitacion, setMemberRole } from '@winzer/db';
 import { ROLES } from '@winzer/domain';
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireOrg } from '@/lib/session';
 
-export async function inviteAction(slug: string, email: string, role: string): Promise<{ link?: string; error?: string }> {
+/** `correo`: enviado por Resend, solo registrado en la consola (sin RESEND_API_KEY) o fallido (el enlace sirve igual). */
+export async function inviteAction(
+  slug: string,
+  email: string,
+  role: string
+): Promise<{ link?: string; correo?: 'enviado' | 'consola' | 'fallido'; error?: string }> {
   const { actor } = await requireOrg(slug);
   if (!z.email().safeParse(email.trim()).success) return { error: 'Correo inválido.' };
   if (!ROLES[role] && !actor.customRoles?.some((r) => r.id === role)) return { error: 'Rol inválido.' };
   try {
     const token = await createInvitation(actor, email, role);
-    const h = await headers();
-    const origin = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host')}`;
+    const r = await enviarInvitacion(actor, email.trim().toLowerCase(), role, token);
     revalidatePath(`/${slug}/usuarios`);
-    return { link: `${origin}/invitacion/${token}` };
+    return { link: r.enlace, correo: !r.enviado ? 'fallido' : r.via === 'resend' ? 'enviado' : 'consola' };
   } catch (e) {
     return { error: (e as Error).message };
   }

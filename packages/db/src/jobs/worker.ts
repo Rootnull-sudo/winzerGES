@@ -8,6 +8,7 @@
  * Jobs:
  *  - `alertas.programar` (cron cada hora): encola un `alertas.calcular` por viña.
  *  - `alertas.calcular` { orgId }: evalúa las reglas (motor.ts) para esa viña.
+ *  - `correo.resumen` (diario 7:00): resumen de avisos nuevos a quien lo activó.
  *  - `adjuntos.purgar` (domingos 3:00): borra del almacenamiento los adjuntos eliminados hace más de 30 días.
  */
 import 'dotenv/config';
@@ -15,10 +16,11 @@ import PgBoss from 'pg-boss';
 import { calcularAlertas } from '../alertas/motor';
 import { REGLAS } from '../alertas/reglas';
 import { db } from '../client';
+import { enviarResumenes } from '../correo/envios';
 import { purgarAdjuntos } from '../services/adjuntos';
 import { organization } from '../schema';
 
-export const COLAS = { programar: 'alertas.programar', calcular: 'alertas.calcular', purgar: 'adjuntos.purgar' } as const;
+export const COLAS = { programar: 'alertas.programar', calcular: 'alertas.calcular', purgar: 'adjuntos.purgar', resumen: 'correo.resumen' } as const;
 
 export async function iniciarWorker() {
   const url = process.env.DATABASE_URL_ADMIN;
@@ -47,6 +49,12 @@ export async function iniciarWorker() {
     }
   });
   await boss.schedule(COLAS.programar, '0 * * * *', {}, { tz: 'America/Santiago' });
+  await boss.work(COLAS.resumen, async () => {
+    const r = await enviarResumenes(new Date(Date.now() - 24 * 3_600_000));
+    if (r.enviados || r.fallidos) console.log('[correo] resumen diario', r);
+  });
+  // Todos los días 7:00: resumen de avisos nuevos a quien lo activó (F0-8).
+  await boss.schedule(COLAS.resumen, '0 7 * * *', {}, { tz: 'America/Santiago' });
   // Domingo 3:00: archivos de adjuntos borrados hace más de 30 días (ADR 0013).
   await boss.schedule(COLAS.purgar, '0 3 * * 0', {}, { tz: 'America/Santiago' });
   // Al partir, un cálculo inmediato para no esperar a la próxima hora.

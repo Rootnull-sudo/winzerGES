@@ -258,3 +258,18 @@ test('adjuntos: subir un PDF a un cliente, descargarlo y quitarlo', async ({ pag
   await adjuntos.getByRole('button', { name: `Quitar ${nombre}` }).click();
   await expect(adjuntos.getByText(nombre)).toHaveCount(0);
 });
+
+test('resumen diario por correo: se activa desde la campana y se recuerda', async ({ page }) => {
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo');
+  await page.getByRole('button', { name: /^Avisos/ }).click();
+  const casilla = page.getByRole('checkbox', { name: /resumen diario por correo/ });
+  await expect(casilla).not.toBeChecked();
+  await casilla.check();
+  await page.waitForTimeout(500);
+  await page.reload();
+  await page.getByRole('button', { name: /^Avisos/ }).click();
+  await expect(casilla).toBeChecked();
+  await casilla.uncheck();
+  await page.waitForTimeout(500);
+});

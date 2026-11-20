@@ -1,4 +1,4 @@
-import { alertasPara, withOrg } from '@winzer/db';
+import { alertasPara, resumenAlertasActivo, withOrg } from '@winzer/db';
 import { fechaHoy, ROLES, temporadaActual } from '@winzer/domain';
 import { AppShell } from '@/components/shell/app-shell';
 import { getMemberships, requireOrg } from '@/lib/session';
@@ -7,10 +7,11 @@ import { getTemporadas } from '@/lib/temporada';
 export default async function OrgLayout({ children, params }: { children: React.ReactNode; params: Promise<{ org: string }> }) {
   const { org: slug } = await params;
   const { user, actor, org } = await requireOrg(slug);
-  const [memberships, temporadas, alertas] = await Promise.all([
+  const [memberships, temporadas, alertas, resumenAlertas] = await Promise.all([
     getMemberships(user.id),
     getTemporadas(org.id),
-    withOrg(org.id, (tx) => alertasPara(tx, actor))
+    withOrg(org.id, (tx) => alertasPara(tx, actor)),
+    resumenAlertasActivo(actor)
   ]);
   const roleName = ROLES[actor.role]?.nombre ?? actor.customRoles?.find((r) => r.id === actor.role)?.nombre ?? actor.role;
   return (
@@ -22,6 +23,7 @@ export default async function OrgLayout({ children, params }: { children: React.
         roleName,
         customRoles: actor.customRoles ?? [],
         acceso: actor.acceso!,
+        resumenAlertas,
         temporadas: temporadas.map(({ anio, inicio, fin, estado }) => ({ anio, inicio, fin, estado })),
         temporadaActual: temporadaActual(temporadas, fechaHoy())?.anio ?? null,
         alertas: alertas.map(({ id, severidad, titulo, mensaje, ruta, detectadaEn, vista }) => ({

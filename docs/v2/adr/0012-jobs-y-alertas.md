@@ -26,6 +26,12 @@ cosas que no dependen de que alguien abra la app:
   - La campana de la barra superior lee `alerta` (abiertas), filtrada por los permisos del rol.
   - `alerta_vista` guarda lo leído por usuario.
 - **Correo** con Resend: invitaciones y un resumen diario opcional de alertas nuevas.
+  - Implementación (F0-8): `packages/db/src/correo/`, con transporte, plantillas y envíos.
+  - Sin `RESEND_API_KEY`, los correos se escriben en la consola. Un envío fallido nunca rompe la acción: la
+    invitación igual muestra el enlace para compartirlo.
+  - Los enlaces usan `BETTER_AUTH_URL`, nunca la cabecera `Host`.
+  - El resumen sale a las 7:00 (job `correo.resumen`) solo a quien lo activó en la campana
+    (`member.resumen_alertas`). Incluye solo avisos que la persona puede ver y aún no vio.
 - **Tras un push de sync** la ruta del push recalcula las alertas de la viña con `after()` de Next, después de
   responder. No necesita pg-boss en la web ni la conexión de administración.
 - **Implementación** (F0-5):

@@ -3,7 +3,7 @@ import { Bell, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { marcarVistas } from '@/app/[org]/alertas-actions';
+import { cambiarResumen, marcarVistas } from '@/app/[org]/alertas-actions';
 import { cn } from '@/lib/cn';
 import { useOrg } from './org-context';
 
@@ -23,7 +23,8 @@ function hace(iso: string) {
  * vistas para este usuario. Solo muestra las de módulos que el rol puede ver.
  */
 export function Campana() {
-  const { org, alertas } = useOrg();
+  const { org, alertas, resumenAlertas } = useOrg();
+  const [resumen, setResumen] = useState(resumenAlertas);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [vistasLocal, setVistasLocal] = useState<Set<string>>(new Set());
@@ -110,6 +111,18 @@ export function Campana() {
               })}
             </ul>
           )}
+          <label className="flex cursor-pointer items-center gap-2.5 border-t border-rule px-4 py-3 text-[13px] text-ink-2">
+            <input
+              type="checkbox"
+              checked={resumen}
+              onChange={(e) => {
+                setResumen(e.target.checked);
+                void cambiarResumen(org.slug, e.target.checked);
+              }}
+              className="size-4 accent-ink"
+            />
+            Recibir un resumen diario por correo (7:00)
+          </label>
         </div>
       )}
     </div>

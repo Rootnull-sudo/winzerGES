@@ -126,6 +126,7 @@ function InviteDialog({ roles, onClose }: { roles: Role[]; onClose: () => void }
   const { org } = useOrg();
   const [pending, start] = useTransition();
   const [link, setLink] = useState<string | null>(null);
+  const [correo, setCorreo] = useState<{ email: string; estado?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [role, setRole] = useState('enologo');
@@ -135,7 +136,10 @@ function InviteDialog({ roles, onClose }: { roles: Role[]; onClose: () => void }
     start(async () => {
       const r = await inviteAction(org.slug, email, role);
       if (r.error) setError(r.error);
-      else setLink(r.link!);
+      else {
+        setLink(r.link!);
+        setCorreo({ email, estado: r.correo });
+      }
     });
   }
   return (
@@ -143,7 +147,7 @@ function InviteDialog({ roles, onClose }: { roles: Role[]; onClose: () => void }
       open
       onClose={onClose}
       title="Invitar a la viña"
-      description="Se genera un enlace personal válido por 7 días. Envíalo por correo o WhatsApp."
+      description="Le enviamos un correo con un enlace personal válido por 7 días. También puedes copiarlo y mandarlo por WhatsApp."
       footer={
         link ? (
           <Button variant="primary" onClick={onClose}>
@@ -155,7 +159,7 @@ function InviteDialog({ roles, onClose }: { roles: Role[]; onClose: () => void }
               Cancelar
             </Button>
             <Button type="submit" form="invite-form" variant="primary" disabled={pending}>
-              {pending ? 'Generando…' : 'Generar enlace'}
+              {pending ? 'Invitando…' : 'Invitar'}
             </Button>
           </>
         )
@@ -163,7 +167,14 @@ function InviteDialog({ roles, onClose }: { roles: Role[]; onClose: () => void }
     >
       {link ? (
         <div className="flex flex-col gap-3">
-          <p className="text-[14px]">Comparte este enlace. Solo funciona con el correo invitado.</p>
+          <p role="status" className="text-[14px]">
+            {correo?.estado === 'enviado'
+              ? `Enviamos la invitación a ${correo.email}. También puedes compartir el enlace:`
+              : correo?.estado === 'fallido'
+                ? `No pudimos enviar el correo a ${correo.email}. Comparte este enlace:`
+                : 'El correo no está configurado en este servidor: comparte este enlace.'}{' '}
+            Solo funciona con el correo invitado.
+          </p>
           <div className="flex gap-2">
             <Input readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="font-mono text-[12px]" />
             <Button

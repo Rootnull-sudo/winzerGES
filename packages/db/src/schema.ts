@@ -114,6 +114,8 @@ export const member = pgTable(
     /** Id de rol: predefinido (@winzer/domain ROLES) o personalizado (org_role.id). */
     role: text('role').notNull(),
     estado: text('estado').notNull().default('activo'),
+    /** Recibir por correo el resumen diario de avisos nuevos de esta viña (F0-8). */
+    resumenAlertas: boolean('resumen_alertas').notNull().default(false),
     createdAt: ts('created_at').notNull().defaultNow()
   },
   (t) => [primaryKey({ columns: [t.orgId, t.userId] }), index('member_user_idx').on(t.userId)]

@@ -12,3 +12,5 @@ export * from './services/adjuntos';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';
+export * from './correo/index';
+export * from './correo/envios';

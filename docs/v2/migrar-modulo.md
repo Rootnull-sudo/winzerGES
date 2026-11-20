@@ -66,8 +66,15 @@ no lo hagas en la pantalla ni con varias llamadas a `upsert`. Ver [adr/0010](adr
 
 - **Online**: un **servicio** en `packages/db/src/services/<accion>.ts` que recibe `(tx, actor, input)`, valida y
   escribe todo en la misma transacción. La Server Action solo lo llama.
-- **Offline**: una **reacción** registrada en `REACCIONES[<entidad>]`, que `sync/push` ejecuta en la misma
-  transacción del push. Tiene que ser idempotente (un reintento no duplica movimientos).
+- **Offline**: una **reacción** en `packages/db/src/reacciones/<modulo>.ts`, registrada con una línea en
+  `REACCIONES[<entidad>]` (`reacciones/index.ts`). `sync/push` la ejecuta en la misma transacción, después de
+  escribir. Recibe `(tx, actor, { op, previo, registro })`.
+  - Tiene que ser idempotente: un reintento no duplica movimientos.
+  - Escribe como sistema con `tx`: el permiso ya se verificó sobre la entidad que la disparó.
+  - Si lanza un error, la mutación completa se rechaza.
+  - Ejemplo: `reacciones/catastro.ts` (un cuartel con variedad nueva la agrega al maestro).
+- Si un servicio online escribe una entidad que tiene reacciones, llama a `reaccionar(tx, actor, …)` después de
+  escribir, para que el efecto sea el mismo online y offline.
 - Códigos y folios (`V-0001`, `OE-2026-0001`, folios DTE): `siguienteCodigo(tx, clave, prefijo)` dentro del servicio,
   nunca `count + 1` (v1 los repetía al borrar).
 - Stocks y saldos: no los guardes en columnas; usa o crea una vista `v_*` ([modelo-datos.md](modelo-datos.md#vistas-derivadas-sql)).

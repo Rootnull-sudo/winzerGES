@@ -28,7 +28,8 @@ En v2 hay servidor, transacciones, RLS y sync offline. Hay que decidir cómo se 
    - Reciben `(tx, actor, input)` y validan permisos y Zod.
    - Escriben todo dentro de la transacción de `withOrg` y auditan.
    - Las Server Actions solo llaman al servicio.
-5. **Reacciones de sync** para las entidades offline: `REACCIONES: Record<entidad, (tx, actor, registro, previo) => …>`.
+5. **Reacciones de sync** para las entidades offline: `REACCIONES: Record<entidad, ((tx, actor, { op, previo, registro }) => …)[]>`
+   en `packages/db/src/reacciones/`.
    - `sync/push` las ejecuta en la misma transacción después del `upsert`. Ejemplos: entrada de bodega → ficha de
      fermentación + estado del lote; aplicación → `mov_insumo`.
    - Deben ser **idempotentes**: un reintento del push no duplica movimientos. Se logra borrando y reescribiendo

@@ -9,6 +9,7 @@
 import { can, SYNC_ENTITIES, type Mutation, type PullResponse, type PushResult, type SyncRecord } from '@winzer/domain';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Tx } from './client';
+import { reaccionar } from './reacciones';
 import { ConflictError, softDelete, toData, upsert, type Actor } from './repo';
 import { syncTables } from './tables';
 import { withOrg } from './tenancy';
@@ -84,9 +85,11 @@ export async function push(actor: Actor, mutations: Mutation[]): Promise<PushRes
     try {
       const rec = await withOrg(actor.orgId, async (tx: Tx) => {
         if (m.op === 'delete') {
+          const [previo] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
           const r = await softDelete(tx, t, actor, meta, m.id);
-          const [cur] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
-          return r ?? cur ?? null;
+          // Solo reacciona si este push hizo el borrado (un reintento de un borrado ya aplicado no repite efectos).
+          if (r) await reaccionar(tx, actor, { entity: m.entity, op: 'delete', previo: previo ?? null, registro: r });
+          return r ?? previo ?? null;
         }
         const parsed = def.schema.safeParse({ ...(m.data ?? {}), id: m.id });
         if (!parsed.success) throw Object.assign(new Error(parsed.error.issues.map((i) => i.message).join(' ')), { status: 422 });
@@ -106,7 +109,11 @@ export async function push(actor: Actor, mutations: Mutation[]): Promise<PushRes
           const [cur] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
           if (cur && Number(cur.version) === m.baseVersion + 1 && cur.updatedBy === actor.userId && sameData(cur, data)) return cur;
         }
-        return upsert(tx, t, actor, meta, data, { baseVersion: m.baseVersion, checkVersion: true });
+        const [previo] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
+        const registro = await upsert(tx, t, actor, meta, data, { baseVersion: m.baseVersion, checkVersion: true });
+        // Efectos en otros módulos, en la misma transacción (ADR 0010).
+        await reaccionar(tx, actor, { entity: m.entity, op: 'upsert', previo: previo ?? null, registro });
+        return registro;
       });
       if (!rec) out.push({ mutationId: m.mutationId, status: 'rejected', message: 'Registro no encontrado.' });
       else out.push({ mutationId: m.mutationId, status: 'ok', record: toSyncRecord(m.entity, rec, t) });

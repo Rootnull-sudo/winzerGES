@@ -3,6 +3,7 @@ export * from './tenancy';
 export * from './repo';
 export * from './orgs';
 export * as sync from './sync';
+export { REACCIONES, reaccionar, type ContextoReaccion, type Reaccion } from './reacciones';
 export * from './import-v1';
 export * from './services/temporadas';
 export * from './services/secuencias';

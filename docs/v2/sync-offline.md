@@ -39,6 +39,8 @@ Cuerpo `{ mutations: Mutation[] }` (máx. 200; el motor envía de a 50). Por cad
 - `delete` → `softDelete` (permiso `d`).
 - `upsert` → Zod, unicidad, permiso `c`/`e`, y si `baseVersion` ≠ versión actual → `conflict` con el registro del servidor.
 - Reintento de algo ya aplicado (misma data, versión `base+1`, mismo usuario) → `ok` sin duplicar.
+- Después de escribir, las **reacciones** de la entidad (`REACCIONES`, `packages/db/src/reacciones/`) en la misma
+  transacción. Si una falla, la mutación entera se rechaza.
 
 Respuesta `{ results: PushResult[] }`. En el cliente: `ok` → se guarda la versión del servidor; `conflict` /
 `rejected` → se vuelve a la versión del servidor (o se quita si nunca existió) y se agrega un aviso a `issues`,

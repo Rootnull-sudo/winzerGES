@@ -33,6 +33,6 @@ describe('esquema multi-viña', () => {
   });
 
   it('tenant tables se derivan del esquema', () => {
-    expect(tenantTables.map(tableName).sort()).toEqual(['audit_log', 'cliente', 'cobro', 'cuartel', 'org_role', 'temporada', 'variedad']);
+    expect(tenantTables.map(tableName).sort()).toEqual(['audit_log', 'cliente', 'cobro', 'cuartel', 'org_role', 'secuencia', 'temporada', 'variedad']);
   });
 });

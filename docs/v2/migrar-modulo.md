@@ -68,6 +68,8 @@ no lo hagas en la pantalla ni con varias llamadas a `upsert`. Ver [adr/0010](adr
   escribe todo en la misma transacción. La Server Action solo lo llama.
 - **Offline**: una **reacción** registrada en `REACCIONES[<entidad>]`, que `sync/push` ejecuta en la misma
   transacción del push. Tiene que ser idempotente (un reintento no duplica movimientos).
+- Códigos y folios (`V-0001`, `OE-2026-0001`, folios DTE): `siguienteCodigo(tx, clave, prefijo)` dentro del servicio,
+  nunca `count + 1` (v1 los repetía al borrar).
 - Stocks y saldos: no los guardes en columnas; usa o crea una vista `v_*` ([modelo-datos.md](modelo-datos.md#vistas-derivadas-sql)).
 
 ## Orden

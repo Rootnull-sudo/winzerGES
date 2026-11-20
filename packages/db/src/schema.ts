@@ -315,3 +315,23 @@ export const temporada = pgTable(
     index('temporada_sync_idx').on(t.orgId, t.seq)
   ]
 );
+
+/* --- Núcleo: secuencias de códigos y folios (online) --- */
+/**
+ * Contador por viña y clave (`venta`, `orden_envasado:2026`, `dte:33`…). Se incrementa con un upsert que bloquea
+ * la fila hasta el fin de la transacción: dos ventas simultáneas nunca reciben el mismo número, y si la transacción
+ * se revierte el número no se consume (sin huecos). Ver services/secuencias.ts.
+ */
+export const secuencia = pgTable(
+  'secuencia',
+  {
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    clave: text('clave').notNull(),
+    /** Próximo número a entregar. */
+    siguiente: bigint('siguiente', { mode: 'number' }).notNull().default(1),
+    updatedAt: ts('updated_at').notNull().defaultNow()
+  },
+  (t) => [primaryKey({ columns: [t.orgId, t.clave] })]
+);

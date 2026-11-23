@@ -16,7 +16,7 @@ import { variedadDesdeCuartel } from './catastro';
 import { loteEnMolienda, validarMovimientoBodega } from './bodega';
 import { jornalesDeCosechaBorrada, loteEnVendimia } from './cosecha';
 import { efectosDeSO2, fichaBorrada, fichaDesdeEntrada, loteSegunFicha } from './fermentacion';
-import { consumoDeAplicacion } from './insumos';
+import { consumoDeAditivo, consumoDeAplicacion } from './insumos';
 
 export interface ContextoReaccion {
   entity: string;
@@ -37,7 +37,8 @@ export const REACCIONES: Record<string, readonly Reaccion[]> = {
   cosecha: [jornalesDeCosechaBorrada, loteEnVendimia],
   mov_bodega: [validarMovimientoBodega, loteEnMolienda, fichaDesdeEntrada],
   fermentacion: [loteSegunFicha, fichaBorrada],
-  adicion_so2: [efectosDeSO2]
+  adicion_so2: [efectosDeSO2],
+  aditivo: [consumoDeAditivo]
 };
 
 /** Ejecuta las reacciones registradas para la entidad, en orden. */

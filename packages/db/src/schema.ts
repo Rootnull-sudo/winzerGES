@@ -948,3 +948,33 @@ export const tarea = pgTable(
   },
   (t) => [index('tarea_estado_idx').on(t.orgId, t.estado)]
 );
+
+/* --- Vinificación: aditivos (F2-4, offline) --- */
+export const aditivo = pgTable(
+  'aditivo',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    loteId: text('lote_id')
+      .notNull()
+      .references(() => lote.id),
+    estanqueId: text('estanque_id').references(() => estanque.id),
+    /** bentonita | tartarico | tanino | enzima | levadura | nutriente | clarificante | otro (el SO₂ va en la ficha). */
+    tipo: text('tipo').notNull(),
+    insumoId: text('insumo_id')
+      .notNull()
+      .references(() => insumo.id),
+    volumen: num('volumen').notNull(),
+    dosis: num('dosis').notNull(),
+    /** g/hL (productos de masa) o mL/hL (líquidos). */
+    unidadDosis: text('unidad_dosis').notNull(),
+    /** Foto: cantidad en la unidad del insumo y su costo al registrar. */
+    cantidad: num('cantidad').notNull(),
+    costo: money('costo').notNull().default(0),
+    objetivo: text('objetivo'),
+    responsable: text('responsable'),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('aditivo_lote_idx').on(t.orgId, t.loteId), index('aditivo_sync_idx').on(t.orgId, t.seq)]
+);

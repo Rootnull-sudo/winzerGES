@@ -380,3 +380,7 @@ Corregidos al migrar el viñedo (F1):
 26. **SO₂ descontado siempre en kg** y **medición huérfana al borrar la adición**. → Unidad real del insumo; la reacción
     borra ambos.
 27. **°Brix 0 ignorado** en los tiempos de fermentación. → Cuenta como dato.
+28. **Dos caminos para el SO₂** (aditivo tipo SO₂ y adición en la ficha) que descontaban el insumo por separado. → Solo
+    la ficha; el importador omite los aditivos de SO₂ de v1.
+29. **Aditivos en kg fijos** aunque el insumo fuera líquido o en gramos. → Dosis en g/hL o mL/hL y cantidad
+    convertida a la unidad del insumo (el servidor la recalcula).

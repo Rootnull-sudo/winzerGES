@@ -9,6 +9,7 @@
  */
 import {
   adicionSO2Input,
+  aditivoInput,
   anioDeFecha,
   aplicacionInput,
   clienteInput,
@@ -46,6 +47,7 @@ import {
   cosecha,
   cuartel,
   adicionSO2,
+  aditivo,
   estanque,
   fenologia,
   fermentacion,
@@ -212,15 +214,26 @@ const IMPORTERS: Record<string, Importer> = {
     refs: ['fermentacionId', 'insumoId'],
     adaptar: (r) => ({ ...r, costo: Math.round(Number(r.costo) || 0) })
   },
+  // El SO₂ de v1 registrado como aditivo no tiene ficha: se omite (en v2 el SO₂ va en la ficha de fermentación).
+  aditivo: {
+    table: aditivo,
+    schema: aditivoInput,
+    meta: { entity: 'aditivo', module: 'vinificacion', label: 'aditivos' },
+    refs: ['loteId', 'estanqueId', 'insumoId'],
+    adaptar: (r) =>
+      r.tipo === 'so2'
+        ? null
+        : { ...r, unidadDosis: 'g/hL', cantidad: Number(r.cantidad) || 0, costo: Math.round(Number(r.costo) || 0), objetivo: r.objetivo ?? null }
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,
     meta: metaMovInsumo,
     entidadV2: 'mov_insumo',
     refs: ['insumoId'],
-    // Los consumos de aplicaciones y de SO₂ los vuelven a generar sus reacciones (no se duplican).
+    // Los consumos de aplicaciones, SO₂ y aditivos los vuelven a generar sus reacciones (no se duplican).
     adaptar: (r, orgId) =>
-      r.tipo === 'aplicacion' || r.tipo === 'so2'
+      r.tipo === 'aplicacion' || r.tipo === 'so2' || r.tipo === 'aditivo'
         ? null
         : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
   }

@@ -187,7 +187,7 @@ describe('importador v1', () => {
       cuartel: 3,
       cliente: 6,
       cobro: 2,
-      insumo: 6,
+      insumo: 7,
       movInsumo: 2,
       fenologia: 5,
       clima: 22,
@@ -197,7 +197,11 @@ describe('importador v1', () => {
       jornal: 3,
       lote: 5,
       estanque: 4,
-      movBodega: 6
+      movBodega: 6,
+      fermentacion: 2,
+      seguimiento: 17,
+      adicionSO2: 1,
+      aditivo: 2
     });
     expect(r1.omitidos).toEqual([]);
     expect(r1.pendientes).toEqual({ venta: 1, ordenEnvasado: 2 });

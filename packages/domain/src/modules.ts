@@ -34,7 +34,7 @@ export const MODULES: readonly ModuleDef[] = [
   m('cosecha', 'Cosecha', 'operacion', 'grape', 'v2'),
   m('calendario', 'Calendario de vendimia', 'operacion', 'calendar', 'v2'),
   m('laboratorio', 'Laboratorio', 'operacion', 'test-tube'),
-  m('vinificacion', 'Vinificación y aditivos', 'bodega', 'beaker'),
+  m('vinificacion', 'Vinificación y aditivos', 'bodega', 'beaker', 'v2'),
   m('fermentacion', 'Fermentación', 'bodega', 'thermometer', 'v2'),
   m('bodega', 'Control de bodega', 'bodega', 'container', 'v2'),
   m('historico', 'Histórico kg y litros', 'bodega', 'history'),

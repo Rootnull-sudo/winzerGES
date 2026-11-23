@@ -104,12 +104,15 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Hecho cuando**: un trasiego hecho offline se sincroniza como 2 o 3 movimientos con el mismo `grupo`, y la
   ocupación coincide con v1.
 
-### Vinificación y aditivos · ⬜ · F2 · M
-- **Tablas**: `aditivo`.
-- **Pantallas**: aditivos por lote, con cálculo de SO₂ (modo suave o moderado) y dosis g/hL, y costo enológico
-  acumulado por lote.
-- **Cálculos**: `oenology` (SO₂, ya portado) y `financial.costoLitroLote` (parte enológica).
-- **Reacción**: `mov_insumo` en la unidad correcta del insumo.
+### Vinificación y aditivos · ✅ · F2 · M
+- **Tablas**: `aditivo` (offline).
+- **Pantallas**: aplicaciones de aditivos por lote con dosis en g/hL o mL/hL y cantidad convertida a la unidad del
+  insumo; costo enológico acumulado por lote (aditivos + SO₂) y $/L enológico. El SO₂ se registra solo en la ficha de
+  fermentación (en v1 había dos caminos).
+- **Cálculos**: `cantidadAditivo` (dosis × volumen / 100, convertido a kg, g, L o mL) y la parte enológica de
+  `financial.costoLitroLote`.
+- **Reacción**: `consumoDeAditivo` recalcula la cantidad en el servidor y escribe `mov_insumo` en la unidad del
+  insumo; rechaza unidades no convertibles.
 - **Hecho cuando**: la conversión de unidades tiene tests en g, kg y L, y el costo por lote coincide con v1.
 
 ### Fermentación · ✅ (F2-3)

@@ -1,5 +1,8 @@
 import { rutClean, rutDV, rutFormat } from '@winzer/domain';
 
+/** Fecha ISO `base` + n días (para las curvas de demo). */
+const dia = (base: string, n: number) => new Date(Date.parse(`${base}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
 /** En v1 el seed recalculaba el dígito verificador (rutOk); aquí igual. */
 const rutOk = (r: string) => {
   const c = rutClean(r).slice(0, -1);
@@ -184,6 +187,7 @@ export const demoDump = {
         vencimiento: '2027-01-15',
         _demo: true
       },
+      { id: 'ins_bento', nombre: 'Bentonita sódica', categoria: 'enologico', tipo: 'Clarificante', unidad: 'kg', precio: 4200, stockInicial: 50, _demo: true },
       {
         id: 'ins_botella',
         nombre: 'Botella Bordelesa 750 mL',
@@ -194,6 +198,127 @@ export const demoDump = {
         stockInicial: 6000,
         stockMinimo: 2000,
         plazoEntrega: 15,
+        _demo: true
+      }
+    ],
+    fermentacion: [
+      {
+        id: 'fer_d1',
+        codigo: 'FA-L-2026-SB',
+        loteId: 'lot_d1',
+        estanqueId: 'est_d1',
+        tipo: 'blanco',
+        variedad: 'Sauvignon Blanc',
+        volumen: 2750,
+        brixInicial: 22.5,
+        phInicial: 3.28,
+        acidezInicial: 7.1,
+        levadura: 'Levadura seca activa',
+        temperaturaObjetivo: '14–16 °C',
+        diasPlanificados: 18,
+        fechaMolienda: '2026-03-11',
+        inicioFA: '2026-03-12',
+        inicioTumultuosa: '2026-03-14',
+        finFA: '2026-03-30',
+        alcoholFinal: 13.2,
+        azucarResidual: 2.1,
+        estado: 'cerrada',
+        _demo: true
+      },
+      {
+        id: 'fer_d2',
+        codigo: 'FA-L-2026-CS',
+        loteId: 'lot_d2',
+        estanqueId: 'est_d2',
+        tipo: 'tinto',
+        variedad: 'Cabernet Sauvignon',
+        volumen: 4150,
+        brixInicial: 24.6,
+        phInicial: 3.55,
+        acidezInicial: 5.9,
+        levadura: 'Levadura seca activa',
+        temperaturaObjetivo: '26–28 °C',
+        diasPlanificados: 10,
+        fechaMolienda: '2026-03-26',
+        inicioFA: '2026-03-27',
+        inicioTumultuosa: '2026-03-28',
+        finFA: '2026-04-08',
+        inicioMaceracion: '2026-03-27',
+        finMaceracion: '2026-04-15',
+        inicioFML: '2026-04-21',
+        finFML: '2026-05-20',
+        alcoholFinal: 14.1,
+        azucarResidual: 1.6,
+        estado: 'cerrada',
+        _demo: true
+      }
+    ],
+    seguimiento: [
+      ...[24.6, 22.1, 18.4, 14.2, 10.1, 6.3, 3.0, 0.4, -1.2].map((brix, i) => ({
+        id: `seg_d2_${i}`,
+        fermentacionId: 'fer_d2',
+        fecha: dia('2026-03-27', i),
+        brix,
+        temperatura: 24 + (i % 3) * 2,
+        so2Libre: i === 8 ? 18 : null,
+        responsable: 'Enólogo',
+        _demo: true
+      })),
+      ...[22.5, 20.2, 16.8, 12.9, 8.7, 4.4, 1.1, -1.0].map((brix, i) => ({
+        id: `seg_d1_${i}`,
+        fermentacionId: 'fer_d1',
+        fecha: dia('2026-03-12', i * 2),
+        brix,
+        temperatura: 15 + (i % 2),
+        responsable: 'Enólogo',
+        _demo: true
+      }))
+    ],
+    adicionSO2: [
+      {
+        id: 'so2_d1',
+        fermentacionId: 'fer_d2',
+        fecha: '2026-04-10',
+        insumoId: 'ins_mbk',
+        producto: 'Metabisulfito de potasio',
+        fraccion: 0.57,
+        gramos: 110,
+        volumen: 4100,
+        so2Previo: 18,
+        so2Medido: 32,
+        modo: 'suave',
+        motivo: 'Post FA',
+        costo: 715,
+        _demo: true
+      }
+    ],
+    aditivo: [
+      {
+        id: 'adi_d1',
+        fecha: '2026-03-12',
+        loteId: 'lot_d1',
+        estanqueId: 'est_d1',
+        tipo: 'bentonita',
+        insumoId: 'ins_bento',
+        volumen: 2750,
+        dosis: 40,
+        cantidad: 1.1,
+        costo: 4620,
+        objetivo: 'Estabilidad proteica',
+        _demo: true
+      },
+      {
+        id: 'adi_d2',
+        fecha: '2026-03-27',
+        loteId: 'lot_d2',
+        estanqueId: 'est_d2',
+        tipo: 'levadura',
+        insumoId: 'ins_levadura',
+        volumen: 4150,
+        dosis: 25,
+        cantidad: 1.0375,
+        costo: 101675,
+        objetivo: 'Inoculación',
         _demo: true
       }
     ],

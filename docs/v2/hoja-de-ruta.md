@@ -64,7 +64,7 @@ flowchart LR
 | F2-1 Lotes, ventanas y calendario (Gantt) + reacción de cosecha (lote Planificado → En vendimia, también al asignar el lote después; FK `cosecha.lote_id`; campo lote en la cosecha) ✅. Los cuarteles del lote van en `lote.cuartel_ids` (sin tabla intermedia, para offline) | `lote`, `ventana` | L |
 | F2-2 Estanques y movimientos (entrada, trasiego, merma) + vistas + balance; grupos atómicos en el sync ✅ | `estanque`, `mov_bodega` | L |
 | F2-3 Fermentación, seguimiento y SO₂ + reacciones (+ `tarea` y bandeja en la campana, que crea la reacción de fin de FA) ✅ | `fermentacion`, `seguimiento`, `adicion_so2`, `tarea` | L |
-| F2-4 Vinificación y aditivos (conversión de unidades) | `aditivo` | M |
+| F2-4 Vinificación y aditivos (conversión de unidades) ✅ | `aditivo` | M |
 | F2-5 Laboratorio (+ adjunto del informe) | `analisis` | S |
 | F2-6 Histórico kg y litros | — | S |
 | F2-7 Reglas de alerta de bodega | — | S |

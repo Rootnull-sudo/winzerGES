@@ -647,3 +647,36 @@ test('fermentación: ciclo de una ficha sin señal, con adición de SO₂ y avis
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(page.getByRole('button', { name: new RegExp(codigo) })).toHaveCount(0);
 });
+
+test('vinificación: aditivo sin señal con conversión de unidades y costo enológico del lote', async ({ page, context }) => {
+  await login(page, 'enologo@winzer.test');
+  await page.goto('/vina-demo/vinificacion?t=2026');
+  await waitSynced(page);
+  const costo = page.getByRole('region', { name: 'Costo enológico por lote' }).getByRole('row', { name: /L-2026-SB/ });
+  const antes = await costo.innerText();
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Registrar aplicación' }).click();
+  const d = page.getByRole('dialog', { name: 'Registrar aplicación' });
+  await d.getByLabel('Lote').selectOption({ label: 'L-2026-SB · Sauvignon Blanc' });
+  await d.getByLabel('Producto').selectOption({ label: 'Bentonita sódica (kg)' });
+  await d.getByLabel('Volumen tratado').fill('2000');
+  await d.getByLabel('Dosis').fill('50');
+  await expect(d.getByLabel('Cálculo')).toContainText('1 kg'); // 50 g/hL × 2.000 L = 1.000 g
+  await expect(d.getByLabel('Cálculo')).toContainText('$4.200');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect.poll(() => costo.innerText()).not.toBe(antes);
+  await page.screenshot(shots('21-vinificacion'));
+  await context.setOffline(false);
+  await waitSynced(page);
+
+  // Limpieza.
+  await page
+    .getByRole('row', { name: /Bentonita sódica.*2\.000 L/ })
+    .first()
+    .click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect.poll(() => costo.innerText(), { timeout: 15_000 }).toBe(antes);
+});

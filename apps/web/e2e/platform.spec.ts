@@ -540,3 +540,55 @@ test('calendario: lote creado sin señal, en el Gantt, y la cosecha lo pasa a «
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(page.getByRole('row', { name: new RegExp(codigo) })).toHaveCount(0);
 });
+
+test('bodega: un trasiego sin señal se sincroniza como una sola operación y la ocupación cuadra', async ({ page, context }) => {
+  const litrosDe = async (codigo: string) =>
+    Number(
+      (
+        (
+          await page
+            .getByRole('list', { name: 'Estanques' })
+            .getByRole('button', { name: new RegExp(`^${codigo}`) })
+            .innerText()
+        ).match(/([\d.]+) L \//)?.[1] ?? '0'
+      ).replace(/\./g, '')
+    );
+  await login(page, 'enologo@winzer.test');
+  await page.goto('/vina-demo/bodega?t=2026');
+  await waitSynced(page);
+  const [e1, e3] = [await litrosDe('E-01'), await litrosDe('E-03')];
+  expect(e3).toBeGreaterThan(1000);
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Trasiego' }).click();
+  const d = page.getByRole('dialog', { name: 'Registrar trasiego' });
+  const origen = d.getByLabel('Estanque de origen');
+  await origen.selectOption((await origen.locator('option', { hasText: 'E-03' }).getAttribute('value'))!);
+  await d.getByLabel('Estanque de destino').selectOption({ index: 1 });
+  const destino = ((await d.getByLabel('Estanque de destino').locator('option:checked').innerText()).split(' · ')[0] ?? '').trim();
+  await d.getByLabel('Litros trasegados').fill('1000');
+  await d.getByLabel(/Merma en el trasiego/).fill('20');
+  await d.getByRole('button', { name: 'Registrar trasiego' }).click();
+  await expect(d).toHaveCount(0);
+  expect(await litrosDe('E-03')).toBe(e3 - 1020);
+  await page.screenshot(shots('19-bodega-offline'));
+
+  await context.setOffline(false);
+  await waitSynced(page);
+  await page.reload();
+  await waitSynced(page);
+  expect(await litrosDe('E-03')).toBe(e3 - 1020);
+  if (destino === 'E-01') expect(await litrosDe('E-01')).toBe(e1 + 1000);
+
+  // Limpieza: borrar el trasiego completo (los tres movimientos juntos).
+  await page.getByRole('tab', { name: 'Movimientos' }).click();
+  page.once('dialog', (x) => x.accept());
+  await page
+    .getByRole('row', { name: /Trasiego \(salida\)/ })
+    .first()
+    .click();
+  await waitSynced(page);
+  await page.getByRole('tab', { name: 'Estanques' }).click();
+  await expect.poll(() => litrosDe('E-03'), { timeout: 20_000 }).toBe(e3);
+});

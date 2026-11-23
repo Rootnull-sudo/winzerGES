@@ -46,6 +46,10 @@ Antes de empezar, lee la ficha del módulo en [modulos.md](modulos.md) y sus tab
   - `soloLectura: true`: se sincroniza para leer sin señal, pero se escribe solo en línea con un servicio (p. ej.
     el maestro de insumos). El motor offline y el push rechazan escribirla.
   - `readAll: true`: maestro que reciben todos los roles (p. ej. temporadas).
+- Una operación que escribe varios registros que deben ir juntos (trasiego) usa `engine.escribirGrupo([...])`: el
+  servidor la aplica completa o la rechaza completa.
+- Las reglas que dependen del estado acumulado (capacidad, stock) se validan **también en el servidor** con una
+  reacción que lanza `ReglaError` (ver `reacciones/bodega.ts`); la validación del cliente es solo ayuda.
 - Lee con `useEntity<T>('<entidad>')` (devuelve `undefined` mientras carga: muestra un esqueleto).
 - Escribe con `useSync()?.write('<entidad>', 'upsert' | 'delete', id | null, data)`. Lanza `Error` con el mensaje
   de Zod si los datos son inválidos; muéstralo junto al campo.

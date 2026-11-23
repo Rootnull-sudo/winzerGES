@@ -39,6 +39,9 @@ Cuerpo `{ mutations: Mutation[] }` (máx. 200; el motor envía de a 50). Por cad
 - `delete` → `softDelete` (permiso `d`).
 - `upsert` → Zod, unicidad, permiso `c`/`e`, y si `baseVersion` ≠ versión actual → `conflict` con el registro del servidor.
 - Reintento de algo ya aplicado (misma data, versión `base+1`, mismo usuario) → `ok` sin duplicar.
+- **Grupos atómicos**: las mutaciones consecutivas con el mismo `grupo` (p. ej. salida + entrada + merma de un
+  trasiego, o su borrado) se aplican en **una** transacción: entran todas o ninguna. En el cliente se escriben con
+  `engine.escribirGrupo([...])`, y el envío nunca corta un grupo entre dos lotes.
 - Después de escribir, las **reacciones** de la entidad (`REACCIONES`, `packages/db/src/reacciones/`) en la misma
   transacción. Si una falla, la mutación entera se rechaza.
 

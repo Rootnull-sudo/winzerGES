@@ -771,3 +771,62 @@ export const ventana = pgTable(
     index('ventana_sync_idx').on(t.orgId, t.seq)
   ]
 );
+
+/* --- Control de bodega: estanques y libro de movimientos (F2-2, offline) --- */
+export const estanque = pgTable(
+  'estanque',
+  {
+    ...base(),
+    ...syncCols(),
+    codigo: text('codigo').notNull(),
+    /** Litros. */
+    capacidad: num('capacidad').notNull(),
+    material: text('material'),
+    tipo: text('tipo'),
+    ubicacion: text('ubicacion'),
+    /** operativo | mantencion | reservado (ocupado/vacío se calcula con los movimientos). */
+    estado: text('estado').notNull().default('operativo'),
+    costoMantencion: money('costo_mantencion')
+  },
+  (t) => [
+    uniqueIndex('estanque_codigo_uq')
+      .on(t.orgId, sql`lower(${t.codigo})`)
+      .where(sql`${t.deletedAt} is null`),
+    index('estanque_sync_idx').on(t.orgId, t.seq)
+  ]
+);
+
+/** Libro de movimientos de vino (solo agregar). Litros del estanque = Σ litros (v_stock_estanque). */
+export const movBodega = pgTable(
+  'mov_bodega',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    estanqueId: text('estanque_id')
+      .notNull()
+      .references(() => estanque.id),
+    loteId: text('lote_id')
+      .notNull()
+      .references(() => lote.id),
+    /** Con signo: + entra, − sale. */
+    litros: num('litros').notNull(),
+    /** entrada | trasiego_salida | trasiego_entrada | merma | vinagre | envasado | venta_granel | ajuste */
+    tipo: text('tipo').notNull(),
+    /** uva | mosto | vino (solo entradas). */
+    origen: text('origen'),
+    kgUva: num('kg_uva'),
+    /** Movimientos de una misma operación (trasiego). */
+    grupo: text('grupo'),
+    motivo: text('motivo'),
+    glosa: text('glosa'),
+    origenTipo: text('origen_tipo'),
+    origenId: text('origen_id')
+  },
+  (t) => [
+    index('mov_bodega_estanque_idx').on(t.orgId, t.estanqueId),
+    index('mov_bodega_lote_idx').on(t.orgId, t.loteId),
+    index('mov_bodega_grupo_idx').on(t.orgId, t.grupo),
+    index('mov_bodega_sync_idx').on(t.orgId, t.seq)
+  ]
+);

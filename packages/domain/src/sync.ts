@@ -14,6 +14,7 @@ import { aplicacionInput, laborInput } from './entities/aplicacion';
 import { cosechaInput, jornalInput } from './entities/cosecha';
 import { climaInput, fenologiaInput } from './entities/fenologia';
 import { loteInput, ventanaInput } from './entities/lote';
+import { estanqueInput, movBodegaInput } from './entities/bodega';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
 
@@ -88,6 +89,14 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
     schema: ventanaInput,
     unique: [{ campos: ['variedad', 'valle'], mensaje: 'Ya hay una ventana para esa variedad y valle.' }]
   },
+  estanque: {
+    entity: 'estanque',
+    module: 'bodega',
+    label: 'estanques',
+    schema: estanqueInput,
+    unique: [{ campos: ['codigo'], mensaje: 'Ya existe un estanque con ese código.' }]
+  },
+  mov_bodega: { entity: 'mov_bodega', module: 'bodega', label: 'movimientos de bodega', schema: movBodegaInput, sensitive: true },
   cosecha: { entity: 'cosecha', module: 'cosecha', label: 'cosechas', schema: cosechaInput },
   jornal: { entity: 'jornal', module: 'cosecha', label: 'jornales', schema: jornalInput, sensitive: true },
   clima: {
@@ -111,6 +120,8 @@ export interface Mutation {
   baseVersion: number | null;
   data?: Record<string, unknown>;
   createdAt: string;
+  /** Grupo atómico: las mutaciones consecutivas con el mismo grupo se aplican todas o ninguna (p. ej. un trasiego). */
+  grupo?: string;
 }
 
 export interface SyncRecord {

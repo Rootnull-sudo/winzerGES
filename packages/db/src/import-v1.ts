@@ -15,11 +15,13 @@ import {
   cobroInput,
   cosechaInput,
   cuartelInput,
+  estanqueInput,
   fenologiaInput,
   insumoInput,
   jornalInput,
   laborInput,
   loteInput,
+  movBodegaInput,
   movInsumoInput,
   rangoPorDefecto,
   variedadInput,
@@ -40,12 +42,14 @@ import {
   cobro,
   cosecha,
   cuartel,
+  estanque,
   fenologia,
   insumo,
   insumoPrecio,
   jornal,
   labor,
   lote,
+  movBodega,
   movInsumo,
   variedad,
   ventana
@@ -164,6 +168,19 @@ const IMPORTERS: Record<string, Importer> = {
     meta: { entity: 'jornal', module: 'cosecha', label: 'jornales' },
     refs: ['cosechaId'],
     adaptar: ({ fecha: _f, pago: _p, ...r }) => r
+  },
+  estanque: { table: estanque, schema: estanqueInput, meta: { entity: 'estanque', module: 'bodega', label: 'estanques' } },
+  // Envasado y ventas a granel llegan con sus documentos (F5): por ahora se omiten.
+  movBodega: {
+    table: movBodega,
+    schema: movBodegaInput,
+    meta: { entity: 'mov_bodega', module: 'bodega', label: 'movimientos de bodega' },
+    entidadV2: 'mov_bodega',
+    refs: ['estanqueId', 'loteId'],
+    adaptar: (r, orgId) =>
+      r.tipo === 'envasado' || r.tipo === 'venta_granel'
+        ? null
+        : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, grupo: r.grupo ? String(r.grupo) : null }
   },
   movInsumo: {
     table: movInsumo,

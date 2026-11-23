@@ -91,7 +91,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 
 ## Vinificación y bodega (offline)
 
-### Control de bodega · ⬜ · F2 · L
+### Control de bodega · ✅ (F2-2)
 - **Tablas**: `estanque`, `mov_bodega`, vistas `v_stock_estanque`, `v_ocupacion` y `v_balance_lote`.
 - **Pantallas**:
   - grilla de estanques con su nivel y KPIs de ocupación;

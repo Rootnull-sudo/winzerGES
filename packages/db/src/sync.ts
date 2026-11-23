@@ -67,67 +67,104 @@ export async function pull(actor: Actor, cursor: string | null, limit = 500): Pr
   });
 }
 
+class Rechazo extends Error {
+  readonly status = 422;
+}
+
+/** Aplica una mutación dentro de una transacción ya abierta. Lanza si se rechaza. */
+async function aplicar(tx: Tx, actor: Actor, m: Mutation): Promise<Record<string, unknown> | null> {
+  const def = SYNC_ENTITIES[m.entity];
+  const t = tableOf(m.entity);
+  if (!def || !t) throw new Rechazo(`Entidad no sincronizable: ${m.entity}`);
+  if (def.soloLectura) throw new Rechazo(`Las ${def.label} se editan con conexión.`);
+  const meta = { entity: def.entity, module: def.module, label: def.label, sensitive: def.sensitive };
+  if (m.op === 'delete') {
+    const [previo] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
+    const r = await softDelete(tx, t, actor, meta, m.id);
+    // Solo reacciona si este push hizo el borrado (un reintento de un borrado ya aplicado no repite efectos).
+    if (r) await reaccionar(tx, actor, { entity: m.entity, op: 'delete', previo: previo ?? null, registro: r });
+    return r ?? previo ?? null;
+  }
+  const parsed = def.schema.safeParse({ ...(m.data ?? {}), id: m.id });
+  if (!parsed.success) throw new Rechazo(parsed.error.issues.map((i) => i.message).join(' '));
+  const data = parsed.data as Record<string, unknown> & { id: string };
+  for (const u of def.unique ?? []) {
+    const { campos, mensaje } = claveUnica(u, data);
+    const iguales = campos.map((k) => sql`lower(coalesce(${(t as any)[k]}::text, '')) = lower(${String(data[k] ?? '')})`);
+    const dup = await tx
+      .select({ id: t.id })
+      .from(t)
+      .where(and(...iguales, sql`${t.id} <> ${m.id}`, sql`${t.deletedAt} is null`))
+      .limit(1);
+    if (dup.length) throw new Rechazo(mensaje);
+  }
+  // Reintento de una mutación ya aplicada (se perdió la respuesta): mismo contenido, versión +1.
+  if (m.baseVersion != null) {
+    const [cur] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
+    if (cur && Number(cur.version) === m.baseVersion + 1 && cur.updatedBy === actor.userId && sameData(cur, data)) return cur;
+  }
+  const [previo] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
+  const registro = await upsert(tx, t, actor, meta, data, { baseVersion: m.baseVersion, checkVersion: true });
+  // Efectos en otros módulos, en la misma transacción (ADR 0010).
+  await reaccionar(tx, actor, { entity: m.entity, op: 'upsert', previo: previo ?? null, registro });
+  return registro;
+}
+
+function resultadoError(m: Mutation, e: unknown): PushResult {
+  const t = tableOf(m.entity);
+  if (e instanceof ConflictError) {
+    return { mutationId: m.mutationId, status: 'conflict', message: e.message, record: e.current && t ? toSyncRecord(m.entity, e.current, t) : null };
+  }
+  const err = e as Error & { status?: number };
+  if (!err.status) console.error('[sync.push]', e);
+  return { mutationId: m.mutationId, status: 'rejected', message: err.status ? err.message : 'Error interno al guardar.' };
+}
+
 /**
  * Aplica mutaciones en orden. Cada una en su propia transacción: una rechazada no bloquea a las demás.
+ * Excepción: las mutaciones consecutivas con el mismo `grupo` (p. ej. salida + entrada + merma de un trasiego) se
+ * aplican juntas en UNA transacción: o entran todas o ninguna, así un rechazo nunca deja la operación a medias.
  * Idempotencia: el id del registro lo genera el cliente; reenviar un upsert ya aplicado con la misma
  * baseVersion se detecta como "ya aplicado" comparando contra la versión actual.
  */
 export async function push(actor: Actor, mutations: Mutation[]): Promise<PushResult[]> {
   const out: PushResult[] = [];
-  for (const m of mutations) {
-    const def = SYNC_ENTITIES[m.entity];
-    const t = tableOf(m.entity);
-    if (!def || !t) {
-      out.push({ mutationId: m.mutationId, status: 'rejected', message: `Entidad no sincronizable: ${m.entity}` });
-      continue;
-    }
-    if (def.soloLectura) {
-      out.push({ mutationId: m.mutationId, status: 'rejected', message: `Las ${def.label} se editan con conexión.` });
-      continue;
-    }
-    const meta = { entity: def.entity, module: def.module, label: def.label, sensitive: def.sensitive };
+  for (let i = 0; i < mutations.length;) {
+    const m = mutations[i]!;
+    let j = i + 1;
+    if (m.grupo) while (j < mutations.length && mutations[j]!.grupo === m.grupo) j++;
+    const lote = mutations.slice(i, j);
+    i = j;
+    let fallo: { m: Mutation; e: unknown } | null = null;
     try {
-      const rec = await withOrg(actor.orgId, async (tx: Tx) => {
-        if (m.op === 'delete') {
-          const [previo] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
-          const r = await softDelete(tx, t, actor, meta, m.id);
-          // Solo reacciona si este push hizo el borrado (un reintento de un borrado ya aplicado no repite efectos).
-          if (r) await reaccionar(tx, actor, { entity: m.entity, op: 'delete', previo: previo ?? null, registro: r });
-          return r ?? previo ?? null;
+      const recs = await withOrg(actor.orgId, async (tx: Tx) => {
+        const rs: (Record<string, unknown> | null)[] = [];
+        for (const x of lote) {
+          try {
+            rs.push(await aplicar(tx, actor, x));
+          } catch (e) {
+            fallo = { m: x, e };
+            throw e;
+          }
         }
-        const parsed = def.schema.safeParse({ ...(m.data ?? {}), id: m.id });
-        if (!parsed.success) throw Object.assign(new Error(parsed.error.issues.map((i) => i.message).join(' ')), { status: 422 });
-        const data = parsed.data as Record<string, unknown> & { id: string };
-        for (const u of def.unique ?? []) {
-          const { campos, mensaje } = claveUnica(u, data);
-          const iguales = campos.map((k) => sql`lower(coalesce(${(t as any)[k]}::text, '')) = lower(${String(data[k] ?? '')})`);
-          const dup = await tx
-            .select({ id: t.id })
-            .from(t)
-            .where(and(...iguales, sql`${t.id} <> ${m.id}`, sql`${t.deletedAt} is null`))
-            .limit(1);
-          if (dup.length) throw Object.assign(new Error(mensaje), { status: 422 });
-        }
-        // Reintento de una mutación ya aplicada (se perdió la respuesta): mismo contenido, versión +1.
-        if (m.baseVersion != null) {
-          const [cur] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
-          if (cur && Number(cur.version) === m.baseVersion + 1 && cur.updatedBy === actor.userId && sameData(cur, data)) return cur;
-        }
-        const [previo] = (await tx.select().from(t).where(eq(t.id, m.id))) as Record<string, unknown>[];
-        const registro = await upsert(tx, t, actor, meta, data, { baseVersion: m.baseVersion, checkVersion: true });
-        // Efectos en otros módulos, en la misma transacción (ADR 0010).
-        await reaccionar(tx, actor, { entity: m.entity, op: 'upsert', previo: previo ?? null, registro });
-        return registro;
+        return rs;
       });
-      if (!rec) out.push({ mutationId: m.mutationId, status: 'rejected', message: 'Registro no encontrado.' });
-      else out.push({ mutationId: m.mutationId, status: 'ok', record: toSyncRecord(m.entity, rec, t) });
+      lote.forEach((x, k) => {
+        const rec = recs[k];
+        const t = tableOf(x.entity)!;
+        out.push(
+          rec
+            ? { mutationId: x.mutationId, status: 'ok', record: toSyncRecord(x.entity, rec, t) }
+            : { mutationId: x.mutationId, status: 'rejected', message: 'Registro no encontrado.' }
+        );
+      });
     } catch (e) {
-      if (e instanceof ConflictError) {
-        out.push({ mutationId: m.mutationId, status: 'conflict', message: e.message, record: e.current ? toSyncRecord(m.entity, e.current, t) : null });
-      } else {
-        const err = e as Error & { status?: number };
-        if (!err.status) console.error('[sync.push]', e);
-        out.push({ mutationId: m.mutationId, status: 'rejected', message: err.status ? err.message : 'Error interno al guardar.' });
+      const f = (fallo as { m: Mutation; e: unknown } | null) ?? { m: lote[0]!, e };
+      const r = resultadoError(f.m, f.e);
+      for (const x of lote) {
+        if (x === f.m) out.push(r);
+        // El resto del grupo se revierte con el mismo motivo.
+        else out.push({ mutationId: x.mutationId, status: 'rejected', message: r.status === 'ok' ? '' : `No se aplicó la operación completa: ${r.message}` });
       }
     }
   }

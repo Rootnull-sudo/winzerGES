@@ -20,5 +20,42 @@ export const VISTAS: Vista[] = [
           left join mov_insumo m on m.insumo_id = i.id and m.deleted_at is null
           where i.deleted_at is null
           group by i.id`
+  },
+  {
+    // Litros por estanque y lote (v1: inventory.lotesEnEstanque); solo lo que supera 0,5 L.
+    nombre: 'v_stock_estanque',
+    sql: `select m.org_id, m.estanque_id, m.lote_id, sum(m.litros) as litros
+          from mov_bodega m
+          where m.deleted_at is null
+          group by m.org_id, m.estanque_id, m.lote_id
+          having sum(m.litros) > 0.5`
+  },
+  {
+    // Ocupación por estanque (v1: inventory.ocupacion / estadoEstanque).
+    nombre: 'v_ocupacion',
+    sql: `select e.org_id, e.id as estanque_id, e.codigo, e.capacidad, e.estado,
+            coalesce(sum(m.litros), 0) as litros,
+            case when e.capacidad > 0 then coalesce(sum(m.litros), 0) / e.capacidad else 0 end as pct
+          from estanque e
+          left join mov_bodega m on m.estanque_id = e.id and m.deleted_at is null
+          where e.deleted_at is null
+          group by e.id`
+  },
+  {
+    // Balance por lote (v1: inventory.balanceLote) + kg de uva cosechados y rendimiento L/kg (v2).
+    nombre: 'v_balance_lote',
+    sql: `select l.org_id, l.id as lote_id, l.codigo, l.temporada_id, l.tipo, l.variedad,
+            coalesce(sum(m.litros) filter (where m.tipo = 'entrada'), 0) as entradas,
+            -coalesce(sum(m.litros) filter (where m.tipo = 'envasado'), 0) as envasado,
+            -coalesce(sum(m.litros) filter (where m.tipo = 'venta_granel'), 0) as venta_granel,
+            -coalesce(sum(m.litros) filter (where m.tipo = 'merma'), 0) as merma,
+            -coalesce(sum(m.litros) filter (where m.tipo = 'vinagre'), 0) as vinagre,
+            coalesce(sum(m.litros) filter (where m.tipo = 'ajuste'), 0) as ajustes,
+            coalesce(sum(m.litros), 0) as stock,
+            (select coalesce(sum(c.kg), 0) from cosecha c where c.lote_id = l.id and c.deleted_at is null) as kg_uva
+          from lote l
+          left join mov_bodega m on m.lote_id = l.id and m.deleted_at is null
+          where l.deleted_at is null
+          group by l.id`
   }
 ];

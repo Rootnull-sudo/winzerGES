@@ -99,6 +99,13 @@
       "when": 1795450188633,
       "tag": "0013_lotes",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795462100525,
+      "tag": "0014_bodega",
+      "breakpoints": true
     }
   ]
 }

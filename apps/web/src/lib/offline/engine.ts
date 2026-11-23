@@ -76,6 +76,54 @@ export class SyncEngine {
   }
 
   /** Crea/edita/borra localmente y encola. Lanza Error con mensaje si los datos no son válidos. */
+  /**
+   * Escribe varias operaciones como un GRUPO ATÓMICO (p. ej. salida + entrada + merma de un trasiego, o su
+   * borrado): se validan todas antes de encolar nada y el servidor las aplica todas o ninguna. Las altas son
+   * registros nuevos; los borrados, registros existentes. Devuelve los ids.
+   */
+  async escribirGrupo(items: { entity: string; op?: 'upsert' | 'delete'; id?: string; data?: Record<string, unknown> }[]): Promise<string[]> {
+    const grupo = uuid();
+    const listos = items.map(({ entity, op = 'upsert', id, data }) => {
+      const def = SYNC_ENTITIES[entity];
+      if (!def) throw new Error(`Entidad no disponible offline: ${entity}`);
+      if (def.soloLectura) throw new Error(`Las ${def.label} se editan con conexión. Sin señal solo se pueden consultar.`);
+      const recId = id ?? uuid();
+      if (op === 'delete') return { entity, op, id: recId, clean: undefined };
+      const r = def.schema.safeParse({ ...data, id: recId });
+      if (!r.success) throw Object.assign(new Error(r.error.issues[0]?.message ?? 'Datos inválidos.'), { issues: r.error.issues });
+      return { entity, op, id: recId, clean: r.data as Record<string, unknown> };
+    });
+    await this.db.transaction('rw', this.db.records, this.db.outbox, async () => {
+      for (const x of listos) {
+        const key = `${x.entity}:${x.id}`;
+        const cur = await this.db.records.get(key);
+        await this.db.outbox.add({
+          mutationId: uuid(),
+          entity: x.entity,
+          op: x.op,
+          id: x.id,
+          baseVersion: cur?.server?.version ?? null,
+          data: x.clean,
+          createdAt: new Date().toISOString(),
+          grupo
+        });
+        await this.db.records.put({
+          key,
+          entity: x.entity,
+          id: x.id,
+          version: cur?.version ?? 0,
+          deleted: x.op === 'delete',
+          data: { ...(cur?.data ?? {}), ...(x.clean ?? {}), id: x.id },
+          pending: true,
+          server: cur?.server ?? null
+        });
+      }
+    });
+    await this.refreshPending();
+    void this.sync();
+    return listos.map((x) => x.id);
+  }
+
   async write(entity: string, op: 'upsert' | 'delete', id: string | null, data?: Record<string, unknown>) {
     const def = SYNC_ENTITIES[entity];
     if (!def) throw new Error(`Entidad no disponible offline: ${entity}`);
@@ -189,6 +237,16 @@ export class SyncEngine {
     for (;;) {
       const batch = await this.db.outbox.orderBy('seq').limit(50).toArray();
       if (!batch.length) return;
+      // Un grupo atómico nunca se corta entre dos envíos: el servidor lo aplica entero o lo rechaza entero.
+      const ultimo = batch[batch.length - 1]!;
+      if (ultimo.grupo) {
+        const resto = await this.db.outbox
+          .where('seq')
+          .above(ultimo.seq!)
+          .filter((x) => x.grupo === ultimo.grupo)
+          .toArray();
+        batch.push(...resto);
+      }
       const { results } = await this.api<PushResponse>('push', { method: 'POST', body: JSON.stringify({ mutations: batch }) });
       await this.db.transaction('rw', this.db.records, this.db.outbox, this.db.issues, async () => {
         for (const r of results) {

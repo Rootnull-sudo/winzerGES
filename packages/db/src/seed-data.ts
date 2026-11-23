@@ -400,6 +400,77 @@ export const demoDump = {
         _demo: true
       }
     ],
+    estanque: [
+      {
+        id: 'est_d1',
+        codigo: 'E-01',
+        capacidad: 16000,
+        material: 'Acero inoxidable',
+        tipo: 'Fermentación con camisa de frío',
+        ubicacion: 'Nave 1',
+        estado: 'operativo',
+        _demo: true
+      },
+      {
+        id: 'est_d2',
+        codigo: 'E-02',
+        capacidad: 20000,
+        material: 'Acero inoxidable',
+        tipo: 'Fermentación tintos',
+        ubicacion: 'Nave 1',
+        estado: 'operativo',
+        _demo: true
+      },
+      { id: 'est_d3', codigo: 'E-03', capacidad: 12000, material: 'Hormigón epóxico', tipo: 'Guarda', ubicacion: 'Nave 2', estado: 'operativo', _demo: true },
+      {
+        id: 'est_d4',
+        codigo: 'E-04',
+        capacidad: 8000,
+        material: 'Acero inoxidable',
+        tipo: 'Pulmón de embotellado',
+        ubicacion: 'Nave 2',
+        estado: 'mantencion',
+        _demo: true
+      }
+    ],
+    movBodega: [
+      { id: 'mb_d1', fecha: '2026-03-11', estanqueId: 'est_d1', loteId: 'lot_d1', litros: 2750, tipo: 'entrada', origen: 'mosto', kgUva: 3990, _demo: true },
+      { id: 'mb_d2', fecha: '2026-03-26', estanqueId: 'est_d2', loteId: 'lot_d2', litros: 4150, tipo: 'entrada', origen: 'uva', kgUva: 5850, _demo: true },
+      {
+        id: 'mb_d3',
+        fecha: '2026-04-20',
+        estanqueId: 'est_d2',
+        loteId: 'lot_d2',
+        litros: -4000,
+        tipo: 'trasiego_salida',
+        grupo: 'tr_d1',
+        glosa: 'Descube',
+        _demo: true
+      },
+      {
+        id: 'mb_d4',
+        fecha: '2026-04-20',
+        estanqueId: 'est_d3',
+        loteId: 'lot_d2',
+        litros: 3880,
+        tipo: 'trasiego_entrada',
+        grupo: 'tr_d1',
+        glosa: 'Descube',
+        _demo: true
+      },
+      {
+        id: 'mb_d5',
+        fecha: '2026-04-20',
+        estanqueId: 'est_d2',
+        loteId: 'lot_d2',
+        litros: -120,
+        tipo: 'merma',
+        grupo: 'tr_d1',
+        motivo: 'Borras de trasiego',
+        _demo: true
+      },
+      { id: 'mb_d6', fecha: '2026-05-10', estanqueId: 'est_d1', loteId: 'lot_d1', litros: -60, tipo: 'merma', motivo: 'Borras', _demo: true }
+    ],
     cosecha: [
       {
         id: 'cos_d1',

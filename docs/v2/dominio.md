@@ -368,9 +368,10 @@ Corregidos al migrar el viñedo (F1):
 18. **Desborre faltante dibujado como 0** en el gráfico. → Se omite.
 19. **Historial de precios sin el precio inicial** y nunca visible. → `insumo_precio` con el inicial, en el diálogo.
 20. **Jornal por día sin jornadas pagaba 1 día**. → Es obligatorio.
+21. **Alertas de carencia de todas las temporadas** y umbral de vencimiento fijo en la lista. → Temporada actual y
+    el parámetro de la viña.
+
 22. **Ajustes de bodega sin validar** capacidad ni stock, y **borrar movimientos sin revalidar**. → Validación en el
     servidor (reacción) para todo movimiento, incluidos ajustes y borrados.
 23. **Trasiego a medias**: si la entrada fallaba, la salida quedaba. → Grupo atómico.
 24. **Ocupación por tipo**: un estanque con dos lotes se atribuía entero al principal. → Se reparte por lote.
-21. **Alertas de carencia de todas las temporadas** y umbral de vencimiento fijo en la lista. → Temporada actual y
-    el parámetro de la viña.

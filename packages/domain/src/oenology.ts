@@ -13,7 +13,7 @@ export type TipoVino = 'blanco' | 'tinto';
 export const SO2_FRACCION = { K2S2O5: 0.57, Na2S2O5: 0.67 } as const;
 
 /** Fracción de SO₂ de un insumo (campo so2Pct en %) o de su tipo químico. */
-export function fraccionSO2(insumo?: { so2Pct?: unknown; quimico?: string } | null): number {
+export function fraccionSO2(insumo?: { so2Pct?: unknown; quimico?: string | null } | null): number {
   if (!insumo) return SO2_FRACCION.K2S2O5;
   if (n(insumo.so2Pct) > 0) return n(insumo.so2Pct) / 100;
   return SO2_FRACCION[insumo.quimico as keyof typeof SO2_FRACCION] ?? SO2_FRACCION.K2S2O5;

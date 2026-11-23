@@ -15,6 +15,7 @@ import { cosechaInput, jornalInput } from './entities/cosecha';
 import { climaInput, fenologiaInput } from './entities/fenologia';
 import { loteInput, ventanaInput } from './entities/lote';
 import { estanqueInput, movBodegaInput } from './entities/bodega';
+import { adicionSO2Input, fermentacionInput, seguimientoInput } from './entities/fermentacion';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
 
@@ -97,6 +98,15 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
     unique: [{ campos: ['codigo'], mensaje: 'Ya existe un estanque con ese código.' }]
   },
   mov_bodega: { entity: 'mov_bodega', module: 'bodega', label: 'movimientos de bodega', schema: movBodegaInput, sensitive: true },
+  fermentacion: {
+    entity: 'fermentacion',
+    module: 'fermentacion',
+    label: 'fichas de fermentación',
+    schema: fermentacionInput,
+    unique: [{ campos: ['codigo'], mensaje: 'Ya existe una ficha con ese código.' }]
+  },
+  seguimiento: { entity: 'seguimiento', module: 'fermentacion', label: 'registros de seguimiento', schema: seguimientoInput },
+  adicion_so2: { entity: 'adicion_so2', module: 'fermentacion', label: 'adiciones de SO₂', schema: adicionSO2Input, sensitive: true },
   cosecha: { entity: 'cosecha', module: 'cosecha', label: 'cosechas', schema: cosechaInput },
   jornal: { entity: 'jornal', module: 'cosecha', label: 'jornales', schema: jornalInput, sensitive: true },
   clima: {

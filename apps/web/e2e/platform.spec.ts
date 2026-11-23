@@ -592,3 +592,58 @@ test('bodega: un trasiego sin señal se sincroniza como una sola operación y la
   await page.getByRole('tab', { name: 'Estanques' }).click();
   await expect.poll(() => litrosDe('E-03'), { timeout: 20_000 }).toBe(e3);
 });
+
+test('fermentación: ciclo de una ficha sin señal, con adición de SO₂ y aviso de intervalo', async ({ page, context }) => {
+  const codigo = 'FA-E2E-' + Date.now().toString(36).slice(-4).toUpperCase();
+  await login(page, 'enologo@winzer.test');
+  await page.goto('/vina-demo/fermentacion');
+  await waitSynced(page);
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Nueva ficha' }).click();
+  const d = page.getByRole('dialog', { name: 'Nueva ficha de fermentación' });
+  await d.getByLabel('Lote').selectOption({ index: 1 });
+  await d.getByLabel('Código de la ficha').fill(codigo);
+  await d.getByLabel('Volumen').fill('3000');
+  await d.getByLabel('Inicio FA', { exact: true }).fill(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()));
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await page.getByRole('button', { name: new RegExp(codigo) }).click();
+  await expect(page.getByRole('heading', { name: codigo })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Registrar seguimiento' }).click();
+  const s = page.getByRole('dialog', { name: 'Registrar seguimiento' });
+  await s.getByLabel('Densidad').fill('1090');
+  await s.getByLabel('Temperatura').fill('34');
+  await expect(s.getByText(/riesgo de parada/)).toBeVisible(); // aviso, no bloquea
+  await s.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByRole('list', { name: 'Avisos de la ficha' })).toContainText('Temperatura muy alta');
+
+  await page.getByRole('button', { name: 'Adición de metabisulfito' }).click();
+  const a = page.getByRole('dialog', { name: 'Adición de metabisulfito' });
+  await a.getByRole('button', { name: 'Usar sugeridos' }).click();
+  await a.getByRole('button', { name: 'Registrar adición' }).click();
+  await expect(a).toHaveCount(0);
+  // Segunda adición el mismo día: pide confirmar el intervalo mínimo.
+  let mensaje = '';
+  page.once('dialog', (x) => {
+    mensaje = x.message();
+    void x.dismiss();
+  });
+  await page.getByRole('button', { name: 'Adición de metabisulfito' }).click();
+  await expect.poll(() => mensaje).toMatch(/mínimo recomendado 24 h/);
+  await page.screenshot(shots('20-fermentacion-offline'));
+
+  await context.setOffline(false);
+  await waitSynced(page);
+  await page.reload();
+  await waitSynced(page);
+  await expect(page.getByRole('heading', { name: codigo })).toBeVisible();
+  await expect(page.getByText('Intervalo mínimo entre adiciones')).toBeVisible();
+
+  // Limpieza: borrar la ficha (también su seguimiento y su adición).
+  await page.getByRole('button', { name: 'Editar hitos y datos' }).click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(page.getByRole('button', { name: new RegExp(codigo) })).toHaveCount(0);
+});

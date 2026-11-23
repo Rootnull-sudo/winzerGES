@@ -8,6 +8,7 @@
  * - Cada registro se valida con el mismo esquema Zod que usa la app; los inválidos se reportan y se omiten.
  */
 import {
+  adicionSO2Input,
   anioDeFecha,
   aplicacionInput,
   clienteInput,
@@ -17,6 +18,7 @@ import {
   cuartelInput,
   estanqueInput,
   fenologiaInput,
+  fermentacionInput,
   insumoInput,
   jornalInput,
   laborInput,
@@ -24,6 +26,7 @@ import {
   movBodegaInput,
   movInsumoInput,
   rangoPorDefecto,
+  seguimientoInput,
   variedadInput,
   ventanaInput
 } from '@winzer/domain';
@@ -42,8 +45,10 @@ import {
   cobro,
   cosecha,
   cuartel,
+  adicionSO2,
   estanque,
   fenologia,
+  fermentacion,
   insumo,
   insumoPrecio,
   jornal,
@@ -51,6 +56,7 @@ import {
   lote,
   movBodega,
   movInsumo,
+  seguimiento,
   variedad,
   ventana
 } from './schema';
@@ -182,15 +188,41 @@ const IMPORTERS: Record<string, Importer> = {
         ? null
         : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, grupo: r.grupo ? String(r.grupo) : null }
   },
+  // levaduraId de v1 apuntaba a un insumo que el formulario no mostraba: se deja el texto de `levadura`.
+  fermentacion: {
+    table: fermentacion,
+    schema: fermentacionInput,
+    meta: { entity: 'fermentacion', module: 'fermentacion', label: 'fichas de fermentación' },
+    refs: ['loteId', 'estanqueId'],
+    adaptar: ({ levaduraId: _l, ...r }) => r
+  },
+  // La medición posterior a una adición de SO₂ la vuelve a crear la reacción de la adición.
+  seguimiento: {
+    table: seguimiento,
+    schema: seguimientoInput,
+    meta: { entity: 'seguimiento', module: 'fermentacion', label: 'registros de seguimiento' },
+    refs: ['fermentacionId'],
+    adaptar: (r) => (r.observaciones === 'Medición post adición de SO₂' ? null : r)
+  },
+  adicionSO2: {
+    table: adicionSO2,
+    schema: adicionSO2Input,
+    meta: { entity: 'adicion_so2', module: 'fermentacion', label: 'adiciones de SO₂' },
+    entidadV2: 'adicion_so2',
+    refs: ['fermentacionId', 'insumoId'],
+    adaptar: (r) => ({ ...r, costo: Math.round(Number(r.costo) || 0) })
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,
     meta: metaMovInsumo,
     entidadV2: 'mov_insumo',
     refs: ['insumoId'],
-    // Los consumos de aplicaciones los vuelve a generar la reacción al importar `aplicacion` (no se duplican).
+    // Los consumos de aplicaciones y de SO₂ los vuelven a generar sus reacciones (no se duplican).
     adaptar: (r, orgId) =>
-      r.tipo === 'aplicacion' ? null : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
+      r.tipo === 'aplicacion' || r.tipo === 'so2'
+        ? null
+        : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
   }
 };
 export const IMPORTABLE_ENTITIES = Object.keys(IMPORTERS);
@@ -237,7 +269,7 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
             .where(eq(imp.table.id, input.id as string))) as Record<string, unknown>[];
           const rec = await upsert(tx, imp.table, actor, imp.meta, parsed.data as Record<string, unknown> & { id: string });
           // Mismos efectos que si llegara por sync (p. ej. aplicación → movimiento de insumo).
-          await reaccionar(tx, actor, { entity: imp.entidadV2 ?? entidad, op: 'upsert', previo: previo ?? null, registro: rec });
+          await reaccionar(tx, actor, { entity: imp.entidadV2 ?? entidad, op: 'upsert', previo: previo ?? null, registro: rec, importando: true });
           if (imp.despues) await imp.despues(tx, actor, r0, String(rec.id));
           if (r._demo)
             await tx

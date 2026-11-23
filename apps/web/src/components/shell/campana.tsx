@@ -3,7 +3,7 @@ import { Bell, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { cambiarResumen, marcarVistas } from '@/app/[org]/alertas-actions';
+import { cambiarResumen, marcarTareaHecha, marcarVistas } from '@/app/[org]/alertas-actions';
 import { cn } from '@/lib/cn';
 import { useOrg } from './org-context';
 
@@ -23,7 +23,9 @@ function hace(iso: string) {
  * vistas para este usuario. Solo muestra las de módulos que el rol puede ver.
  */
 export function Campana() {
-  const { org, alertas, resumenAlertas } = useOrg();
+  const { org, alertas, resumenAlertas, tareas } = useOrg();
+  const [hechas, setHechas] = useState<Set<string>>(new Set());
+  const pendientes = tareas.filter((t) => !hechas.has(t.id));
   const [resumen, setResumen] = useState(resumenAlertas);
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -62,13 +64,13 @@ export function Campana() {
         onClick={alternar}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={sinVer.length ? `Avisos: ${sinVer.length} sin ver` : 'Avisos'}
+        aria-label={sinVer.length || pendientes.length ? `Avisos: ${sinVer.length} sin ver, ${pendientes.length} tareas pendientes` : 'Avisos'}
         className="relative grid size-9 place-items-center rounded-full text-ink-2 hover:bg-sunken hover:text-ink"
       >
         <Bell size={17} strokeWidth={1.8} />
-        {sinVer.length > 0 && (
+        {sinVer.length + pendientes.length > 0 && (
           <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-ink px-1 text-[10px] leading-none font-bold text-on-ink tabular">
-            {sinVer.length > 9 ? '9+' : sinVer.length}
+            {sinVer.length + pendientes.length > 9 ? '9+' : sinVer.length + pendientes.length}
           </span>
         )}
       </button>
@@ -110,6 +112,36 @@ export function Campana() {
                 );
               })}
             </ul>
+          )}
+          {pendientes.length > 0 && (
+            <section aria-label="Tareas" className="border-t border-rule">
+              <p className="px-4 pt-3 pb-1 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Tareas</p>
+              <ul className="divide-y divide-rule">
+                {pendientes.map((t) => (
+                  <li key={t.id} className="flex items-start gap-3 px-4 py-2.5">
+                    <span className="min-w-0 flex-1">
+                      {t.ruta ? (
+                        <Link href={`/${org.slug}/${t.ruta}`} onClick={() => setOpen(false)} className="block text-[14px] font-semibold hover:underline">
+                          {t.titulo}
+                        </Link>
+                      ) : (
+                        <span className="block text-[14px] font-semibold">{t.titulo}</span>
+                      )}
+                      {t.descripcion && <span className="mt-0.5 block text-[13px] text-ink-2">{t.descripcion}</span>}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setHechas((s) => new Set([...s, t.id]));
+                        void marcarTareaHecha(org.slug, t.id).then(() => router.refresh());
+                      }}
+                      className="shrink-0 rounded-control border border-rule-strong px-2 py-1 text-[12px] font-semibold hover:bg-sunken"
+                    >
+                      Hecha
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
           <label className="flex cursor-pointer items-center gap-2.5 border-t border-rule px-4 py-3 text-[13px] text-ink-2">
             <input

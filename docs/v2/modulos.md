@@ -112,7 +112,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Reacción**: `mov_insumo` en la unidad correcta del insumo.
 - **Hecho cuando**: la conversión de unidades tiene tests en g, kg y L, y el costo por lote coincide con v1.
 
-### Fermentación · ⬜ · F2 · L (el más complejo)
+### Fermentación · ✅ (F2-3)
 - **Tablas**: `fermentacion`, `seguimiento`, `adicion_so2`.
 - **Pantallas**:
   - tarjetas por ficha con su etapa;

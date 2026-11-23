@@ -375,3 +375,8 @@ Corregidos al migrar el viñedo (F1):
     servidor (reacción) para todo movimiento, incluidos ajustes y borrados.
 23. **Trasiego a medias**: si la entrada fallaba, la salida quedaba. → Grupo atómico.
 24. **Ocupación por tipo**: un estanque con dos lotes se atribuía entero al principal. → Se reparte por lote.
+25. **Fin de FA retrocedía el lote** (de Envasado a En guarda) y **creaba una tarea en cada guardado**. → Nunca hacia
+    atrás; tarea con id derivado.
+26. **SO₂ descontado siempre en kg** y **medición huérfana al borrar la adición**. → Unidad real del insumo; la reacción
+    borra ambos.
+27. **°Brix 0 ignorado** en los tiempos de fermentación. → Cuenta como dato.

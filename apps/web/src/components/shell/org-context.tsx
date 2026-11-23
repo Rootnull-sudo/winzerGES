@@ -14,6 +14,8 @@ export interface OrgCtx {
   temporadaActual: number | null;
   /** Plan y estado de la suscripción de la viña (F0-7). */
   acceso: AccesoPlan;
+  /** Tareas pendientes del usuario, de su rol o de toda la viña (F2-3). */
+  tareas: { id: string; titulo: string; descripcion: string | null; fecha: string; ruta: string | null }[];
   /** El usuario pidió el resumen diario de avisos por correo (F0-8). */
   resumenAlertas: boolean;
   /** Alertas abiertas visibles para el rol (ADR 0012), las no vistas primero. */

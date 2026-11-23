@@ -15,6 +15,7 @@ import type { Actor } from '../repo';
 import { variedadDesdeCuartel } from './catastro';
 import { loteEnMolienda, validarMovimientoBodega } from './bodega';
 import { jornalesDeCosechaBorrada, loteEnVendimia } from './cosecha';
+import { efectosDeSO2, fichaBorrada, fichaDesdeEntrada, loteSegunFicha } from './fermentacion';
 import { consumoDeAplicacion } from './insumos';
 
 export interface ContextoReaccion {
@@ -24,6 +25,8 @@ export interface ContextoReaccion {
   previo: Record<string, unknown> | null;
   /** Fila después de la mutación (con `deletedAt` si se borró). */
   registro: Record<string, unknown>;
+  /** La escritura viene del importador de v1 (datos históricos): no se crean tareas ni avisos. */
+  importando?: boolean;
 }
 
 export type Reaccion = (tx: Tx, actor: Actor, c: ContextoReaccion) => Promise<void>;
@@ -32,7 +35,9 @@ export const REACCIONES: Record<string, readonly Reaccion[]> = {
   cuartel: [variedadDesdeCuartel],
   aplicacion: [consumoDeAplicacion],
   cosecha: [jornalesDeCosechaBorrada, loteEnVendimia],
-  mov_bodega: [validarMovimientoBodega, loteEnMolienda]
+  mov_bodega: [validarMovimientoBodega, loteEnMolienda, fichaDesdeEntrada],
+  fermentacion: [loteSegunFicha, fichaBorrada],
+  adicion_so2: [efectosDeSO2]
 };
 
 /** Ejecuta las reacciones registradas para la entidad, en orden. */

@@ -16,4 +16,5 @@ export * from './entities/aplicacion';
 export * from './entities/cosecha';
 export * from './entities/lote';
 export * from './entities/bodega';
+export * from './entities/fermentacion';
 export * from './sync';

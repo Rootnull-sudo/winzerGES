@@ -830,3 +830,121 @@ export const movBodega = pgTable(
     index('mov_bodega_sync_idx').on(t.orgId, t.seq)
   ]
 );
+
+/* --- Fermentación: fichas, seguimiento y SO₂ (F2-3, offline) --- */
+export const fermentacion = pgTable(
+  'fermentacion',
+  {
+    ...base(),
+    ...syncCols(),
+    codigo: text('codigo').notNull(),
+    loteId: text('lote_id')
+      .notNull()
+      .references(() => lote.id),
+    estanqueId: text('estanque_id').references(() => estanque.id),
+    tipo: text('tipo').notNull(),
+    variedad: text('variedad'),
+    volumen: num('volumen').notNull(),
+    brixInicial: num('brix_inicial'),
+    phInicial: num('ph_inicial'),
+    acidezInicial: num('acidez_inicial'),
+    levadura: text('levadura'),
+    nutrientes: text('nutrientes'),
+    temperaturaObjetivo: text('temperatura_objetivo'),
+    diasPlanificados: integer('dias_planificados'),
+    fechaMolienda: text('fecha_molienda'),
+    inicioFA: text('inicio_fa'),
+    inicioTumultuosa: text('inicio_tumultuosa'),
+    fechaCorte: text('fecha_corte'),
+    finFA: text('fin_fa'),
+    inicioMaceracion: text('inicio_maceracion'),
+    finMaceracion: text('fin_maceracion'),
+    inicioFML: text('inicio_fml'),
+    finFML: text('fin_fml'),
+    alcoholFinal: num('alcohol_final'),
+    azucarResidual: num('azucar_residual'),
+    /** borrador | activa | cerrada */
+    estado: text('estado').notNull().default('activa')
+  },
+  (t) => [
+    uniqueIndex('fermentacion_codigo_uq')
+      .on(t.orgId, sql`lower(${t.codigo})`)
+      .where(sql`${t.deletedAt} is null`),
+    index('fermentacion_lote_idx').on(t.orgId, t.loteId),
+    index('fermentacion_sync_idx').on(t.orgId, t.seq)
+  ]
+);
+
+export const seguimiento = pgTable(
+  'seguimiento',
+  {
+    ...base(),
+    ...syncCols(),
+    fermentacionId: text('fermentacion_id')
+      .notNull()
+      .references(() => fermentacion.id),
+    fecha: text('fecha').notNull(),
+    responsable: text('responsable'),
+    densidad: num('densidad'),
+    brix: num('brix'),
+    temperatura: num('temperatura'),
+    ph: num('ph'),
+    acidezVolatil: num('acidez_volatil'),
+    so2Libre: num('so2_libre'),
+    so2Total: num('so2_total'),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('seguimiento_ficha_idx').on(t.orgId, t.fermentacionId, t.fecha), index('seguimiento_sync_idx').on(t.orgId, t.seq)]
+);
+
+export const adicionSO2 = pgTable(
+  'adicion_so2',
+  {
+    ...base(),
+    ...syncCols(),
+    fermentacionId: text('fermentacion_id')
+      .notNull()
+      .references(() => fermentacion.id),
+    fecha: text('fecha').notNull(),
+    insumoId: text('insumo_id')
+      .notNull()
+      .references(() => insumo.id),
+    producto: text('producto'),
+    fraccion: num('fraccion').notNull(),
+    gramos: num('gramos').notNull(),
+    volumen: num('volumen').notNull(),
+    dosisMgL: num('dosis_mgl').notNull(),
+    so2Previo: num('so2_previo'),
+    so2Medido: num('so2_medido'),
+    so2Teorico: num('so2_teorico').notNull(),
+    modo: text('modo').notNull().default('suave'),
+    motivo: text('motivo'),
+    responsable: text('responsable'),
+    costo: money('costo').notNull().default(0)
+  },
+  (t) => [index('adicion_so2_ficha_idx').on(t.orgId, t.fermentacionId), index('adicion_so2_sync_idx').on(t.orgId, t.seq)]
+);
+
+/* --- Núcleo: tareas (online, las crean las reacciones y servicios; se ven en la campana) --- */
+export const tarea = pgTable(
+  'tarea',
+  {
+    ...base(),
+    titulo: text('titulo').notNull(),
+    descripcion: text('descripcion'),
+    fecha: text('fecha').notNull(),
+    /** Para quién: un rol (p. ej. enologo) o un usuario; ambos null = toda la viña. */
+    rol: text('rol'),
+    userId: text('user_id'),
+    /** pendiente | hecha */
+    estado: text('estado').notNull().default('pendiente'),
+    /** Ruta relativa a la viña. */
+    ruta: text('ruta'),
+    modulo: text('modulo'),
+    origenTipo: text('origen_tipo'),
+    origenId: text('origen_id'),
+    hechaEn: ts('hecha_en'),
+    hechaPor: text('hecha_por')
+  },
+  (t) => [index('tarea_estado_idx').on(t.orgId, t.estado)]
+);

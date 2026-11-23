@@ -208,16 +208,22 @@ export function Lineas({
   etiquetasX,
   series,
   formato = nf,
-  unidad
+  unidad,
+  banda,
+  referencia
 }: {
   etiquetasX: string[];
   series: Serie[];
   formato?: (v: number) => string;
   unidad?: string;
+  /** Franja de rango aceptable (p. ej. SO₂ libre en modo suave), con su nombre en la leyenda. */
+  banda?: { desde: number; hasta: number; etiqueta: string };
+  /** Línea de umbral (p. ej. alerta de sobre-sulfitado). */
+  referencia?: { valor: number; etiqueta: string };
 }) {
   const [ref, ancho] = useAncho<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
-  const max = Math.max(0, ...series.flatMap((s) => s.valores.map((v) => v ?? 0)));
+  const max = Math.max(0, banda?.hasta ?? 0, referencia?.valor ?? 0, ...series.flatMap((s) => s.valores.map((v) => v ?? 0)));
   const { tope, marcas } = escala(max);
   const w = Math.max(0, ancho - M.left - M.right);
   const h = ALTO - M.top - M.bottom;
@@ -249,11 +255,40 @@ export function Lineas({
                 </text>
               </g>
             ))}
-            {etiquetasX.map((e, i) => (
-              <text key={e} x={x(i)} y={ALTO - 8} textAnchor="middle" className="fill-ink-3 text-[11px]">
-                {e}
-              </text>
-            ))}
+            {banda && (
+              <rect
+                x={M.left}
+                width={w}
+                y={y(banda.hasta)}
+                height={Math.max(0, y(banda.desde) - y(banda.hasta))}
+                className="fill-ok-soft"
+                aria-label={banda.etiqueta}
+              />
+            )}
+            {referencia && (
+              <g>
+                <line
+                  x1={M.left}
+                  x2={M.left + w}
+                  y1={y(referencia.valor)}
+                  y2={y(referencia.valor)}
+                  className="stroke-bad"
+                  strokeWidth={1}
+                  strokeDasharray="4 3"
+                />
+                <text x={M.left + w} y={y(referencia.valor) - 4} textAnchor="end" className="fill-ink-3 text-[11px]">
+                  {referencia.etiqueta}
+                </text>
+              </g>
+            )}
+            {/* Con muchas fechas se muestra una etiqueta cada tanto para que no se monten. */}
+            {etiquetasX.map((e, i) =>
+              i % Math.max(1, Math.ceil(etiquetasX.length / Math.max(1, Math.floor(w / 56)))) === 0 ? (
+                <text key={i} x={x(i)} y={ALTO - 8} textAnchor="middle" className="fill-ink-3 text-[11px]">
+                  {e}
+                </text>
+              ) : null
+            )}
             {hover != null && <line x1={x(hover)} x2={x(hover)} y1={M.top} y2={M.top + h} className="stroke-rule-strong" strokeWidth={1} />}
             {/* La serie elegida (t0) se dibuja al final, encima. */}
             {[...series].reverse().map((s) => {

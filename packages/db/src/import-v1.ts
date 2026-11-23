@@ -10,6 +10,7 @@
 import {
   adicionSO2Input,
   aditivoInput,
+  analisisInput,
   anioDeFecha,
   aplicacionInput,
   clienteInput,
@@ -48,6 +49,7 @@ import {
   cuartel,
   adicionSO2,
   aditivo,
+  analisis,
   estanque,
   fenologia,
   fermentacion,
@@ -224,6 +226,13 @@ const IMPORTERS: Record<string, Importer> = {
       r.tipo === 'so2'
         ? null
         : { ...r, unidadDosis: 'g/hL', cantidad: Number(r.cantidad) || 0, costo: Math.round(Number(r.costo) || 0), objetivo: r.objetivo ?? null }
+  },
+  analisis: {
+    table: analisis,
+    schema: analisisInput,
+    meta: { entity: 'analisis', module: 'laboratorio', label: 'análisis' },
+    refs: ['loteId'],
+    adaptar: (r) => ({ ...r, autorizadoSAG: !!r.autorizadoSAG, certificadoDO: !!r.certificadoDO })
   },
   movInsumo: {
     table: movInsumo,

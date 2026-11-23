@@ -680,3 +680,40 @@ test('vinificación: aditivo sin señal con conversión de unidades y costo enol
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect.poll(() => costo.innerText(), { timeout: 15_000 }).toBe(antes);
 });
+
+test('laboratorio: análisis sin señal con fuera de rango e informe adjunto al reconectar', async ({ page, context }) => {
+  await login(page, 'enologo@winzer.test');
+  await page.goto('/vina-demo/laboratorio?t=2026');
+  await waitSynced(page);
+  // Demo: el último análisis del Cabernet tiene pH y SO₂ libre fuera del rango de tintos.
+  await expect(page.getByRole('row', { name: /20 ago 2026.*L-2026-CS/ }).getByText('pH', { exact: true })).toBeVisible();
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Nuevo análisis' }).click();
+  const d = page.getByRole('dialog', { name: 'Nuevo análisis' });
+  await d.getByLabel('Lote').selectOption({ label: 'L-2026-SB · Sauvignon Blanc' });
+  await d.getByRole('textbox', { name: /^Laboratorio/ }).fill('Laboratorio E2E');
+  await d.getByLabel('pH').fill('3.62');
+  await d.getByLabel('SO₂ libre').fill('30');
+  const comp = d.getByRole('complementary', { name: 'Comparación con rangos' });
+  await expect(comp).toContainText('3,62 ⚠'); // blancos: 3,1–3,4
+  await expect(comp).toContainText('30 ✓'); // SO₂ libre en blancos: 25–35 (parámetro de fermentación)
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /Laboratorio E2E/ });
+  await expect(fila.getByLabel('Pendiente de sincronizar')).toBeVisible();
+  await expect(fila.getByText('pH', { exact: true })).toBeVisible();
+  await page.screenshot(shots('22-laboratorio'));
+
+  await context.setOffline(false);
+  await waitSynced(page);
+  await fila.click();
+  const informe = page.getByRole('dialog').getByRole('region', { name: 'Adjuntos' });
+  await informe.locator('input[type=file]').setInputFiles({ name: 'informe-e2e.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 informe') });
+  await expect(informe.getByText('informe-e2e.pdf')).toBeVisible();
+
+  // Limpieza.
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).first().click();
+  await expect(fila).toHaveCount(0);
+});

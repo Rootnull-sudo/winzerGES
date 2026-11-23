@@ -201,7 +201,8 @@ describe('importador v1', () => {
       fermentacion: 2,
       seguimiento: 17,
       adicionSO2: 1,
-      aditivo: 2
+      aditivo: 2,
+      analisis: 4
     });
     expect(r1.omitidos).toEqual([]);
     expect(r1.pendientes).toEqual({ venta: 1, ordenEnvasado: 2 });

@@ -978,3 +978,31 @@ export const aditivo = pgTable(
   },
   (t) => [index('aditivo_lote_idx').on(t.orgId, t.loteId), index('aditivo_sync_idx').on(t.orgId, t.seq)]
 );
+
+/* --- Laboratorio: análisis (F2-5, offline; el informe va como adjunto) --- */
+export const analisis = pgTable(
+  'analisis',
+  {
+    ...base(),
+    ...syncCols(),
+    fecha: text('fecha').notNull(),
+    loteId: text('lote_id')
+      .notNull()
+      .references(() => lote.id),
+    laboratorio: text('laboratorio').notNull(),
+    autorizadoSAG: boolean('autorizado_sag').notNull().default(false),
+    ph: num('ph'),
+    acidezTotal: num('acidez_total'),
+    acidezVolatil: num('acidez_volatil'),
+    so2Libre: num('so2_libre'),
+    so2Total: num('so2_total'),
+    alcohol: num('alcohol'),
+    azucarResidual: num('azucar_residual'),
+    turbidez: num('turbidez'),
+    densidad: num('densidad'),
+    color: text('color'),
+    certificadoDO: boolean('certificado_do').notNull().default(false),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('analisis_lote_idx').on(t.orgId, t.loteId), index('analisis_sync_idx').on(t.orgId, t.seq)]
+);

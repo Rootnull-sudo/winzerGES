@@ -10,9 +10,10 @@
  */
 import { z } from 'zod';
 import { DEFAULT_CONFIG, type OrgConfig } from './config';
+import { PARAMS_CON_RANGO } from './entities/analisis';
 
 export type GrupoParametro = 'tributario' | 'remuneraciones' | 'enologia' | 'finanzas' | 'alertas';
-export type TipoParametro = 'tasa' | 'clp' | 'numero' | 'entero' | 'si_no' | 'regimen' | 'rango_so2';
+export type TipoParametro = 'tasa' | 'clp' | 'numero' | 'entero' | 'si_no' | 'regimen' | 'rango_so2' | 'rangos_lab';
 
 export interface ParametroDef {
   /** `grupo.campo` de OrgConfig. */
@@ -61,6 +62,8 @@ export const PARAMETROS: readonly ParametroDef[] = [
   p('remuneraciones.valorJornada', 'Valor de la jornada de campo', 'clp', { ayuda: 'Valor por defecto al registrar labores.' }),
   p('enologia.so2Blanco', 'SO₂ libre en blancos', 'rango_so2', { unidad: 'mg/L' }),
   p('enologia.so2Tinto', 'SO₂ libre en tintos', 'rango_so2', { unidad: 'mg/L' }),
+  p('enologia.labBlanco', 'Rangos de laboratorio en blancos', 'rangos_lab', { ayuda: 'El SO₂ libre usa el rango de SO₂ en blancos.' }),
+  p('enologia.labTinto', 'Rangos de laboratorio en tintos', 'rangos_lab', { ayuda: 'El SO₂ libre usa el rango de SO₂ en tintos.' }),
   p('enologia.intervaloMinHoras', 'Intervalo mínimo entre adiciones de SO₂', 'numero', { unidad: 'h' }),
   p('enologia.desviacionDias', 'Desviación tolerada del calendario', 'entero', { unidad: 'días' }),
   p('enologia.kgCajonMin', 'Kilos por cajón (mínimo)', 'numero', { unidad: 'kg' }),
@@ -90,6 +93,11 @@ const rangoSO2 = z
   .object({ min: z.coerce.number().min(0), max: z.coerce.number().min(0), alerta: z.coerce.number().min(0) })
   .refine((r) => r.min <= r.max && r.max <= r.alerta, { message: 'Debe cumplirse mínimo ≤ máximo ≤ alerta.' });
 
+const rango = z
+  .object({ min: z.coerce.number().min(0), max: z.coerce.number().min(0) })
+  .refine((r) => r.min <= r.max, { message: 'El mínimo no puede superar al máximo.' });
+const rangosLab = z.object(Object.fromEntries(PARAMS_CON_RANGO.map((k) => [k, rango])) as Record<(typeof PARAMS_CON_RANGO)[number], typeof rango>);
+
 /** Validación del valor según el tipo del parámetro. */
 export function esquemaValor(tipo: TipoParametro): z.ZodType {
   switch (tipo) {
@@ -107,6 +115,8 @@ export function esquemaValor(tipo: TipoParametro): z.ZodType {
       return z.enum(['14D3', '14D8', '14A']);
     case 'rango_so2':
       return rangoSO2;
+    case 'rangos_lab':
+      return rangosLab;
   }
 }
 

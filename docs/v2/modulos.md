@@ -80,11 +80,13 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Alertas**: desvíos, fases que empiezan en 7 días o menos, más de 2 lotes el mismo día, recordatorios del SAG.
 - **Hecho cuando**: el Gantt muestra plan y realidad de un lote demo y los desvíos coinciden con v1.
 
-### Laboratorio · ⬜ · F2 · S
-- **Tablas**: `analisis`.
-- **Pantallas**: análisis por lote, con parámetros fuera de rango destacados y gráfico de SO₂ y acidez.
-- **Adjunto**: informe del laboratorio en PDF.
-- **Corrige**: los rangos dejan de estar fijos en el código y pasan a `parametro_org`.
+### Laboratorio · ✅ · F2 · S
+- **Tablas**: `analisis` (offline).
+- **Pantallas**: análisis por lote, con parámetros fuera de rango destacados (ícono y color) y comparación en vivo
+  en el diálogo; evolución del lote en dos gráficos (SO₂ libre y acidez total, cada uno con su franja objetivo).
+- **Adjunto**: informe del laboratorio en PDF (con conexión, una vez sincronizado el análisis).
+- **Corrige**: los rangos dejan de estar fijos en el código y pasan a `parametro_org` (`enologia.labBlanco` y
+  `enologia.labTinto`, tipo `rangos_lab`); el SO₂ libre usa el rango de fermentación.
 - **Hecho cuando**: se ven los fuera de rango y se puede adjuntar el informe.
 
 ---

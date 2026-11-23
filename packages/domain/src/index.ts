@@ -18,4 +18,5 @@ export * from './entities/lote';
 export * from './entities/bodega';
 export * from './entities/fermentacion';
 export * from './entities/aditivo';
+export * from './entities/analisis';
 export * from './sync';

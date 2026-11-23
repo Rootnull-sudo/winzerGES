@@ -1,5 +1,18 @@
 'use client';
-import { clp, fechaHoy, GRUPOS_PARAMETRO, INDICADORES, PARAMETROS, valorPorDefecto, vigenteEn, type ParametroDef, type RangoSO2 } from '@winzer/domain';
+import {
+  clp,
+  fechaHoy,
+  GRUPOS_PARAMETRO,
+  INDICADORES,
+  PARAMETROS,
+  PARAMS_ANALISIS,
+  PARAMS_CON_RANGO,
+  valorPorDefecto,
+  vigenteEn,
+  type ParametroDef,
+  type RangosLab,
+  type RangoSO2
+} from '@winzer/domain';
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -25,6 +38,7 @@ export interface IndicadorFila {
 
 const REGIMENES: Record<string, string> = { '14D3': 'Pro Pyme general', '14D8': 'Pro Pyme transparente', '14A': 'Semi integrado' };
 const nf = (v: number, max = 4) => v.toLocaleString('es-CL', { maximumFractionDigits: max });
+const ETIQUETA_LAB = Object.fromEntries(PARAMS_ANALISIS.map(([k, l, u]) => [k, { l, u }])) as Record<string, { l: string; u: string }>;
 const fecha = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** Valor legible según el tipo del parámetro. */
@@ -41,6 +55,10 @@ export function mostrar(d: ParametroDef, v: unknown): string {
     case 'rango_so2': {
       const r = v as RangoSO2;
       return `${nf(r.min)}–${nf(r.max)} · alerta ${nf(r.alerta)} ${d.unidad ?? ''}`.trim();
+    }
+    case 'rangos_lab': {
+      const r = v as RangosLab;
+      return PARAMS_CON_RANGO.map((k) => `${ETIQUETA_LAB[k]!.l} ${nf(r[k].min)}–${nf(r[k].max)}`).join(' · ');
     }
     default:
       return `${nf(Number(v))}${d.unidad ? ` ${d.unidad}` : ''}`;
@@ -141,6 +159,8 @@ function ParametroDialog({ def, filas, onClose }: { def: ParametroDef; filas: Pa
         return fd.get('valor');
       case 'rango_so2':
         return { min: fd.get('min'), max: fd.get('max'), alerta: fd.get('alerta') };
+      case 'rangos_lab':
+        return Object.fromEntries(PARAMS_CON_RANGO.map((k) => [k, { min: fd.get(`${k}.min`), max: fd.get(`${k}.max`) }]));
       default:
         return String(fd.get('valor')).replace(',', '.');
     }
@@ -256,6 +276,48 @@ function ValorInput({ def, base, error }: { def: ParametroDef; base: unknown; er
               {(id, d) => <Input id={id} name={k} type="number" min={0} step="any" defaultValue={r[k]} aria-describedby={d} className="tabular" required />}
             </Field>
           ))}
+        </fieldset>
+      );
+    }
+    case 'rangos_lab': {
+      const r = base as RangosLab;
+      return (
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-2 text-[13px] font-semibold text-ink-2">Rango objetivo por parámetro</legend>
+          {error && (
+            <p role="alert" className="mb-2 text-[13px] text-bad">
+              {error}
+            </p>
+          )}
+          <div className="grid grid-cols-[1fr_96px_96px] items-center gap-x-3 gap-y-2 text-[14px]">
+            <span />
+            <span className="text-[12px] font-semibold text-ink-3">Mínimo</span>
+            <span className="text-[12px] font-semibold text-ink-3">Máximo</span>
+            {PARAMS_CON_RANGO.map((k) => {
+              const e = ETIQUETA_LAB[k]!;
+              return (
+                <div key={k} className="contents">
+                  <span>
+                    {e.l}
+                    {e.u && <span className="ml-1 text-[12px] text-ink-3">{e.u}</span>}
+                  </span>
+                  {(['min', 'max'] as const).map((m) => (
+                    <Input
+                      key={m}
+                      name={`${k}.${m}`}
+                      aria-label={`${e.l} ${m === 'min' ? 'mínimo' : 'máximo'}`}
+                      type="number"
+                      min={0}
+                      step="any"
+                      defaultValue={r[k][m]}
+                      className="tabular"
+                      required
+                    />
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </fieldset>
       );
     }

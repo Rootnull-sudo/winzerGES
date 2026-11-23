@@ -5,6 +5,8 @@
  * Los cálculos reciben la configuración como parámetro: nunca leen estado global.
  */
 
+import type { RangosLab } from './entities/analisis';
+
 export interface RangoSO2 {
   min: number;
   max: number;
@@ -41,6 +43,9 @@ export interface OrgConfig {
   enologia: {
     so2Blanco: RangoSO2;
     so2Tinto: RangoSO2;
+    /** Rangos objetivo de laboratorio (análisis), por tipo de vino. */
+    labBlanco: RangosLab;
+    labTinto: RangosLab;
     intervaloMinHoras: number;
     desviacionDias: number;
     kgCajonMin: number;
@@ -80,6 +85,23 @@ export const DEFAULT_CONFIG: OrgConfig = {
   enologia: {
     so2Blanco: { min: 25, max: 35, alerta: 40 },
     so2Tinto: { min: 20, max: 30, alerta: 35 },
+    // v1: laboratorio/index.js RANGOS (referenciales).
+    labBlanco: {
+      ph: { min: 3.1, max: 3.4 },
+      acidezTotal: { min: 5.5, max: 7.5 },
+      acidezVolatil: { min: 0, max: 0.6 },
+      so2Total: { min: 0, max: 200 },
+      alcohol: { min: 11.5, max: 14 },
+      azucarResidual: { min: 0, max: 4 }
+    },
+    labTinto: {
+      ph: { min: 3.4, max: 3.8 },
+      acidezTotal: { min: 4.8, max: 6.5 },
+      acidezVolatil: { min: 0, max: 0.7 },
+      so2Total: { min: 0, max: 150 },
+      alcohol: { min: 12.5, max: 15 },
+      azucarResidual: { min: 0, max: 4 }
+    },
     intervaloMinHoras: 24,
     desviacionDias: 3,
     kgCajonMin: 18,

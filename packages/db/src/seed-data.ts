@@ -292,6 +292,76 @@ export const demoDump = {
         _demo: true
       }
     ],
+    analisis: [
+      {
+        id: 'ana_d1',
+        fecha: '2026-04-02',
+        loteId: 'lot_d1',
+        laboratorio: 'Laboratorio Enológico Demo',
+        autorizadoSAG: true,
+        ph: 3.3,
+        acidezTotal: 6.7,
+        acidezVolatil: 0.31,
+        so2Libre: 26,
+        so2Total: 80,
+        alcohol: 13.1,
+        azucarResidual: 1.8,
+        densidad: 991.8,
+        _demo: true
+      },
+      {
+        id: 'ana_d2',
+        fecha: '2026-07-28',
+        loteId: 'lot_d1',
+        laboratorio: 'Laboratorio Enológico Demo',
+        autorizadoSAG: true,
+        ph: 3.32,
+        acidezTotal: 6.5,
+        acidezVolatil: 0.34,
+        so2Libre: 32,
+        so2Total: 104,
+        alcohol: 13.1,
+        azucarResidual: 1.8,
+        turbidez: 0.9,
+        densidad: 991.9,
+        color: 'Amarillo verdoso brillante',
+        certificadoDO: true,
+        _demo: true
+      },
+      {
+        id: 'ana_d3',
+        fecha: '2026-05-25',
+        loteId: 'lot_d2',
+        laboratorio: 'Laboratorio Enológico Demo',
+        autorizadoSAG: true,
+        ph: 3.66,
+        acidezTotal: 5.6,
+        acidezVolatil: 0.48,
+        so2Libre: 24,
+        so2Total: 75,
+        alcohol: 14.4,
+        azucarResidual: 1.5,
+        densidad: 993.6,
+        color: 'Rojo violáceo profundo',
+        _demo: true
+      },
+      {
+        id: 'ana_d4',
+        fecha: '2026-08-20',
+        loteId: 'lot_d2',
+        laboratorio: 'Laboratorio interno',
+        autorizadoSAG: false,
+        ph: 3.84,
+        acidezTotal: 5.3,
+        acidezVolatil: 0.61,
+        so2Libre: 18,
+        so2Total: 70,
+        alcohol: 14.6,
+        azucarResidual: 2.1,
+        densidad: 994,
+        _demo: true
+      }
+    ],
     aditivo: [
       {
         id: 'adi_d1',

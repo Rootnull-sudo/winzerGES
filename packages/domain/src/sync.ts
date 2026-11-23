@@ -17,6 +17,7 @@ import { loteInput, ventanaInput } from './entities/lote';
 import { estanqueInput, movBodegaInput } from './entities/bodega';
 import { adicionSO2Input, fermentacionInput, seguimientoInput } from './entities/fermentacion';
 import { aditivoInput } from './entities/aditivo';
+import { analisisInput } from './entities/analisis';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
 
@@ -109,6 +110,7 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
   seguimiento: { entity: 'seguimiento', module: 'fermentacion', label: 'registros de seguimiento', schema: seguimientoInput },
   adicion_so2: { entity: 'adicion_so2', module: 'fermentacion', label: 'adiciones de SO₂', schema: adicionSO2Input, sensitive: true },
   aditivo: { entity: 'aditivo', module: 'vinificacion', label: 'aditivos', schema: aditivoInput },
+  analisis: { entity: 'analisis', module: 'laboratorio', label: 'análisis', schema: analisisInput },
   cosecha: { entity: 'cosecha', module: 'cosecha', label: 'cosechas', schema: cosechaInput },
   jornal: { entity: 'jornal', module: 'cosecha', label: 'jornales', schema: jornalInput, sensitive: true },
   clima: {

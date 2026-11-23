@@ -120,6 +120,13 @@
       "when": 1795464694811,
       "tag": "0016_aditivos",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795475582592,
+      "tag": "0017_laboratorio",
+      "breakpoints": true
     }
   ]
 }

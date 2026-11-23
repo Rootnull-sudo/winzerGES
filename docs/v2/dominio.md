@@ -384,3 +384,6 @@ Corregidos al migrar el viñedo (F1):
     la ficha; el importador omite los aditivos de SO₂ de v1.
 29. **Aditivos en kg fijos** aunque el insumo fuera líquido o en gramos. → Dosis en g/hL o mL/hL y cantidad
     convertida a la unidad del insumo (el servidor la recalcula).
+30. **Rangos de laboratorio fijos** y el de SO₂ libre duplicado con el de fermentación. → Parámetros de la viña
+    (`enologia.labBlanco/labTinto`); el SO₂ libre sale de `enologia.so2Blanco/so2Tinto`.
+31. **Gráfico de laboratorio con "acidez × 5"** en el eje del SO₂. → Un gráfico por parámetro, con su franja objetivo.

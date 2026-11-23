@@ -67,7 +67,7 @@ movimientos (solo agregar); **D** = documento con estado.
 | `seguimiento` | S | `fermentacion_id`, `fecha`, `densidad`, `brix`, `temperatura`, `ph`, `acidez_volatil`, `so2_libre`, `so2_total`, `responsable` | |
 | `adicion_so2` | S | `fermentacion_id`, `fecha`, `insumo_id`, `producto`, `fraccion`, `gramos`, `volumen`, `dosis_mgl`, `so2_previo`, `so2_medido`, `so2_teorico`, `costo`, `modo`, `motivo`, `responsable` | Reacción: `mov_insumo` en la unidad del insumo (kg o g; otra unidad se rechaza) y `seguimiento` con el SO₂ medido; borrarla deshace ambos |
 | `aditivo` | S | `fecha`, `lote_id`, `estanque_id`, `tipo`, `insumo_id`, `volumen`, `dosis`, `unidad_dosis` (g/hL o mL/hL), `cantidad` (en la unidad del insumo), `costo`, `objetivo`, `responsable`, `observaciones` | Sin SO₂ (va en `adicion_so2`). Reacción: `mov_insumo` |
-| `analisis` | S | `fecha`, `lote_id`, `laboratorio`, `autorizado_sag`, `ph`, `acidez_total`, `acidez_volatil`, `so2_libre`, `so2_total`, `alcohol`, `azucar_residual`, `turbidez`, `densidad`, `color`, `certificado_do` | Adjunto: informe en PDF |
+| `analisis` | S | `fecha`, `lote_id`, `laboratorio`, `autorizado_sag`, `ph`, `acidez_total`, `acidez_volatil`, `so2_libre`, `so2_total`, `alcohol`, `azucar_residual`, `turbidez`, `densidad`, `color`, `certificado_do`, `observaciones` | Adjunto: informe en PDF. Rangos objetivo en `parametro_org` |
 
 ## 4. Inventario
 

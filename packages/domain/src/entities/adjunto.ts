@@ -7,7 +7,8 @@ import { z } from 'zod';
 /** Entidad → módulo dueño. Subir o borrar exige `e` en ese módulo; ver y descargar, `v`. Agregar al migrar un módulo. */
 export const ADJUNTABLES: Record<string, string> = {
   cliente: 'clientes',
-  cuartel: 'catastro'
+  cuartel: 'catastro',
+  analisis: 'laboratorio'
 };
 
 /** 20 MB por archivo. */

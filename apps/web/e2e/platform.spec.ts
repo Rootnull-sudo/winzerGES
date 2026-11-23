@@ -717,3 +717,22 @@ test('laboratorio: análisis sin señal con fuera de rango e informe adjunto al 
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).first().click();
   await expect(fila).toHaveCount(0);
 });
+
+test('histórico kg y litros: trazabilidad por lote sin señal, con filtros', async ({ page, context }) => {
+  await login(page, 'enologo@winzer.test');
+  await page.goto('/vina-demo/historico');
+  await waitSynced(page);
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  const detalle = page.getByRole('region', { name: 'Detalle por lote' });
+  const sb = detalle.getByRole('row', { name: /L-2026-SB/ });
+  await expect(sb).toContainText('3.990'); // kg de la cosecha del lote
+  await expect(sb).toContainText('0,69'); // 2.750 L / 3.990 kg
+  await expect(page.getByRole('region', { name: 'Comparativa entre temporadas' }).getByRole('row', { name: /^2026/ })).toContainText('9.840');
+  await detalle.getByRole('group', { name: 'Filtros' }).getByLabel('Tipo').selectOption('tinto');
+  await expect(sb).toHaveCount(0);
+  await expect(detalle.getByRole('row', { name: /L-2026-CS/ })).toBeVisible();
+  await expect(page.getByLabel('Totales del detalle')).toContainText('5.850');
+  await page.screenshot(shots('23-historico'));
+  await context.setOffline(false);
+});

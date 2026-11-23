@@ -7,14 +7,21 @@
  *  - un dato faltante (null) no se dibuja (v1 lo pintaba como 0);
  *  - tooltip al pasar el cursor o el dedo; la tabla de la página es la vista accesible de los datos.
  * Colores por temporada: escala ordinal de un tono (`serie-t0` = elegida, t1 anterior, t2 dos atrás).
+ * Por tipo de uva: `tinto` y `blanco` (relleno dorado, bajo 3:1 en claro: siempre con leyenda y tabla al lado).
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export type ColorSerie = 't0' | 't1' | 't2' | 'tinto';
-const FILL: Record<ColorSerie, string> = { t0: 'fill-serie-t0', t1: 'fill-serie-t1', t2: 'fill-serie-t2', tinto: 'fill-tinto' };
-const STROKE: Record<ColorSerie, string> = { t0: 'stroke-serie-t0', t1: 'stroke-serie-t1', t2: 'stroke-serie-t2', tinto: 'stroke-tinto' };
-const BG: Record<ColorSerie, string> = { t0: 'bg-serie-t0', t1: 'bg-serie-t1', t2: 'bg-serie-t2', tinto: 'bg-tinto' };
+export type ColorSerie = 't0' | 't1' | 't2' | 'tinto' | 'blanco';
+const FILL: Record<ColorSerie, string> = { t0: 'fill-serie-t0', t1: 'fill-serie-t1', t2: 'fill-serie-t2', tinto: 'fill-tinto', blanco: 'fill-blanco-fill' };
+const STROKE: Record<ColorSerie, string> = {
+  t0: 'stroke-serie-t0',
+  t1: 'stroke-serie-t1',
+  t2: 'stroke-serie-t2',
+  tinto: 'stroke-tinto',
+  blanco: 'stroke-blanco-fill'
+};
+const BG: Record<ColorSerie, string> = { t0: 'bg-serie-t0', t1: 'bg-serie-t1', t2: 'bg-serie-t2', tinto: 'bg-tinto', blanco: 'bg-blanco-fill' };
 
 export interface Serie {
   id: string;

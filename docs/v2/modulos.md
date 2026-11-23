@@ -135,10 +135,11 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Hecho cuando**: el ciclo completo de una ficha funciona offline en el celular, incluida la adición de SO₂ con
   confirmación por intervalo.
 
-### Histórico kg y litros · ⬜ · F2 · S
-- **Pantallas**: comparación entre temporadas (kg, L, L/kg, envasado, granel, mermas, variación) y detalle por lote
-  con filtros. Exporta CSV.
-- **Lee**: `v_balance_lote`, cosecha y orden de envasado.
+### Histórico kg y litros · ✅ · F2 · S
+- **Pantallas**: comparación entre temporadas (kg, L, blanco/tinto, L/kg, envasado, granel, mermas, variación) y
+  detalle por lote con filtros (temporada, tipo, variedad, cuartel) y totales. Exporta CSV. Solo lectura y offline.
+- **Lee**: lotes, cosechas y movimientos de bodega (IndexedDB; `historicoLotes` / `historicoPorTemporada` sobre
+  `balanceLote`). Las unidades envasadas se suman cuando exista la orden de envasado (F5).
 - **Hecho cuando**: los totales por temporada coinciden con v1.
 
 ---

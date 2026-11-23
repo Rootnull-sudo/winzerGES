@@ -387,3 +387,5 @@ Corregidos al migrar el viñedo (F1):
 30. **Rangos de laboratorio fijos** y el de SO₂ libre duplicado con el de fermentación. → Parámetros de la viña
     (`enologia.labBlanco/labTinto`); el SO₂ libre sale de `enologia.so2Blanco/so2Tinto`.
 31. **Gráfico de laboratorio con "acidez × 5"** en el eje del SO₂. → Un gráfico por parámetro, con su franja objetivo.
+32. **Histórico: kg y litros en un mismo eje** y variación contra una temporada vacía. → Gráficos separados (kg con
+    L/kg; litros por tipo) y la variación compara con la última temporada con litros.

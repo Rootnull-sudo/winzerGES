@@ -12,6 +12,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   bigint,
   boolean,
   customType,
@@ -673,8 +674,8 @@ export const cosecha = pgTable(
     cuartelId: text('cuartel_id')
       .notNull()
       .references(() => cuartel.id),
-    /** Lote de bodega: la FK y la reacción "lote → En vendimia" llegan con F2-1. */
-    loteId: text('lote_id'),
+    /** Lote de bodega (reacción: lote Planificado → En vendimia). */
+    loteId: text('lote_id').references((): AnyPgColumn => lote.id),
     cajones: integer('cajones').notNull(),
     kg: num('kg').notNull(),
     /** propia | venta | descarte */
@@ -711,4 +712,62 @@ export const jornal = pgTable(
     pago: money('pago').notNull().default(0)
   },
   (t) => [index('jornal_cosecha_idx').on(t.orgId, t.cosechaId), index('jornal_sync_idx').on(t.orgId, t.seq)]
+);
+
+/* --- Calendario de vendimia: lotes y ventanas (F2-1, offline) --- */
+export const lote = pgTable(
+  'lote',
+  {
+    ...base(),
+    ...syncCols(),
+    codigo: text('codigo').notNull(),
+    temporadaId: text('temporada_id')
+      .notNull()
+      .references(() => temporada.id),
+    /** Cuarteles de origen (v1: cuartelIds). Lista en el lote para que funcione igual offline. */
+    cuartelIds: jsonb('cuartel_ids').$type<string[]>().notNull().default([]),
+    variedad: text('variedad').notNull(),
+    tipo: text('tipo').notNull(),
+    valle: text('valle'),
+    /** Planificado → En vendimia → En molienda → Fermentando → (Macerando) → FML → En guarda → Envasado → Finalizado */
+    estado: text('estado').notNull().default('Planificado'),
+    litrosEstimados: num('litros_estimados'),
+    costoUvaComprada: money('costo_uva_comprada'),
+    fechaVendimiaPlan: text('fecha_vendimia_plan').notNull(),
+    diasVendimia: integer('dias_vendimia'),
+    diasFA: integer('dias_fa'),
+    diasMaceracion: integer('dias_maceracion'),
+    diasFML: integer('dias_fml'),
+    diasGuarda: integer('dias_guarda'),
+    inicioVendimiaReal: text('inicio_vendimia_real'),
+    fechaMoliendaReal: text('fecha_molienda_real'),
+    inicioFAReal: text('inicio_fa_real'),
+    finFAReal: text('fin_fa_real')
+  },
+  (t) => [
+    uniqueIndex('lote_codigo_uq')
+      .on(t.orgId, sql`lower(${t.codigo})`)
+      .where(sql`${t.deletedAt} is null`),
+    index('lote_sync_idx').on(t.orgId, t.seq)
+  ]
+);
+
+export const ventana = pgTable(
+  'ventana',
+  {
+    ...base(),
+    ...syncCols(),
+    variedad: text('variedad').notNull(),
+    valle: text('valle').notNull(),
+    /** mm-dd */
+    desde: text('desde').notNull(),
+    hasta: text('hasta').notNull(),
+    fuente: text('fuente')
+  },
+  (t) => [
+    uniqueIndex('ventana_variedad_valle_uq')
+      .on(t.orgId, sql`lower(${t.variedad})`, sql`lower(${t.valle})`)
+      .where(sql`${t.deletedAt} is null`),
+    index('ventana_sync_idx').on(t.orgId, t.seq)
+  ]
 );

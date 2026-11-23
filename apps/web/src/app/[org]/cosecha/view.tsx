@@ -11,7 +11,8 @@ import {
   TARIFAS_JORNAL,
   type Cosecha,
   type Cuartel,
-  type Jornal
+  type Jornal,
+  type Lote
 } from '@winzer/domain';
 import { Grape, Plus, Trash2, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -51,12 +52,13 @@ function useDatos() {
   const cuarteles = useEntity<Cuartel>('cuartel') as CuartelRow[] | undefined;
   const cosechas = useEntity<Cosecha>('cosecha') as CosechaRow[] | undefined;
   const jornales = useEntity<Jornal>('jornal') as JornalRow[] | undefined;
+  const lotes = useEntity<Lote>('lote') as (Lote & Pend)[] | undefined;
   const porCuartel = useMemo(() => new Map((cuarteles ?? []).map((c) => [c.id, c])), [cuarteles]);
   const delaTemporada = useMemo(
     () => (cosechas ?? []).filter((c) => c.temporadaId === elegida?.id).sort((a, b) => b.fecha.localeCompare(a.fecha)),
     [cosechas, elegida]
   );
-  return { elegida, cuarteles, cosechas, jornales, porCuartel, delaTemporada, cargando: !cuarteles || !cosechas || !jornales };
+  return { elegida, cuarteles, cosechas, jornales, lotes, porCuartel, delaTemporada, cargando: !cuarteles || !cosechas || !jornales || !lotes };
 }
 
 export function CosechaView({ kgCajon }: { kgCajon: Rango }) {
@@ -288,7 +290,7 @@ function CosechaDialog({
     }
     const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
-      const nuevoId = await engine.write('cosecha', 'upsert', c?.id ?? null, { ...data, temporadaId: t.temporada?.id ?? '', loteId: c?.loteId ?? null });
+      const nuevoId = await engine.write('cosecha', 'upsert', c?.id ?? null, { ...data, temporadaId: t.temporada?.id ?? '' });
       toast(navigator.onLine ? 'Cosecha guardada.' : 'Cosecha guardada en este equipo; se enviará al recuperar la señal.');
       setErrors({});
       // Una cosecha nueva queda abierta para agregar su cuadrilla.
@@ -375,6 +377,20 @@ function CosechaDialog({
           <Field label="Kg" required error={errors.kg}>
             {(i, d) => (
               <Input id={i} name="kg" type="number" min={1} step="any" value={f.kg} onChange={set('kg')} className="tabular" aria-describedby={d} required />
+            )}
+          </Field>
+          <Field label="Lote" hint="Al asignarlo, un lote planificado pasa a «En vendimia».">
+            {(i, d) => (
+              <Select id={i} name="loteId" defaultValue={c?.loteId ?? ''} aria-describedby={d}>
+                <option value="">Sin lote</option>
+                {(datos.lotes ?? [])
+                  .filter((l) => l.temporadaId === t.temporada?.id || l.id === c?.loteId)
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.codigo} · {l.variedad}
+                    </option>
+                  ))}
+              </Select>
             )}
           </Field>
           <Field label="Destino">

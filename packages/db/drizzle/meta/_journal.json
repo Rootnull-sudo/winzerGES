@@ -92,6 +92,13 @@
       "when": 1795194731464,
       "tag": "0012_cosecha",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795450188633,
+      "tag": "0013_lotes",
+      "breakpoints": true
     }
   ]
 }

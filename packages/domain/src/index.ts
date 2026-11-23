@@ -14,4 +14,5 @@ export * from './entities/insumo';
 export * from './entities/fenologia';
 export * from './entities/aplicacion';
 export * from './entities/cosecha';
+export * from './entities/lote';
 export * from './sync';

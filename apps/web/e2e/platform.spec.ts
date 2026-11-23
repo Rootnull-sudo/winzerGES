@@ -484,3 +484,59 @@ test('cosecha: una cuadrilla registrada sin señal queda con su pago calculado',
   await waitSynced(page);
   await expect(page.getByRole('row', { name: new RegExp(cuadrilla) })).toHaveCount(0);
 });
+
+test('calendario: lote creado sin señal, en el Gantt, y la cosecha lo pasa a «En vendimia»', async ({ page, context }) => {
+  const codigo = 'L-E2E-' + Date.now().toString(36).slice(-4).toUpperCase();
+  await login(page, 'agronomo@winzer.test');
+  await page.goto('/vina-demo/calendario');
+  await waitSynced(page);
+
+  await context.setOffline(true);
+  await expect(page.getByRole('button', { name: /Sin conexión/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Nuevo lote' }).click();
+  const d = page.getByRole('dialog', { name: 'Nuevo lote' });
+  await d.getByLabel('Código del lote').fill(codigo);
+  await d.getByLabel('Variedad').fill('Syrah');
+  await d.getByLabel('Valle').fill('Maipo');
+  const anio = Number((await page.getByRole('combobox', { name: 'Temporada' }).first().inputValue()) || '0');
+  await d.getByLabel('Vendimia planificada').fill(`${anio}-03-15`);
+  await expect(d.getByLabel('Plan', { exact: true })).toContainText('FML');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: new RegExp(codigo) });
+  await expect(fila.getByLabel('Pendiente de sincronizar')).toBeVisible();
+  await expect(fila).toContainText('Planificado');
+
+  await page.getByRole('tab', { name: 'Vista Gantt' }).click();
+  await expect(page.getByRole('region', { name: 'Gantt de lotes' }).getByText(codigo)).toBeVisible();
+  await page.screenshot(shots('18-gantt'));
+  await context.setOffline(false);
+  await waitSynced(page);
+
+  // La cosecha con ese lote lo pasa a «En vendimia».
+  await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Cosecha' }).click();
+  await page.getByRole('button', { name: 'Registrar cosecha' }).click();
+  const c = page.getByRole('dialog');
+  await c.getByLabel('Cuartel').selectOption({ index: 1 });
+  await c.getByLabel('Lote').selectOption({ label: `${codigo} · Syrah` });
+  await c.getByLabel('Cajones').fill('10');
+  await c.getByLabel(/^Kg\b/).fill('190');
+  await c.getByRole('button', { name: 'Guardar y agregar personal' }).click();
+  await expect(c.getByRole('region', { name: 'Personal y pagos' })).toBeVisible();
+  await waitSynced(page);
+  await page.keyboard.press('Escape');
+  await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Calendario de vendimia' }).click();
+  await expect
+    .poll(async () => (await page.getByRole('row', { name: new RegExp(codigo) }).innerText()).includes('En vendimia'), { timeout: 20_000 })
+    .toBe(true);
+
+  // Limpieza.
+  await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Cosecha' }).click();
+  await page.getByRole('row', { name: /190/ }).first().click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Calendario de vendimia' }).click();
+  await page.getByRole('row', { name: new RegExp(codigo) }).click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(codigo) })).toHaveCount(0);
+});

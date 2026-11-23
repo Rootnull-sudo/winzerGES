@@ -13,7 +13,7 @@
 import type { Tx } from '../client';
 import type { Actor } from '../repo';
 import { variedadDesdeCuartel } from './catastro';
-import { jornalesDeCosechaBorrada } from './cosecha';
+import { jornalesDeCosechaBorrada, loteEnVendimia } from './cosecha';
 import { consumoDeAplicacion } from './insumos';
 
 export interface ContextoReaccion {
@@ -30,7 +30,7 @@ export type Reaccion = (tx: Tx, actor: Actor, c: ContextoReaccion) => Promise<vo
 export const REACCIONES: Record<string, readonly Reaccion[]> = {
   cuartel: [variedadDesdeCuartel],
   aplicacion: [consumoDeAplicacion],
-  cosecha: [jornalesDeCosechaBorrada]
+  cosecha: [jornalesDeCosechaBorrada, loteEnVendimia]
 };
 
 /** Ejecuta las reacciones registradas para la entidad, en orden. */

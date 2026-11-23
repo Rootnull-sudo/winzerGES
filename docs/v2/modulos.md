@@ -70,7 +70,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Alerta**: cajones fuera de rango.
 - **Hecho cuando**: una cuadrilla registrada en el viñedo sin señal queda con el pago calculado.
 
-### Calendario de vendimia · ⬜ · F2 · L
+### Calendario de vendimia · ✅ (F2-1)
 - **Tablas**: `lote`, `lote_cuartel`, `ventana`.
 - **Pantallas**:
   - lotes de la temporada, con el plan de fases (molienda, FA, maceración, descube, FML, guarda);

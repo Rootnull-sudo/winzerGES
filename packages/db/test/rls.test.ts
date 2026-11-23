@@ -194,7 +194,8 @@ describe('importador v1', () => {
       aplicacion: 4,
       labor: 3,
       cosecha: 3,
-      jornal: 3
+      jornal: 3,
+      lote: 5
     });
     expect(r1.omitidos).toEqual([]);
     expect(r1.pendientes).toEqual({ venta: 1, estanque: 2 });

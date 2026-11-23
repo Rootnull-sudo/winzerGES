@@ -68,6 +68,7 @@ describe('cosecha', () => {
       app: 'vina-gestion',
       data: {
         cuartel: [{ id: 'cu_k', codigo: 'K-09', variedad: 'Syrah', tipo: 'tinto', superficie: 1 }],
+        lote: [{ id: 'lot_1', codigo: 'L-K', temporada: 2027, cuartelIds: ['cu_k'], variedad: 'Syrah', tipo: 'tinto', fechaVendimiaPlan: '2027-03-20' }],
         cosecha: [{ id: 'co_1', fecha: '2027-03-20', temporada: 2027, cuartelId: 'cu_k', cajones: 50, kg: 950, destino: 'Venta de uva', loteId: 'lot_1' }],
         jornal: [{ id: 'jo_1', cosechaId: 'co_1', nombre: 'Juan', tarifaTipo: 'kg', tarifa: 40, kg: 950, fecha: '2027-03-20', pago: 1 }]
       }

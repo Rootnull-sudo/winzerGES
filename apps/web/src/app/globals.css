@@ -46,6 +46,13 @@
   --serie-t0: #7a1f35;
   --serie-t1: #b4566b;
   --serie-t2: #e3a5b4;
+  /* Fases del calendario de vendimia (categórica de referencia dataviz, validada; en claro 3 tonos < 3:1 → el Gantt
+     lleva etiqueta en la barra y la tabla de lotes como vista accesible). */
+  --fase-vendimia: #2a78d6;
+  --fase-fa: #eb6834;
+  --fase-maceracion: #1baf7a;
+  --fase-fml: #eda100;
+  --fase-guarda: #e87ba4;
   --blanco: #6b5714;
   --blanco-soft: #f6f0dc;
   --blanco-fill: #d9c27a; /* relleno de gráficos (no para texto) */
@@ -86,6 +93,11 @@
     --serie-t0: #e895a8;
     --serie-t1: #b35a6f;
     --serie-t2: #7d3646;
+    --fase-vendimia: #3987e5;
+    --fase-fa: #d95926;
+    --fase-maceracion: #199e70;
+    --fase-fml: #c98500;
+    --fase-guarda: #d55181;
     --blanco: #e3d08a;
     --blanco-soft: #2a2512;
     --blanco-fill: #b9a45c;
@@ -125,6 +137,11 @@
   --serie-t0: #e895a8;
   --serie-t1: #b35a6f;
   --serie-t2: #7d3646;
+  --fase-vendimia: #3987e5;
+  --fase-fa: #d95926;
+  --fase-maceracion: #199e70;
+  --fase-fml: #c98500;
+  --fase-guarda: #d55181;
   --blanco: #e3d08a;
   --blanco-soft: #2a2512;
   --blanco-fill: #b9a45c;
@@ -155,6 +172,11 @@
   --color-serie-t0: var(--serie-t0);
   --color-serie-t1: var(--serie-t1);
   --color-serie-t2: var(--serie-t2);
+  --color-fase-vendimia: var(--fase-vendimia);
+  --color-fase-fa: var(--fase-fa);
+  --color-fase-maceracion: var(--fase-maceracion);
+  --color-fase-fml: var(--fase-fml);
+  --color-fase-guarda: var(--fase-guarda);
   --color-blanco: var(--blanco);
   --color-blanco-soft: var(--blanco-soft);
   --color-blanco-fill: var(--blanco-fill);

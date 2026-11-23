@@ -16,6 +16,7 @@ import { calcularAlertas } from './alertas/motor';
 import { asignarPlan } from './plan-cli';
 import { REGLAS } from './alertas/reglas';
 import { cargarIndicadores } from './services/parametros';
+import { cargarVentanasBase } from './services/calendario';
 import { asegurarTemporada } from './services/temporadas';
 import { withOrg } from './tenancy';
 
@@ -93,6 +94,8 @@ async function main() {
   // Planes: la demo con todo; Los Robles en Esencial para ver módulos fuera del plan.
   await asignarPlan('vina-demo', 'piloto');
   await asignarPlan('los-robles', 'esencial');
+  // Ventanas de vendimia referenciales (las viñas nuevas las reciben al crearse).
+  for (const o of ['org_demo', 'org_robles']) await withOrg(o, (tx) => cargarVentanasBase(tx, o));
   // Alertas iniciales (en producción las calcula el worker cada hora).
   for (const o of ['org_demo', 'org_robles']) await calcularAlertas(o, REGLAS);
   console.log('✓ Seed listo', rep.importados);

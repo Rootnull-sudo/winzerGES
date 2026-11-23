@@ -19,9 +19,11 @@ import {
   insumoInput,
   jornalInput,
   laborInput,
+  loteInput,
   movInsumoInput,
   rangoPorDefecto,
-  variedadInput
+  variedadInput,
+  ventanaInput
 } from '@winzer/domain';
 import { eq } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
@@ -31,7 +33,23 @@ import { reaccionar } from './reacciones';
 import { upsert, type Actor, type EntityMeta } from './repo';
 import { asegurarTemporada, listarTemporadas } from './services/temporadas';
 import type { Tx } from './client';
-import { aplicacion, cliente, clima, cobro, cosecha, cuartel, fenologia, insumo, insumoPrecio, jornal, labor, movInsumo, variedad } from './schema';
+import {
+  aplicacion,
+  cliente,
+  clima,
+  cobro,
+  cosecha,
+  cuartel,
+  fenologia,
+  insumo,
+  insumoPrecio,
+  jornal,
+  labor,
+  lote,
+  movInsumo,
+  variedad,
+  ventana
+} from './schema';
 import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { withOrg } from './tenancy';
 
@@ -123,6 +141,15 @@ const IMPORTERS: Record<string, Importer> = {
     adaptar: ({ unidadDosis: _u, ...r }) => ({ ...r, costo: Math.round(Number(r.costo) || 0) })
   },
   labor: { table: labor, schema: laborInput, meta: { entity: 'labor', module: 'insumos', label: 'labores' }, refs: ['cuartelId'], temporada: true },
+  ventana: { table: ventana, schema: ventanaInput, meta: { entity: 'ventana', module: 'calendario', label: 'ventanas de vendimia' } },
+  lote: {
+    table: lote,
+    schema: loteInput,
+    meta: { entity: 'lote', module: 'calendario', label: 'lotes' },
+    temporada: true,
+    // cuartelIds es una lista: se remapea cada id.
+    adaptar: (r, orgId) => ({ ...r, cuartelIds: Array.isArray(r.cuartelIds) ? r.cuartelIds.map((c) => mapId(orgId, String(c))) : [] })
+  },
   cosecha: {
     table: cosecha,
     schema: cosechaInput,

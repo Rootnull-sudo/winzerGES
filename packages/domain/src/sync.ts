@@ -13,6 +13,7 @@ import { cuartelInput, variedadInput } from './entities/catastro';
 import { aplicacionInput, laborInput } from './entities/aplicacion';
 import { cosechaInput, jornalInput } from './entities/cosecha';
 import { climaInput, fenologiaInput } from './entities/fenologia';
+import { loteInput, ventanaInput } from './entities/lote';
 import { insumoInput, movInsumoInput } from './entities/insumo';
 import { temporadaInput } from './entities/temporada';
 
@@ -73,6 +74,20 @@ export const SYNC_ENTITIES: Record<string, SyncEntityDef> = {
   },
   aplicacion: { entity: 'aplicacion', module: 'insumos', label: 'aplicaciones', schema: aplicacionInput },
   labor: { entity: 'labor', module: 'insumos', label: 'labores', schema: laborInput },
+  lote: {
+    entity: 'lote',
+    module: 'calendario',
+    label: 'lotes',
+    schema: loteInput,
+    unique: [{ campos: ['codigo'], mensaje: 'Ya existe un lote con ese código.' }]
+  },
+  ventana: {
+    entity: 'ventana',
+    module: 'calendario',
+    label: 'ventanas de vendimia',
+    schema: ventanaInput,
+    unique: [{ campos: ['variedad', 'valle'], mensaje: 'Ya hay una ventana para esa variedad y valle.' }]
+  },
   cosecha: { entity: 'cosecha', module: 'cosecha', label: 'cosechas', schema: cosechaInput },
   jornal: { entity: 'jornal', module: 'cosecha', label: 'jornales', schema: jornalInput, sensitive: true },
   clima: {

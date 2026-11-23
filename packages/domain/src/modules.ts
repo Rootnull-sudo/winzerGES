@@ -32,7 +32,7 @@ export const MODULES: readonly ModuleDef[] = [
   m('fenologia', 'Desborre y fenología', 'operacion', 'sprout', 'v2'),
   m('insumos', 'Insumos y labores', 'operacion', 'flask-conical', 'v2'),
   m('cosecha', 'Cosecha', 'operacion', 'grape', 'v2'),
-  m('calendario', 'Calendario de vendimia', 'operacion', 'calendar'),
+  m('calendario', 'Calendario de vendimia', 'operacion', 'calendar', 'v2'),
   m('laboratorio', 'Laboratorio', 'operacion', 'test-tube'),
   m('vinificacion', 'Vinificación y aditivos', 'bodega', 'beaker'),
   m('fermentacion', 'Fermentación', 'bodega', 'thermometer'),

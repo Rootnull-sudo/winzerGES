@@ -59,9 +59,8 @@ movimientos (solo agregar); **D** = documento con estado.
 
 | Tabla | Tipo | Columnas clave | Notas |
 |---|---|---|---|
-| `lote` | S | `codigo`, `temporada_id`, `variedad`, `tipo`, `valle`, `estado`, `litros_estimados`, `costo_uva_comprada`, `fecha_vendimia_plan`, `dias_vendimia/fa/maceracion/fml/guarda`, `fecha_molienda_real`, `inicio_fa_real`, `fin_fa_real`, `inicio_vendimia_real` | Único por (org, codigo) |
-| `lote_cuartel` | S | `lote_id`, `cuartel_id`, `pct` opcional | Reemplaza `lote.cuartelIds` (N:M) |
-| `ventana` | S | `variedad`, `valle`, `desde_mmdd`, `hasta_mmdd`, `fuente` | Seed de 30 ventanas al crear la viña |
+| `lote` | S | `codigo`, `temporada_id`, `cuartel_ids` (jsonb, lista), `variedad`, `tipo`, `valle`, `estado`, `litros_estimados`, `costo_uva_comprada`, `fecha_vendimia_plan`, `dias_vendimia/fa/maceracion/fml/guarda`, `fecha_molienda_real`, `inicio_fa_real`, `fin_fa_real`, `inicio_vendimia_real` | Único por (org, codigo). Plan con `planLote` (`entities/lote.ts`). Reacción de cosecha: Planificado → En vendimia |
+| `ventana` | S | `variedad`, `valle`, `desde` (mm-dd), `hasta` (mm-dd), `fuente` | Única por (variedad, valle). Las 30 referenciales de v1 se cargan al crear la viña (`cargarVentanasBase`) |
 | `estanque` | S | `codigo`, `capacidad_l`, `material`, `tipo`, `ubicacion`, `estado` (operativo/mantencion/reservado), `costo_mantencion` | |
 | `mov_bodega` | S·L | `fecha`, `estanque_id`, `lote_id`, `litros` (con signo), `tipo` (entrada/trasiego_salida/trasiego_entrada/merma/vinagre/envasado/venta_granel/ajuste), `origen` (uva/mosto/vino), `kg_uva`, `grupo`, `motivo`, `origen_tipo`, `origen_id`, `orden_envasado_id`, `venta_id` | Índices (estanque), (lote). La entrada no-vino tiene una reacción |
 | `fermentacion` | S·D | `codigo`, `lote_id`, `estanque_id`, `tipo`, `volumen`, `brix_inicial`, `ph_inicial`, `acidez_inicial`, `levadura_insumo_id`, `nutrientes`, `temperatura_objetivo`, `dias_planificados`, hitos (`fecha_molienda`, `inicio_fa`, `inicio_tumultuosa`, `fecha_corte`, `fin_fa`, `inicio/fin_maceracion`, `inicio/fin_fml`), `alcohol_final`, `azucar_residual`, `estado` (borrador/activa/cerrada) | Reacciones al iniciar y al terminar la FA |

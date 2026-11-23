@@ -8,6 +8,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { db } from './client';
 import { invitation, member, organization, orgRole, suscripcion, user } from './schema';
 import type { Actor } from './repo';
+import { cargarVentanasBase } from './services/calendario';
 import { asegurarTemporada } from './services/temporadas';
 import { withOrg } from './tenancy';
 
@@ -82,6 +83,8 @@ export async function createOrganization(userId: string, input: { nombre: string
     await asegurarTemporada(tx, id, fechaHoy());
     // Prueba de 30 días del plan completo (ADR 0014).
     await tx.insert(suscripcion).values({ orgId: id, ...suscripcionInicial(fechaHoy()) });
+    // Ventanas de vendimia referenciales (editables).
+    await cargarVentanasBase(tx, id, userId);
   });
   return { id, slug };
 }

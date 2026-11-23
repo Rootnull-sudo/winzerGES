@@ -101,7 +101,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   - tabla de movimientos de la temporada;
   - balance de masa por lote.
 - **Reacción**: una entrada que no es vino crea la ficha de fermentación y pasa el lote a "En molienda".
-- **Alertas**: sobrecapacidad y mermas sobre el 3%.
+- **Alertas** (job, F2-7): sobrecapacidad y mermas sobre el 3% en lotes que siguen en bodega.
 - **Corrige**: el balance de masa pasa a compararse contra los kg de uva.
 - **Hecho cuando**: un trasiego hecho offline se sincroniza como 2 o 3 movimientos con el mismo `grupo`, y la
   ocupación coincide con v1.

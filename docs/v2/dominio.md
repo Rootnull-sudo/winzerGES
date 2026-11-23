@@ -389,3 +389,6 @@ Corregidos al migrar el viñedo (F1):
 31. **Gráfico de laboratorio con "acidez × 5"** en el eje del SO₂. → Un gráfico por parámetro, con su franja objetivo.
 32. **Histórico: kg y litros en un mismo eje** y variación contra una temporada vacía. → Gráficos separados (kg con
     L/kg; litros por tipo) y la variación compara con la última temporada con litros.
+33. **Desvío de FA en curso**: v1 comparaba los días transcurridos con el plan y avisaba "−8 días" apenas partía.
+    → En curso solo avisa si ya superó el plan; terminada, en ambos sentidos.
+34. **Mermas altas para siempre**: v1 avisaba también de lotes ya vendidos o envasados. → Solo lotes con stock.

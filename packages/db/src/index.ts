@@ -15,6 +15,7 @@ export * from './services/tareas';
 export * from './services/proveedores';
 export * from './services/compras';
 export * from './services/pagos';
+export * from './services/gastos';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

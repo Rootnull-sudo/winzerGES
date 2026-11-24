@@ -1105,13 +1105,58 @@ export const pagoAplicacion = pgTable(
       .notNull()
       .references(() => pago.id),
     compraId: text('compra_id').references(() => compra.id),
-    /** FK a gasto: la agrega F3-4 (Gastos). */
-    gastoId: text('gasto_id'),
+    gastoId: text('gasto_id').references((): AnyPgColumn => gasto.id),
     monto: money('monto').notNull()
   },
   (t) => [
     index('pago_aplicacion_pago_idx').on(t.orgId, t.pagoId),
     index('pago_aplicacion_compra_idx').on(t.orgId, t.compraId),
     check('pago_aplicacion_un_documento', sql`(${t.compraId} is null) <> (${t.gastoId} is null)`)
+  ]
+);
+
+/* --- Administración: gastos y presupuesto (F3-4, online) --- */
+export const gasto = pgTable(
+  'gasto',
+  {
+    ...base(),
+    fecha: text('fecha').notNull(),
+    categoria: text('categoria').notNull(),
+    descripcion: text('descripcion').notNull(),
+    proveedorId: text('proveedor_id').references(() => proveedor.id),
+    /** Neto. */
+    monto: money('monto').notNull(),
+    /** factura | boleta | otro */
+    documento: text('documento').notNull().default('factura'),
+    folio: text('folio'),
+    afectoIVA: boolean('afecto_iva').notNull().default(false),
+    /** Foto al registrar: IVA con la tasa de la fecha y total. */
+    iva: money('iva').notNull().default(0),
+    total: money('total').notNull(),
+    medioPago: text('medio_pago').notNull().default('transferencia'),
+    /** pagado (al contado) | pendiente (a crédito: v_por_pagar). */
+    estado: text('estado').notNull().default('pagado'),
+    /** fijo | variable */
+    tipoCosto: text('tipo_costo').notNull().default('fijo'),
+    /** admin | ventas | produccion */
+    area: text('area').notNull().default('admin'),
+    noDeducible: boolean('no_deducible').notNull().default(false),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('gasto_fecha_idx').on(t.orgId, t.fecha)]
+);
+
+export const presupuesto = pgTable(
+  'presupuesto',
+  {
+    ...base(),
+    anio: integer('anio').notNull(),
+    categoria: text('categoria').notNull(),
+    monto: money('monto').notNull()
+  },
+  (t) => [
+    uniqueIndex('presupuesto_uq')
+      .on(t.orgId, t.anio, t.categoria)
+      .where(sql`${t.deletedAt} is null`)
   ]
 );

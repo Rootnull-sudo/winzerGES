@@ -214,8 +214,8 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   - trabajadores, con liquidación estimada en vivo;
   - remuneraciones ("calcular mes", liquidación imprimible, marcar pagada);
   - honorarios;
-  - gastos (factura afecta → DTE recibido);
-  - presupuesto vs real.
+  - gastos con IVA solo en factura afecta, al contado o a crédito (se pagan en Por pagar) ✅ F3-4;
+  - presupuesto vs real con todas las categorías editables en la fila ✅ F3-4.
 - **Cálculos**: `tax.liquidacion` (ya portado), usando los **indicadores del mes** y guardando la foto de los
   valores. Se agregan días trabajados, horas extra, anticipos y el tope de AFC.
 - **Hecho cuando**: la liquidación de un mes pasado usa la UF y la UTM de ese mes.

@@ -12,6 +12,8 @@ import {
   aditivoInput,
   analisisInput,
   compraInput,
+  gastoInput,
+  presupuestoInput,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -55,7 +57,9 @@ import {
   aditivo,
   analisis,
   compra,
+  gasto,
   pago,
+  presupuesto,
   estanque,
   fenologia,
   fermentacion,
@@ -75,6 +79,7 @@ import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { metaProveedor } from './services/proveedores';
 import { metaCompra, registrarCompra } from './services/compras';
 import { metaPago, registrarPago } from './services/pagos';
+import { guardarGasto, guardarPresupuesto, metaGasto, metaPresupuesto } from './services/gastos';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -317,6 +322,28 @@ const IMPORTERS: Record<string, Importer> = {
       if (!validas.length) throw new Error('El documento del pago ya no tiene saldo.');
       return registrarPago(tx, actor, { ...(data as never as PagoInput), monto: validas.reduce((t, a) => t + a.monto, 0), aplicaciones: validas });
     }
+  },
+  // IVA y total los calcula guardarGasto con la tasa de la fecha; `proveedor` era un campo suelto del seed de v1.
+  gasto: {
+    table: gasto,
+    schema: gastoInput,
+    meta: metaGasto,
+    refs: ['proveedorId'],
+    refsOpcionales: { proveedorId: proveedor },
+    adaptar: ({ proveedor: _p, ...r }) => ({
+      ...r,
+      monto: Math.round(Number(r.monto) || 0),
+      medioPago: r.medioPago === 'cargo automático' ? 'cargo_automatico' : r.medioPago || 'transferencia',
+      documento: r.documento || 'otro'
+    }),
+    guardar: (tx, actor, data) => guardarGasto(tx, actor, data as never)
+  },
+  presupuesto: {
+    table: presupuesto,
+    schema: presupuestoInput,
+    meta: metaPresupuesto,
+    adaptar: (r) => ({ ...r, monto: Math.round(Number(r.monto) || 0) }),
+    guardar: (tx, actor, data) => guardarPresupuesto(tx, actor, data as never)
   },
   movInsumo: {
     table: movInsumo,

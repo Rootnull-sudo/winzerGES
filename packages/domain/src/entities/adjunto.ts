@@ -10,7 +10,8 @@ export const ADJUNTABLES: Record<string, string> = {
   cuartel: 'catastro',
   analisis: 'laboratorio',
   proveedor: 'proveedores',
-  compra: 'proveedores'
+  compra: 'proveedores',
+  gasto: 'administracion'
 };
 
 /** 20 MB por archivo. */

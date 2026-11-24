@@ -6,7 +6,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { Tx } from '../client';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
-import { compra, insumo, proveedor } from '../schema';
+import { compra, gasto, insumo, proveedor } from '../schema';
 
 export const metaProveedor: EntityMeta = { entity: 'proveedor', module: 'proveedores', label: 'proveedores', display: (r) => String(r.nombre) };
 
@@ -23,10 +23,11 @@ export async function guardarProveedor(tx: Tx, actor: Actor, input: ProveedorInp
   return upsert(tx, proveedor, actor, metaProveedor, { ...data, id }, { baseVersion, checkVersion: baseVersion != null });
 }
 
-type ConProveedor = typeof insumo | typeof compra;
-/** Tablas que referencian al proveedor (F3-4 agrega gastos). */
+type ConProveedor = typeof insumo | typeof compra | typeof gasto;
+/** Tablas que referencian al proveedor. */
 const REFERENCIAS: { tabla: ConProveedor; nombre: string }[] = [
   { tabla: compra, nombre: 'compras' },
+  { tabla: gasto, nombre: 'gastos' },
   { tabla: insumo, nombre: 'insumos' }
 ];
 

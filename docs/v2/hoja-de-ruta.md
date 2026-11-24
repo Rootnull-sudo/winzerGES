@@ -76,7 +76,7 @@ flowchart LR
 | F3-1 Proveedores (+ FK `insumo.proveedor_id` e `insumo_precio.proveedor_id` → `proveedor`; selector de proveedor en el insumo; usuario demo administrativo) ✅ | `proveedor` | S |
 | F3-2 Compras con líneas + servicio `registrarCompra` (stock, precio vigente por fecha, NC y guía; `v_por_pagar`; el DTE recibido lo arma F6 desde `compra`) ✅ | `compra`, `compra_linea` | L |
 | F3-3 Pagos aplicados y cuentas por pagar (+ alerta por pagar) ✅ | `pago`, `pago_aplicacion` | M |
-| F3-4 Gastos y presupuesto | `gasto`, `presupuesto` | M |
+| F3-4 Gastos y presupuesto (gastos a crédito pagables desde Por pagar; FK `pago_aplicacion.gasto_id`) ✅ | `gasto`, `presupuesto` | M |
 | F3-5 Activos fijos | `activo` | S |
 
 ## F4 · Personas (carril B)

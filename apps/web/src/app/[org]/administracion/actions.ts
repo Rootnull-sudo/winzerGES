@@ -1,0 +1,46 @@
+'use server';
+/** Sueldos y gastos — módulo ONLINE: Server Actions → servicios de @winzer/db dentro de withOrg (RLS). */
+import { ConflictError, eliminarGasto, guardarGasto, guardarPresupuesto, ReglaError, withOrg } from '@winzer/db';
+import { gastoInput, PermissionError, presupuestoInput, type GastoInput, type PresupuestoInput } from '@winzer/domain';
+import { revalidatePath } from 'next/cache';
+import { requireOrg } from '@/lib/session';
+import type { Result } from '../proveedores/actions';
+
+function fallo(e: unknown): Result {
+  if (e instanceof PermissionError || e instanceof ConflictError || e instanceof ReglaError) return { ok: false, error: e.message };
+  console.error('[administracion]', e);
+  return { ok: false, error: 'No se pudo guardar. Inténtalo de nuevo.' };
+}
+const invalido = (issues: { path: PropertyKey[]; message: string }[]): Result => ({
+  ok: false,
+  error: 'Revisa los campos marcados.',
+  fieldErrors: Object.fromEntries(issues.map((i) => [i.path.map(String).join('.'), i.message]))
+});
+
+async function ejecutar(slug: string, fn: (actor: Awaited<ReturnType<typeof requireOrg>>['actor']) => Promise<unknown>): Promise<Result> {
+  const { actor } = await requireOrg(slug);
+  try {
+    await fn(actor);
+    revalidatePath(`/${slug}/administracion`);
+    revalidatePath(`/${slug}/proveedores`);
+    return { ok: true };
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+export async function saveGasto(slug: string, input: Record<string, unknown>, version?: number): Promise<Result> {
+  const p = gastoInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => guardarGasto(tx, actor, input as GastoInput, version)));
+}
+
+export async function deleteGasto(slug: string, id: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => eliminarGasto(tx, actor, id)));
+}
+
+export async function savePresupuesto(slug: string, input: Record<string, unknown>): Promise<Result> {
+  const p = presupuestoInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => guardarPresupuesto(tx, actor, input as PresupuestoInput)));
+}

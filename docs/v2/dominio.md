@@ -397,3 +397,7 @@ Corregidos al migrar el viñedo (F1):
     del historial con la fecha más reciente; anular recalcula.
 37. **Guía y factura contaban dos veces** como deuda (y el stock, si ambas tenían insumo). → La guía mueve stock sin
     deuda; la factura que la referencia no vuelve a mover stock.
+38. **IVA fantasma en gastos**: `afectoIVA` quedaba en true (oculto) en boletas y "otro", y el flujo y la
+    conciliación sumaban un 19 % no pagado. → Solo en factura; IVA y total se guardan con la tasa de la fecha.
+39. **Presupuesto**: no se podía presupuestar una categoría sin gastos y los meses salían del reloj del navegador.
+    → Todas las categorías editables; meses desde la fecha de evaluación.

@@ -850,3 +850,39 @@ test('pagos: pago parcial en Por pagar baja el saldo; al eliminarlo vuelve', asy
   await page.getByRole('tab', { name: 'Por pagar' }).click();
   await expect(fila).toContainText('$511.500');
 });
+
+test('gastos y presupuesto: factura afecta con IVA a crédito y presupuesto de una categoría sin gastos', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/administracion?tab=gastos&t=2027');
+  await page.getByRole('button', { name: 'Nuevo gasto' }).click();
+  const d = page.getByRole('dialog', { name: 'Nuevo gasto' });
+  await d.getByRole('textbox', { name: /^Descripción/ }).fill('Gasto E2E');
+  await d.getByLabel(/^Proveedor/).selectOption({ label: 'Eléctrica Demo S.A.' });
+  await d.getByLabel(/Monto neto/).fill('100000');
+  await d.getByLabel(/^Pago/).selectOption('pendiente');
+  const calc = d.getByRole('complementary', { name: 'Cálculo' });
+  await expect(calc).toContainText('$19.000');
+  await expect(calc).toContainText('$119.000');
+  await d.getByLabel(/^Documento/).selectOption('boleta'); // la boleta no da crédito: sin IVA
+  await expect(calc).not.toContainText('$19.000');
+  await d.getByLabel(/^Documento/).selectOption('factura');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /Gasto E2E/ });
+  await expect(fila).toContainText('Por pagar $119.000');
+  await page.screenshot(shots('27-gastos'));
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
+
+  await page.getByRole('tab', { name: 'Presupuesto' }).click();
+  const arriendo = page.getByRole('row', { name: /Arriendo/ });
+  await arriendo.getByLabel('Presupuesto Arriendo').fill('3000000');
+  await arriendo.getByLabel('Presupuesto Arriendo').press('Enter');
+  await expect(page.getByText('Presupuesto de arriendo actualizado.')).toBeVisible();
+  await expect(arriendo).toContainText('-100 %'); // sin gastos: proyección 0
+  await page.screenshot(shots('28-presupuesto'));
+  await arriendo.getByLabel('Presupuesto Arriendo').fill('0');
+  await arriendo.getByLabel('Presupuesto Arriendo').press('Enter');
+  await expect(page.getByText('Presupuesto de arriendo actualizado.').last()).toBeVisible();
+});

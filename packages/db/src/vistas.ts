@@ -60,7 +60,7 @@ export const VISTAS: Vista[] = [
   },
   {
     // Cuentas por pagar (F3): saldo = total − notas de crédito que lo referencian − pagos aplicados. Solo documentos
-    // que generan deuda (la guía no; la NC resta en su referencia). Estado y días al vencimiento se calculan en el dominio.
+    // que generan deuda (la guía no; la NC resta en su referencia) y gastos a crédito (vencen en su fecha). Estado y días al vencimiento se calculan en el dominio.
     nombre: 'v_por_pagar',
     sql: `select c.org_id, 'compra'::text as origen, c.id as documento_id, c.proveedor_id, c.documento, c.folio, c.fecha,
             c.vencimiento, c.total, nc.total as notas_credito, ap.total as aplicado, c.total - nc.total - ap.total as saldo
@@ -73,6 +73,15 @@ export const VISTAS: Vista[] = [
             select coalesce(sum(a.monto), 0)::numeric as total from pago_aplicacion a
             where a.compra_id = c.id and a.deleted_at is null
           ) ap
-          where c.deleted_at is null and c.estado = 'registrada' and c.documento in ('factura', 'factura_exenta', 'boleta')`
+          where c.deleted_at is null and c.estado = 'registrada' and c.documento in ('factura', 'factura_exenta', 'boleta')
+          union all
+          select g.org_id, 'gasto'::text, g.id, g.proveedor_id, g.documento, g.folio, g.fecha, g.fecha, g.total, 0::numeric, ap.total,
+            g.total - ap.total
+          from gasto g
+          cross join lateral (
+            select coalesce(sum(a.monto), 0)::numeric as total from pago_aplicacion a
+            where a.gasto_id = g.id and a.deleted_at is null
+          ) ap
+          where g.deleted_at is null and g.estado = 'pendiente'`
   }
 ];

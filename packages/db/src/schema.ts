@@ -1172,3 +1172,40 @@ export const activo = pgTable('activo', {
   compraId: text('compra_id').references(() => compra.id),
   observaciones: text('observaciones')
 });
+
+/* --- Personas: trabajadores (F4-1, online, sensible) --- */
+export const trabajador = pgTable(
+  'trabajador',
+  {
+    ...base(),
+    nombre: text('nombre').notNull(),
+    rut: text('rut').notNull(),
+    cargo: text('cargo').notNull(),
+    /** produccion | admin | ventas */
+    area: text('area').notNull().default('produccion'),
+    /** indefinido | plazo_fijo | obra */
+    contrato: text('contrato').notNull().default('indefinido'),
+    ingreso: text('ingreso'),
+    termino: text('termino'),
+    sueldoBase: money('sueldo_base').notNull(),
+    /** art50 | fija | ninguna */
+    gratificacion: text('gratificacion').notNull().default('art50'),
+    gratificacionMonto: money('gratificacion_monto').notNull().default(0),
+    bonos: money('bonos').notNull().default(0),
+    comisiones: money('comisiones').notNull().default(0),
+    colacion: money('colacion').notNull().default(0),
+    movilizacion: money('movilizacion').notNull().default(0),
+    afp: text('afp').notNull().default('Modelo'),
+    tasaAfp: num('tasa_afp'),
+    /** Fonasa | Isapre */
+    salud: text('salud').notNull().default('Fonasa'),
+    planSalud: money('plan_salud').notNull().default(0),
+    vacacionesPendientes: num('vacaciones_pendientes').notNull().default(0),
+    observaciones: text('observaciones')
+  },
+  (t) => [
+    uniqueIndex('trabajador_rut_uq')
+      .on(t.orgId, t.rut)
+      .where(sql`${t.deletedAt} is null`)
+  ]
+);

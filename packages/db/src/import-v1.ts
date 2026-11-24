@@ -15,6 +15,7 @@ import {
   compraInput,
   gastoInput,
   presupuestoInput,
+  trabajadorInput,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -62,6 +63,7 @@ import {
   gasto,
   pago,
   presupuesto,
+  trabajador,
   estanque,
   fenologia,
   fermentacion,
@@ -82,6 +84,7 @@ import { metaProveedor } from './services/proveedores';
 import { metaCompra, registrarCompra } from './services/compras';
 import { metaPago, registrarPago } from './services/pagos';
 import { guardarGasto, guardarPresupuesto, metaGasto, metaPresupuesto } from './services/gastos';
+import { metaTrabajador } from './services/personas';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -356,6 +359,13 @@ const IMPORTERS: Record<string, Importer> = {
       vidaUtilAnios: Math.max(1, Math.round(Number(r.vidaUtilAnios ?? vidaUtil) || 1)),
       valor: Math.round(Number(r.valor) || 0)
     })
+  },
+  // `licencias` era un texto libre: pasa a observaciones.
+  trabajador: {
+    table: trabajador,
+    schema: trabajadorInput,
+    meta: metaTrabajador,
+    adaptar: ({ licencias, ...r }) => ({ ...r, observaciones: [r.observaciones, licencias].filter(Boolean).join('\n') || null })
   },
   movInsumo: {
     table: movInsumo,

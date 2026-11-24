@@ -917,3 +917,27 @@ test('activos fijos: depreciación anual, fin de vida útil y baja', async ({ pa
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(fila).toHaveCount(0);
 });
+
+test('trabajadores: ficha con liquidación estimada en vivo y aviso bajo el ingreso mínimo', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/administracion?tab=trabajadores');
+  await expect(page.getByRole('row', { name: /Trabajadora Demo Dos/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Nuevo trabajador' }).click();
+  const d = page.getByRole('dialog', { name: 'Nuevo trabajador' });
+  await d.getByRole('textbox', { name: /^Nombre/ }).fill('Trabajador E2E');
+  await d.getByRole('textbox', { name: /^RUT/ }).fill('18.777.888-3');
+  await d.getByRole('textbox', { name: /^Cargo/ }).fill('Tractorista');
+  await d.getByLabel(/Sueldo base/).fill('400000');
+  await expect(d.getByText(/Bajo el ingreso mínimo/)).toBeVisible(); // aviso, no bloquea (v1 bloqueaba)
+  await d.getByLabel(/Sueldo base/).fill('900000');
+  // Imponible = 900.000 + gratificación art. 50 con tope 4,75 IMM ÷ 12 = 213.354.
+  await expect(d.getByRole('complementary', { name: 'Liquidación estimada' })).toContainText('$1.113.354');
+  await page.screenshot(shots('30-trabajador'));
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /Trabajador E2E/ });
+  await expect(fila).toContainText('$900.000');
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
+});

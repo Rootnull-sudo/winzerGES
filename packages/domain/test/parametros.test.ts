@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '../src/config';
-import { configEn, PARAMETROS, parametroInput, valorPorDefecto, vigenteEn } from '../src/parametros';
+import { configEn, INDICADORES, PARAMETROS, parametroInput, valorPorDefecto, vigenteEn } from '../src/parametros';
 
 describe('parámetros con vigencia', () => {
   it('el catálogo cubre OrgConfig salvo los indicadores globales', () => {
     const campos = Object.entries(DEFAULT_CONFIG).flatMap(([g, o]) => Object.keys(o).map((k) => `${g}.${k}`));
-    const indicadores = ['remuneraciones.uf', 'remuneraciones.utm', 'remuneraciones.imm', 'tributario.retencionHonorarios'];
+    const indicadores = Object.values(INDICADORES).map((i) => i.campo as string);
     expect(PARAMETROS.map((d) => d.clave).sort()).toEqual(campos.filter((c) => !indicadores.includes(c)).sort());
     for (const d of PARAMETROS) expect(valorPorDefecto(d.clave)).toBeDefined();
   });

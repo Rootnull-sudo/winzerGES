@@ -37,6 +37,14 @@ export interface OrgConfig {
     cesantiaEmpleador: number;
     sis: number;
     aporteEmpleadorPension: number;
+    /** Aporte del empleador al seguro de cesantía en contratos a plazo fijo u obra (v1: 0,03 fijo). */
+    cesantiaEmpleadorPlazoFijo: number;
+    /** Tope imponible AFP/salud en UF (indicador; v1: 87,8 fijo). */
+    topeImponibleUF: number;
+    /** Tope imponible del seguro de cesantía en UF (indicador; no existía en v1). */
+    topeAfcUF: number;
+    /** Jornada ordinaria semanal (horas), para el valor de la hora extra. */
+    jornadaSemanal: number;
     /** Valor de una jornada de campo por defecto en labores (v1 lo tenía fijo en 30.000). */
     valorJornada: number;
   };
@@ -80,6 +88,10 @@ export const DEFAULT_CONFIG: OrgConfig = {
     cesantiaEmpleador: 0.024,
     sis: 0.0154,
     aporteEmpleadorPension: 0.01,
+    cesantiaEmpleadorPlazoFijo: 0.03,
+    topeImponibleUF: 87.8,
+    topeAfcUF: 131.9,
+    jornadaSemanal: 42,
     valorJornada: 30_000
   },
   enologia: {

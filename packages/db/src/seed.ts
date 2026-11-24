@@ -70,7 +70,12 @@ async function main() {
     { clave: 'uf', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.uf, fuente: ej },
     { clave: 'utm', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.utm, fuente: ej },
     { clave: 'imm', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.imm, fuente: ej },
-    { clave: 'retencion_honorarios', fecha: inicioAnio, valor: DEFAULT_CONFIG.tributario.retencionHonorarios, fuente: ej }
+    { clave: 'retencion_honorarios', fecha: inicioAnio, valor: DEFAULT_CONFIG.tributario.retencionHonorarios, fuente: ej },
+    { clave: 'tope_imponible_uf', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.topeImponibleUF, fuente: ej },
+    { clave: 'tope_afc_uf', fecha: inicioAnio, valor: DEFAULT_CONFIG.remuneraciones.topeAfcUF, fuente: ej },
+    // UTM de ejemplo que cambia en octubre y noviembre: la liquidación de cada mes usa la suya (F4-2).
+    { clave: 'utm', fecha: `${inicioAnio.slice(0, 4)}-10-01`, valor: 69_900, fuente: ej },
+    { clave: 'utm', fecha: `${inicioAnio.slice(0, 4)}-11-01`, valor: 70_200, fuente: ej }
   ]);
   await ensureOrg('org_demo', 'vina-demo', 'Viña Demo', '76.123.456-0');
   await ensureOrg('org_robles', 'los-robles', 'Viña Los Robles', '77.555.444-3');

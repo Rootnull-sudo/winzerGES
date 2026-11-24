@@ -682,6 +682,55 @@ export const demoDump = {
       { id: 'act_d2', nombre: 'Equipo de frío 30 kW', valor: 12500000, vidaUtil: 12, fechaCompra: '2021-09-15', _demo: true },
       { id: 'act_d3', nombre: 'Bomba de trasiego', valor: 2400000, vidaUtil: 5, fechaCompra: '2019-03-01', _demo: true }
     ],
+    trabajador: [
+      {
+        id: 'tra_d1',
+        nombre: 'Trabajador Demo Uno',
+        rut: '15.111.222-6',
+        cargo: 'Bodeguero',
+        area: 'produccion',
+        contrato: 'indefinido',
+        ingreso: '2022-03-01',
+        sueldoBase: 750000,
+        gratificacion: 'art50',
+        colacion: 60000,
+        movilizacion: 40000,
+        afp: 'Modelo',
+        salud: 'Fonasa',
+        vacacionesPendientes: 8,
+        _demo: true
+      },
+      {
+        id: 'tra_d2',
+        nombre: 'Trabajadora Demo Dos',
+        rut: '16.333.444-5',
+        cargo: 'Enóloga asistente',
+        area: 'produccion',
+        contrato: 'plazo_fijo',
+        ingreso: '2026-03-01',
+        sueldoBase: 1400000,
+        gratificacion: 'art50',
+        afp: 'Habitat',
+        salud: 'Isapre',
+        planSalud: 180000,
+        _demo: true
+      },
+      {
+        id: 'tra_d3',
+        nombre: 'Trabajador Demo Tres',
+        rut: '17.555.666-4',
+        cargo: 'Vendedor',
+        area: 'ventas',
+        contrato: 'indefinido',
+        ingreso: '2026-11-16',
+        sueldoBase: 650000,
+        gratificacion: 'art50',
+        comisiones: 80000,
+        afp: 'Uno',
+        salud: 'Fonasa',
+        _demo: true
+      }
+    ],
     movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {

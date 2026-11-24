@@ -59,6 +59,8 @@ export const PARAMETROS: readonly ParametroDef[] = [
   p('remuneraciones.cesantiaEmpleador', 'Seguro de cesantía (empleador)', 'tasa'),
   p('remuneraciones.sis', 'SIS', 'tasa'),
   p('remuneraciones.aporteEmpleadorPension', 'Aporte del empleador a pensión', 'tasa'),
+  p('remuneraciones.cesantiaEmpleadorPlazoFijo', 'Seguro de cesantía empleador (plazo fijo u obra)', 'tasa'),
+  p('remuneraciones.jornadaSemanal', 'Jornada ordinaria semanal', 'entero', { unidad: 'h', ayuda: 'Para el valor de la hora extra.' }),
   p('remuneraciones.valorJornada', 'Valor de la jornada de campo', 'clp', { ayuda: 'Valor por defecto al registrar labores.' }),
   p('enologia.so2Blanco', 'SO₂ libre en blancos', 'rango_so2', { unidad: 'mg/L' }),
   p('enologia.so2Tinto', 'SO₂ libre en tintos', 'rango_so2', { unidad: 'mg/L' }),
@@ -85,7 +87,9 @@ export const INDICADORES = {
   uf: { etiqueta: 'UF', campo: 'remuneraciones.uf', periodicidad: 'diaria' },
   utm: { etiqueta: 'UTM', campo: 'remuneraciones.utm', periodicidad: 'mensual' },
   imm: { etiqueta: 'Ingreso mínimo mensual', campo: 'remuneraciones.imm', periodicidad: 'cuando cambia por ley' },
-  retencion_honorarios: { etiqueta: 'Retención de honorarios', campo: 'tributario.retencionHonorarios', periodicidad: 'anual' }
+  retencion_honorarios: { etiqueta: 'Retención de honorarios', campo: 'tributario.retencionHonorarios', periodicidad: 'anual' },
+  tope_imponible_uf: { etiqueta: 'Tope imponible AFP y salud (UF)', campo: 'remuneraciones.topeImponibleUF', periodicidad: 'anual' },
+  tope_afc_uf: { etiqueta: 'Tope imponible seguro de cesantía (UF)', campo: 'remuneraciones.topeAfcUF', periodicidad: 'anual' }
 } as const;
 export type ClaveIndicador = keyof typeof INDICADORES;
 

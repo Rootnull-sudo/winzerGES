@@ -1,7 +1,28 @@
 'use server';
 /** Sueldos y gastos — módulo ONLINE: Server Actions → servicios de @winzer/db dentro de withOrg (RLS). */
-import { ConflictError, eliminarGasto, guardarGasto, guardarPresupuesto, ReglaError, schema, softDelete, upsert, withOrg } from '@winzer/db';
-import { activoInput, gastoInput, PermissionError, presupuestoInput, type GastoInput, type PresupuestoInput } from '@winzer/domain';
+import {
+  ConflictError,
+  eliminarGasto,
+  eliminarTrabajador,
+  guardarGasto,
+  guardarPresupuesto,
+  guardarTrabajador,
+  ReglaError,
+  schema,
+  softDelete,
+  upsert,
+  withOrg
+} from '@winzer/db';
+import {
+  activoInput,
+  gastoInput,
+  PermissionError,
+  presupuestoInput,
+  trabajadorInput,
+  type GastoInput,
+  type PresupuestoInput,
+  type TrabajadorInput
+} from '@winzer/domain';
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { requireOrg } from '@/lib/session';
@@ -66,4 +87,14 @@ export async function saveActivo(slug: string, input: Record<string, unknown>, v
 
 export async function deleteActivo(slug: string, id: string): Promise<Result> {
   return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => softDelete(tx, schema.activo, actor, metaActivo, id)));
+}
+
+export async function saveTrabajador(slug: string, input: Record<string, unknown>, version?: number): Promise<Result> {
+  const p = trabajadorInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => guardarTrabajador(tx, actor, input as TrabajadorInput, version)));
+}
+
+export async function deleteTrabajador(slug: string, id: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => eliminarTrabajador(tx, actor, id)));
 }

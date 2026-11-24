@@ -23,7 +23,10 @@ describe('tax — paridad con v1', () => {
     [{ sueldoBase: 650000, gratificacion: 'art50', colacion: 50000, movilizacion: 40000, contrato: 'indefinido' }],
     [{ sueldoBase: 2_800_000, gratificacionMonto: 100000, contrato: 'plazo_fijo', planSalud: 250000 }]
   ])('liquidación de sueldo %#', (trab) => {
-    expect(tax.liquidacion(trab, r)).toEqual(v1.liquidacion(trab));
+    // v2 agrega `anticipos` al resultado (0 sin extras); el resto es idéntico a v1.
+    const { anticipos, ...v2 } = tax.liquidacion(trab, r);
+    expect(anticipos).toBe(0);
+    expect(v2).toEqual(v1.liquidacion(trab));
   });
   it('periodo anterior', () => {
     expect(tax.periodoAnterior('2026-01')).toBe('2025-12');

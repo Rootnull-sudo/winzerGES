@@ -402,3 +402,8 @@ Corregidos al migrar el viñedo (F1):
     conciliación sumaban un 19 % no pagado. → Solo en factura; IVA y total se guardan con la tasa de la fecha.
 39. **Presupuesto**: no se podía presupuestar una categoría sin gastos y los meses salían del reloj del navegador.
     → Todas las categorías editables; meses desde la fecha de evaluación.
+40. **Liquidación**: tope imponible fijo (87,8 × UF con un respaldo 39.500 distinto del valor por defecto), el seguro
+    de cesantía usaba el tope de AFP, el contrato por obra cotizaba como indefinido, la gratificación "ninguna"
+    pagaba un monto viejo, el plan Isapre seguía contando con Fonasa y no había días, horas extra ni anticipos. →
+    Topes como indicadores, tope propio del seguro de cesantía, obra = plazo fijo, todo lo demás en `liquidacion`.
+41. **Sueldo bajo el IMM bloqueaba el guardado** (jornada parcial imposible). → Aviso.

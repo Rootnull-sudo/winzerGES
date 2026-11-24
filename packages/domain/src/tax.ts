@@ -67,36 +67,75 @@ export function impuestoUnico(base: unknown, utm: number): number {
 
 export interface Trabajador {
   sueldoBase?: unknown;
-  gratificacion?: 'art50' | string;
+  /** art50 | fija | ninguna (v1: cualquier otro valor pagaba `gratificacionMonto`). */
+  gratificacion?: 'art50' | 'fija' | 'ninguna' | string | null;
   gratificacionMonto?: unknown;
   bonos?: unknown;
   comisiones?: unknown;
   colacion?: unknown;
   movilizacion?: unknown;
   tasaAfp?: unknown;
+  /** Fonasa | Isapre. Con Fonasa el plan no cuenta (v1 lo seguía sumando si quedaba guardado). */
+  salud?: string | null;
   planSalud?: unknown;
-  contrato?: 'indefinido' | 'plazo_fijo' | string;
+  /** indefinido | plazo_fijo | obra (obra cotiza cesantía como plazo fijo; v1 la trataba como indefinido). */
+  contrato?: 'indefinido' | 'plazo_fijo' | 'obra' | string | null;
 }
 
-/** Liquidación de sueldo (borrador). Fórmulas documentadas en v1. */
-export function liquidacion(t: Trabajador, r: Remu, extra: { bonos?: unknown; comisiones?: unknown; horasExtra?: unknown; anticipos?: unknown } = {}) {
-  const base = n(t.sueldoBase);
-  const grat = t.gratificacion === 'art50' ? Math.min(Math.round(base * 0.25), Math.round((4.75 * r.imm) / 12)) : n(t.gratificacionMonto);
+export interface ExtraLiquidacion {
+  bonos?: unknown;
+  comisiones?: unknown;
+  /** Horas extra del mes: valor hora = base × 7 ÷ (30 × jornada semanal), con recargo de 50 %. */
+  horasExtra?: unknown;
+  anticipos?: unknown;
+  /** Días trabajados (1–30): prorratea sueldo base y gratificación. Por defecto, 30. */
+  diasTrabajados?: unknown;
+}
+
+/** Monto de horas extra (Código del Trabajo art. 32: recargo 50 % sobre el valor hora ordinario). */
+export function montoHorasExtra(sueldoBase: unknown, horas: unknown, jornadaSemanal: number): number {
+  if (!n(horas)) return 0;
+  const valorHora = (n(sueldoBase) * 7) / (30 * (jornadaSemanal || 45));
+  return Math.round(valorHora * 1.5 * n(horas));
+}
+
+/**
+ * Liquidación de sueldo — fórmulas de v1 (tax.js:75-96), con los valores del mes en `r`:
+ *  gratificación art. 50 = mín(25 % × base, 4,75 × IMM ÷ 12); imponible = base + gratificación + bonos + comisiones +
+ *  horas extra; AFP y salud sobre el imponible con tope (`topeImponibleUF` × UF, antes 87,8 fijo); seguro de cesantía
+ *  con su propio tope (`topeAfcUF`, faltaba en v1), 0 para el trabajador a plazo fijo u obra; impuesto único por
+ *  tramos en UTM sobre imponible − AFP − 7 % salud − cesantía; líquido = imponible + no imponible − descuentos;
+ *  costo empresa = imponible + no imponible + cesantía empleador + SIS + aporte. Con los valores por defecto y sin
+ *  extras da exactamente lo de v1 (test de paridad).
+ */
+export function liquidacion(t: Trabajador, r: Remu, extra: ExtraLiquidacion = {}) {
+  const dias = extra.diasTrabajados == null || extra.diasTrabajados === '' ? 30 : Math.min(30, Math.max(0, n(extra.diasTrabajados)));
+  const prorrata = (x: number) => (dias >= 30 ? x : Math.round((x * dias) / 30));
+  const base = prorrata(n(t.sueldoBase));
+  const grat =
+    t.gratificacion === 'art50'
+      ? prorrata(Math.min(Math.round(n(t.sueldoBase) * 0.25), Math.round((4.75 * r.imm) / 12)))
+      : t.gratificacion === 'ninguna'
+        ? 0
+        : prorrata(n(t.gratificacionMonto));
   const bonos = n(extra.bonos ?? t.bonos);
   const com = n(extra.comisiones ?? t.comisiones);
-  const hhee = n(extra.horasExtra);
+  const hhee = montoHorasExtra(t.sueldoBase, extra.horasExtra, r.jornadaSemanal);
   const noImp = n(t.colacion) + n(t.movilizacion);
   const imponible = base + grat + bonos + com + hhee;
-  const topeImp = 87.8 * (r.uf || 39500);
-  const impTope = Math.min(imponible, topeImp);
+  const impTope = Math.min(imponible, r.topeImponibleUF * r.uf);
+  const afcTope = Math.min(imponible, r.topeAfcUF * r.uf);
+  const plazo = t.contrato === 'plazo_fijo' || t.contrato === 'obra';
   const afp = Math.round(impTope * (n(t.tasaAfp) || r.afp));
-  const salud = Math.round(Math.max(impTope * r.salud, n(t.planSalud)));
-  const ces = t.contrato === 'plazo_fijo' ? 0 : Math.round(impTope * r.cesantiaTrabajador);
+  const plan = t.salud === 'Fonasa' ? 0 : n(t.planSalud);
+  const salud = Math.round(Math.max(impTope * r.salud, plan));
+  const ces = plazo ? 0 : Math.round(afcTope * r.cesantiaTrabajador);
   const tributable = imponible - afp - Math.round(impTope * r.salud) - ces;
   const iu = impuestoUnico(tributable, r.utm);
-  const descuentos = afp + salud + ces + iu + n(extra.anticipos);
+  const anticipos = n(extra.anticipos);
+  const descuentos = afp + salud + ces + iu + anticipos;
   const liquido = imponible + noImp - descuentos;
-  const cesEmp = Math.round(impTope * (t.contrato === 'plazo_fijo' ? 0.03 : r.cesantiaEmpleador));
+  const cesEmp = Math.round(afcTope * (plazo ? r.cesantiaEmpleadorPlazoFijo : r.cesantiaEmpleador));
   const sis = Math.round(impTope * r.sis);
   const aporte = Math.round(impTope * r.aporteEmpleadorPension);
   return {
@@ -112,6 +151,7 @@ export function liquidacion(t: Trabajador, r: Remu, extra: { bonos?: unknown; co
     cesantia: ces,
     tributable,
     impuestoUnico: iu,
+    anticipos,
     descuentos,
     liquido,
     cesantiaEmpleador: cesEmp,
@@ -120,6 +160,7 @@ export function liquidacion(t: Trabajador, r: Remu, extra: { bonos?: unknown; co
     costoEmpresa: imponible + noImp + cesEmp + sis + aporte
   };
 }
+export type Liquidacion = ReturnType<typeof liquidacion>;
 
 export const retencionHonorarios = (bruto: unknown, t: Trib) => Math.round(n(bruto) * t.retencionHonorarios);
 

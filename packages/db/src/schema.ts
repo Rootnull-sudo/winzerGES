@@ -1209,3 +1209,52 @@ export const trabajador = pgTable(
       .where(sql`${t.deletedAt} is null`)
   ]
 );
+
+/* --- Personas: remuneraciones del mes (F4-2, online, sensible) --- */
+export const remuneracion = pgTable(
+  'remuneracion',
+  {
+    ...base(),
+    trabajadorId: text('trabajador_id')
+      .notNull()
+      .references(() => trabajador.id),
+    /** YYYY-MM */
+    periodo: text('periodo').notNull(),
+    /** calculada | pagada */
+    estado: text('estado').notNull().default('calculada'),
+    fechaPago: text('fecha_pago'),
+    // Novedades del mes.
+    diasTrabajados: integer('dias_trabajados').notNull().default(30),
+    horasExtraCantidad: num('horas_extra_cantidad').notNull().default(0),
+    // Resultado de tax.liquidacion (foto).
+    base: money('base').notNull(),
+    gratificacion: money('gratificacion').notNull(),
+    bonos: money('bonos').notNull().default(0),
+    comisiones: money('comisiones').notNull().default(0),
+    horasExtra: money('horas_extra').notNull().default(0),
+    noImponible: money('no_imponible').notNull().default(0),
+    imponible: money('imponible').notNull(),
+    afp: money('afp').notNull(),
+    salud: money('salud').notNull(),
+    cesantia: money('cesantia').notNull(),
+    tributable: money('tributable').notNull(),
+    impuestoUnico: money('impuesto_unico').notNull(),
+    anticipos: money('anticipos').notNull().default(0),
+    descuentos: money('descuentos').notNull(),
+    liquido: money('liquido').notNull(),
+    cesantiaEmpleador: money('cesantia_empleador').notNull(),
+    sis: money('sis').notNull(),
+    aporteEmpleador: money('aporte_empleador').notNull(),
+    costoEmpresa: money('costo_empresa').notNull(),
+    /** Foto del trabajador: { nombre, rut, cargo, area, contrato, afp, salud }. */
+    trabajadorFoto: jsonb('trabajador_foto').notNull(),
+    /** Foto de los indicadores y tasas usados ({} si se importó de v1, donde no se conocían). */
+    parametros: jsonb('parametros').notNull()
+  },
+  (t) => [
+    uniqueIndex('remuneracion_periodo_uq')
+      .on(t.orgId, t.trabajadorId, t.periodo)
+      .where(sql`${t.deletedAt} is null`),
+    index('remuneracion_periodo_idx').on(t.orgId, t.periodo)
+  ]
+);

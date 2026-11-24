@@ -211,8 +211,8 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 ### Sueldos y gastos · ⬜ · F3 (gastos y presupuesto) + F4 (personas) · L
 - **Tablas**: `gasto`, `presupuesto`, `trabajador`, `remuneracion`, `honorario`.
 - **Pantallas**:
-  - trabajadores, con liquidación estimada en vivo;
-  - remuneraciones ("calcular mes", liquidación imprimible, marcar pagada);
+  - trabajadores, con liquidación estimada en vivo ✅ F4-1;
+  - remuneraciones ("calcular mes" con los indicadores del mes, novedades, liquidación imprimible, pago con fecha) ✅ F4-2;
   - honorarios;
   - gastos con IVA solo en factura afecta, al contado o a crédito (se pagan en Por pagar) ✅ F3-4;
   - presupuesto vs real con todas las categorías editables en la fila ✅ F3-4.

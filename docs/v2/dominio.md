@@ -407,3 +407,8 @@ Corregidos al migrar el viñedo (F1):
     pagaba un monto viejo, el plan Isapre seguía contando con Fonasa y no había días, horas extra ni anticipos. →
     Topes como indicadores, tope propio del seguro de cesantía, obra = plazo fijo, todo lo demás en `liquidacion`.
 41. **Sueldo bajo el IMM bloqueaba el guardado** (jornada parcial imposible). → Aviso.
+42. **Remuneraciones con los indicadores de hoy**: "calcular mes" (y el seed) usaban UF, UTM e IMM actuales para
+    cualquier mes y reescribían las ya pagadas; la liquidación impresa leía los datos actuales del trabajador. →
+    Indicadores al último día del periodo con foto en `parametros`, foto del trabajador, pagadas intactas.
+43. **Pagos de sueldo**: "marcar pagada" usaba siempre la fecha de hoy y no se podía deshacer. → Fecha elegida y
+    reversible.

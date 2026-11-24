@@ -169,6 +169,13 @@
       "when": 1795520110147,
       "tag": "0023_trabajadores",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795520468047,
+      "tag": "0024_remuneraciones",
+      "breakpoints": true
     }
   ]
 }

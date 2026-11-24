@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import type { Tx } from '../client';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
 import { trabajador } from '../schema';
+import { tieneRemuneraciones } from './remuneraciones';
 
 export const metaTrabajador: EntityMeta = {
   entity: 'trabajador',
@@ -29,7 +30,8 @@ export async function guardarTrabajador(tx: Tx, actor: Actor, input: TrabajadorI
   return upsert(tx, trabajador, actor, metaTrabajador, { ...data, id }, { baseVersion, checkVersion: baseVersion != null });
 }
 
-/** Elimina un trabajador (F4-2: bloqueado si tiene remuneraciones; se registra su fecha de término). */
+/** Elimina un trabajador sin remuneraciones; si ya tiene, se registra su fecha de término (v1 tampoco lo permitía). */
 export async function eliminarTrabajador(tx: Tx, actor: Actor, id: string) {
+  if (await tieneRemuneraciones(tx, id)) throw new ReglaError('No se puede eliminar: tiene remuneraciones registradas. Registra su fecha de término.');
   return softDelete(tx, trabajador, actor, metaTrabajador, id);
 }

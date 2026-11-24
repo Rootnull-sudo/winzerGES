@@ -84,7 +84,7 @@ flowchart LR
 | Issue | Tablas | Tamaño |
 |---|---|---|
 | F4-1 Trabajadores (+ `liquidacion` con topes como indicadores, tope del seguro de cesantía, obra, días trabajados, horas extra y anticipos) ✅ | `trabajador` | M |
-| F4-2 Remuneraciones con indicadores del mes + liquidación imprimible | `remuneracion` | L |
+| F4-2 Remuneraciones con indicadores del mes + liquidación imprimible (novedades del mes, foto del trabajador, pago reversible; el F29 y el flujo las leen en F6/F7) ✅ | `remuneracion` | L |
 | F4-3 Honorarios | `honorario` | S |
 
 ## F5 · Comercial (junta los carriles)

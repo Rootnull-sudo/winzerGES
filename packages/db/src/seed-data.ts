@@ -731,6 +731,16 @@ export const demoDump = {
         _demo: true
       }
     ],
+    // Sin montos: el importador los calcula con los indicadores de cada mes.
+    remuneracion: [
+      { id: 'rem_tra_d1_2026-09', trabajadorId: 'tra_d1', periodo: '2026-09', estado: 'pagada', fechaPago: '2026-09-30', _demo: true },
+      { id: 'rem_tra_d2_2026-09', trabajadorId: 'tra_d2', periodo: '2026-09', estado: 'pagada', fechaPago: '2026-09-30', _demo: true },
+      { id: 'rem_tra_d1_2026-10', trabajadorId: 'tra_d1', periodo: '2026-10', estado: 'pagada', fechaPago: '2026-10-30', _demo: true },
+      { id: 'rem_tra_d2_2026-10', trabajadorId: 'tra_d2', periodo: '2026-10', estado: 'pagada', fechaPago: '2026-10-30', _demo: true },
+      { id: 'rem_tra_d1_2026-11', trabajadorId: 'tra_d1', periodo: '2026-11', estado: 'calculada', _demo: true },
+      { id: 'rem_tra_d2_2026-11', trabajadorId: 'tra_d2', periodo: '2026-11', estado: 'calculada', _demo: true },
+      { id: 'rem_tra_d3_2026-11', trabajadorId: 'tra_d3', periodo: '2026-11', estado: 'calculada', _demo: true }
+    ],
     movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {

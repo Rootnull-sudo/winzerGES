@@ -4,6 +4,7 @@ import { Tabs, useTab } from '@/components/ui/tabs';
 import { Activos } from './activos';
 import { Gastos } from './gastos';
 import { Presupuesto } from './presupuesto';
+import { Remuneraciones } from './remuneraciones';
 import { Trabajadores } from './trabajadores';
 
 export interface GastoRow {
@@ -34,6 +35,37 @@ export interface PresupuestoRow {
   monto: number;
 }
 export type ProveedorOpt = { id: string; nombre: string };
+export interface RemuneracionFila {
+  id: string;
+  version: number;
+  trabajadorId: string;
+  periodo: string;
+  estado: string;
+  fechaPago: string | null;
+  diasTrabajados: number;
+  horasExtraCantidad: number;
+  base: number;
+  gratificacion: number;
+  bonos: number;
+  comisiones: number;
+  horasExtra: number;
+  noImponible: number;
+  imponible: number;
+  afp: number;
+  salud: number;
+  cesantia: number;
+  tributable: number;
+  impuestoUnico: number;
+  anticipos: number;
+  descuentos: number;
+  liquido: number;
+  cesantiaEmpleador: number;
+  sis: number;
+  aporteEmpleador: number;
+  costoEmpresa: number;
+  trabajadorFoto: { nombre: string; rut: string; cargo: string; area: string; contrato?: string; afp: string; salud: string };
+  parametros: Partial<{ fecha: string; uf: number; utm: number; imm: number; topeImponibleUF: number; topeAfcUF: number }>;
+}
 export interface TrabajadorFila {
   id: string;
   version: number;
@@ -71,6 +103,7 @@ export interface ActivoRow {
 
 const TABS = [
   { id: 'trabajadores', label: 'Trabajadores' },
+  { id: 'remuneraciones', label: 'Remuneraciones' },
   { id: 'gastos', label: 'Gastos' },
   { id: 'presupuesto', label: 'Presupuesto' },
   { id: 'activos', label: 'Activos fijos' }
@@ -83,6 +116,9 @@ export function AdministracionView({
   activos,
   trabajadores,
   remuneraciones,
+  periodo,
+  remuneracionesMes,
+  indicadoresMes,
   tasaIVA
 }: {
   gastos: GastoRow[];
@@ -91,6 +127,9 @@ export function AdministracionView({
   activos: ActivoRow[];
   trabajadores: TrabajadorFila[];
   remuneraciones: OrgConfig['remuneraciones'];
+  periodo: string;
+  remuneracionesMes: RemuneracionFila[];
+  indicadoresMes: OrgConfig['remuneraciones'];
   tasaIVA: number;
 }) {
   const [tab, setTab] = useTab(TABS);
@@ -98,6 +137,7 @@ export function AdministracionView({
     <>
       <Tabs tabs={TABS} actual={tab} onChange={setTab} />
       {tab === 'trabajadores' && <Trabajadores trabajadores={trabajadores} remuneraciones={remuneraciones} />}
+      {tab === 'remuneraciones' && <Remuneraciones periodo={periodo} filas={remuneracionesMes} indicadores={indicadoresMes} />}
       {tab === 'gastos' && <Gastos gastos={gastos} proveedores={proveedores} tasaIVA={tasaIVA} />}
       {tab === 'presupuesto' && <Presupuesto gastos={gastos} presupuestos={presupuestos} />}
       {tab === 'activos' && <Activos activos={activos} />}

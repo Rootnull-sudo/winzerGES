@@ -6,6 +6,7 @@ import type { Regla } from '../motor';
 import { desvioFA, fmlProlongada, mermaAlta, seguimientoAtrasado, so2Alto, so2Bajo, so2Critico, sobrecapacidad } from './bodega';
 import { insumoPorVencer, insumoVencido, stockBajo } from './insumos';
 import { temporadaSinCerrar } from './nucleo';
+import { remuneracionesPorPagar } from './personas';
 import { porPagar } from './proveedores';
 import { cajonFueraDeRango, carenciaVigente, cosechaEnCarencia, desborreDesviado, desborreSinFin, desborreSinRegistrar } from './vinedo';
 
@@ -32,5 +33,7 @@ export const REGLAS: readonly Regla[] = [
   sobrecapacidad,
   mermaAlta,
   // Proveedores (F3-3)
-  porPagar
+  porPagar,
+  // Personas (F4-2)
+  remuneracionesPorPagar
 ];

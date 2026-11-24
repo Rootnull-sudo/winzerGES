@@ -941,3 +941,50 @@ test('trabajadores: ficha con liquidación estimada en vivo y aviso bajo el ingr
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(fila).toHaveCount(0);
 });
+
+test('remuneraciones: cada mes con sus indicadores, novedades, liquidación imprimible y pago', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  // Octubre (pagada) usa la UTM de octubre del demo; noviembre, la de noviembre.
+  await page.goto('/vina-demo/administracion?tab=remuneraciones&periodo=2026-10');
+  await page.getByRole('row', { name: /Trabajador Demo Uno/ }).click();
+  await page.getByRole('dialog').getByRole('link', { name: 'Ver liquidación' }).click();
+  await expect(page.getByLabel('Indicadores usados')).toContainText('UTM $69.900');
+
+  await page.goto('/vina-demo/administracion?tab=remuneraciones&periodo=2026-11');
+  await expect(page.getByLabel('Indicadores del mes')).toContainText('UTM $70.200');
+  await expect(page.getByRole('row', { name: /Trabajador Demo Tres/ })).toContainText('15'); // ingresó el 16-11
+  const fila = page.getByRole('row', { name: /Trabajador Demo Uno/ });
+  const liquido = async () => Number((await fila.getByRole('cell').nth(7).innerText()).replace(/\D/g, ''));
+  const antes = await liquido();
+  await fila.click();
+  let d = page.getByRole('dialog');
+  await d.getByLabel(/Horas extra/).fill('10');
+  await d.getByLabel(/Anticipos/).fill('50000');
+  await d.getByRole('button', { name: 'Guardar novedades' }).click();
+  await expect.poll(liquido).not.toBe(antes);
+
+  await fila.click();
+  await page.getByRole('dialog').getByRole('link', { name: 'Ver liquidación' }).click();
+  await expect(page.getByRole('region', { name: 'Haberes' })).toContainText('Horas extra');
+  await expect(page.getByRole('region', { name: 'Descuentos' })).toContainText('$50.000');
+  await expect(page.getByLabel('Indicadores usados')).toContainText('UTM $70.200');
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.getByRole('navigation', { name: 'Módulos' })).toBeHidden(); // el shell no se imprime
+  await page.screenshot(shots('31-liquidacion-impresa'));
+  await page.emulateMedia({ media: 'screen' });
+
+  // Pagar y revertir; deja las novedades como estaban (el demo queda igual).
+  await page.goto('/vina-demo/administracion?tab=remuneraciones&periodo=2026-11');
+  await fila.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Marcar pagada' }).click();
+  await expect(fila).toContainText('Pagada');
+  await fila.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Revertir pago' }).click();
+  await expect(fila).toContainText('Por pagar');
+  await fila.click();
+  d = page.getByRole('dialog');
+  await d.getByLabel(/Horas extra/).fill('0');
+  await d.getByLabel(/Anticipos/).fill('0');
+  await d.getByRole('button', { name: 'Guardar novedades' }).click();
+  await expect.poll(liquido).toBe(antes);
+});

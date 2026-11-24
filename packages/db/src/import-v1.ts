@@ -16,6 +16,7 @@ import {
   gastoInput,
   presupuestoInput,
   trabajadorInput,
+  remuneracionV1Input,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -64,6 +65,7 @@ import {
   pago,
   presupuesto,
   trabajador,
+  remuneracion,
   estanque,
   fenologia,
   fermentacion,
@@ -85,6 +87,7 @@ import { metaCompra, registrarCompra } from './services/compras';
 import { metaPago, registrarPago } from './services/pagos';
 import { guardarGasto, guardarPresupuesto, metaGasto, metaPresupuesto } from './services/gastos';
 import { metaTrabajador } from './services/personas';
+import { importarRemuneracion, metaRemuneracion } from './services/remuneraciones';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -366,6 +369,15 @@ const IMPORTERS: Record<string, Importer> = {
     schema: trabajadorInput,
     meta: metaTrabajador,
     adaptar: ({ licencias, ...r }) => ({ ...r, observaciones: [r.observaciones, licencias].filter(Boolean).join('\n') || null })
+  },
+  // Montos de v1 tal cual (parametros vacío: no se conocían); sin montos se calcula con el mes. La foto del trabajador
+  // sale de su ficha importada.
+  remuneracion: {
+    table: remuneracion,
+    schema: remuneracionV1Input,
+    meta: metaRemuneracion,
+    refs: ['trabajadorId'],
+    guardar: (tx, actor, data) => importarRemuneracion(tx, actor, data as never)
   },
   movInsumo: {
     table: movInsumo,

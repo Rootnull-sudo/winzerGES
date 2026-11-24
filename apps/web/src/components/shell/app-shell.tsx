@@ -43,11 +43,11 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
   return (
     <OrgContext.Provider value={ctx}>
       <SyncContext.Provider value={engine}>
-        <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--side)_248px,transparent_248px)]">
+        <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--side)_248px,transparent_248px)] print:block print:bg-none">
           {/* Menú lateral negro (como v1): logo, viña activa, módulos por área y usuario. */}
           <aside
             className={cn(
-              'fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-side text-side-ink transition-transform duration-200 ease-out-quick lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0',
+              'fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-side text-side-ink transition-transform duration-200 ease-out-quick lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0 print:hidden',
               navOpen ? 'translate-x-0' : '-translate-x-full'
             )}
           >
@@ -57,7 +57,7 @@ export function AppShell({ ctx, memberships, children }: { ctx: OrgCtx; membersh
           </aside>
           {navOpen && <button aria-label="Cerrar menú" className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setNavOpen(false)} />}
           <div className="min-w-0">
-            <header className="sticky top-0 z-20 flex h-15 items-center gap-3 border-b border-rule bg-raised px-4 sm:px-8">
+            <header className="sticky top-0 z-20 flex h-15 items-center gap-3 border-b border-rule bg-raised px-4 sm:px-8 print:hidden">
               <button
                 className="-ml-2 grid size-11 place-items-center rounded-control text-ink-2 hover:bg-sunken lg:hidden"
                 aria-label="Abrir menú"

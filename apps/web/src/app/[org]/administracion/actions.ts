@@ -2,12 +2,17 @@
 /** Sueldos y gastos — módulo ONLINE: Server Actions → servicios de @winzer/db dentro de withOrg (RLS). */
 import {
   ConflictError,
+  calcularMes,
   eliminarGasto,
+  eliminarRemuneracion,
   eliminarTrabajador,
   guardarGasto,
+  guardarNovedades,
   guardarPresupuesto,
   guardarTrabajador,
+  marcarRemuneracionPagada,
   ReglaError,
+  revertirPagoRemuneracion,
   schema,
   softDelete,
   upsert,
@@ -16,10 +21,13 @@ import {
 import {
   activoInput,
   gastoInput,
+  novedadesInput,
+  periodoInput,
   PermissionError,
   presupuestoInput,
   trabajadorInput,
   type GastoInput,
+  type NovedadesInput,
   type PresupuestoInput,
   type TrabajadorInput
 } from '@winzer/domain';
@@ -97,4 +105,31 @@ export async function saveTrabajador(slug: string, input: Record<string, unknown
 
 export async function deleteTrabajador(slug: string, id: string): Promise<Result> {
   return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => eliminarTrabajador(tx, actor, id)));
+}
+
+export async function calcularMesAction(slug: string, periodo: string): Promise<Result & { calculadas?: number; omitidasPagadas?: number }> {
+  if (!periodoInput.safeParse(periodo).success) return { ok: false, error: 'Periodo inválido.' };
+  let r: { calculadas: number; omitidasPagadas: number } | undefined;
+  const res = await ejecutar(slug, async (actor) => {
+    r = await withOrg(actor.orgId, (tx) => calcularMes(tx, actor, periodo));
+  });
+  return res.ok ? { ...res, ...r } : res;
+}
+
+export async function saveNovedades(slug: string, id: string, input: Record<string, unknown>): Promise<Result> {
+  const p = novedadesInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => guardarNovedades(tx, actor, id, input as NovedadesInput)));
+}
+
+export async function pagarRemuneracion(slug: string, id: string, fechaPago: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => marcarRemuneracionPagada(tx, actor, id, fechaPago)));
+}
+
+export async function revertirRemuneracion(slug: string, id: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => revertirPagoRemuneracion(tx, actor, id)));
+}
+
+export async function deleteRemuneracion(slug: string, id: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => eliminarRemuneracion(tx, actor, id)));
 }

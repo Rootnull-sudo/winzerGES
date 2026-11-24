@@ -176,6 +176,13 @@
       "when": 1795520468047,
       "tag": "0024_remuneraciones",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795521077081,
+      "tag": "0025_honorarios",
+      "breakpoints": true
     }
   ]
 }

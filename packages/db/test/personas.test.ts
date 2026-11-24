@@ -7,7 +7,7 @@ import type { Actor } from '../src/repo';
 import { organization } from '../src/schema';
 import { calcularAlertas } from '../src/alertas/motor';
 import { remuneracionesPorPagar } from '../src/alertas/reglas/personas';
-import { eliminarTrabajador, guardarTrabajador } from '../src/services/personas';
+import { eliminarHonorario, eliminarTrabajador, guardarHonorario, guardarTrabajador, marcarHonorarioPagado } from '../src/services/personas';
 import { cargarIndicadores } from '../src/services/parametros';
 import { calcularMes, guardarNovedades, idRemuneracion, marcarRemuneracionPagada, revertirPagoRemuneracion } from '../src/services/remuneraciones';
 import { withOrg } from '../src/tenancy';
@@ -23,7 +23,8 @@ beforeAll(async () => {
   await adminDb().insert(organization).values({ id: A, slug: A, nombre: 'A' });
   await cargarIndicadores(adminDb(), [
     { clave: 'utm', fecha: '2031-03-01', valor: UTM['2031-03'], fuente: 'test' },
-    { clave: 'utm', fecha: '2031-04-01', valor: UTM['2031-04'], fuente: 'test' }
+    { clave: 'utm', fecha: '2031-04-01', valor: UTM['2031-04'], fuente: 'test' },
+    { clave: 'retencion_honorarios', fecha: '2031-01-01', valor: 0.17, fuente: 'test' }
   ]);
 });
 afterAll(async () => {
@@ -101,5 +102,24 @@ describe('remuneraciones', () => {
       tx.execute<{ titulo: string }>(sql`select titulo from alerta where estado = 'abierta' and regla = 'administracion.remuneraciones_por_pagar'`)
     );
     expect(x!.titulo).toBe('3 remuneraciones de abril de 2031 sin pagar');
+  });
+});
+
+describe('honorarios', () => {
+  const boleta = { fecha: '2031-02-10', nombre: 'Prestador Test', rut: '13.222.333-5', numero: 7, bruto: 500_000 };
+  it('retiene con la tasa vigente en la fecha de la boleta (v1 usaba la de hoy)', async () => {
+    const h = await withOrg(A, (tx) => guardarHonorario(tx, adm, boleta));
+    expect([Number(h.tasaRetencion), h.retencion, h.liquido]).toEqual([0.17, 85_000, 415_000]);
+    const antes = await withOrg(A, (tx) => guardarHonorario(tx, adm, { ...boleta, fecha: '2030-12-10', numero: 6 }));
+    expect(Number(antes.tasaRetencion)).not.toBe(0.17);
+  });
+  it('N° único por RUT; pagada no se edita ni elimina hasta revertir', async () => {
+    await expect(withOrg(A, (tx) => guardarHonorario(tx, adm, boleta))).rejects.toThrow(/ya está registrada/);
+    const [h] = await withOrg(A, (tx) => tx.execute<{ id: string }>(sql`select id from honorario where numero = 7`));
+    await withOrg(A, (tx) => marcarHonorarioPagado(tx, adm, h!.id, '2031-02-20'));
+    await expect(withOrg(A, (tx) => guardarHonorario(tx, adm, { ...boleta, id: h!.id, bruto: 1 }))).rejects.toThrow(/pagada/);
+    await expect(withOrg(A, (tx) => eliminarHonorario(tx, adm, h!.id))).rejects.toThrow(/pagada/);
+    await withOrg(A, (tx) => marcarHonorarioPagado(tx, adm, h!.id, null));
+    await withOrg(A, (tx) => eliminarHonorario(tx, adm, h!.id));
   });
 });

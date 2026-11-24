@@ -988,3 +988,31 @@ test('remuneraciones: cada mes con sus indicadores, novedades, liquidación impr
   await d.getByRole('button', { name: 'Guardar novedades' }).click();
   await expect.poll(liquido).toBe(antes);
 });
+
+test('honorarios: retención a la tasa vigente, pago y reversa', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/administracion?tab=honorarios&t=2027');
+  await expect(page.getByRole('row', { name: /Diseñadora Demo/ })).toContainText('Por pagar');
+  await page.getByRole('button', { name: 'Nueva boleta' }).click();
+  const d = page.getByRole('dialog', { name: 'Nueva boleta de honorarios' });
+  await d.getByLabel(/N° de boleta/).fill(String(Date.now() % 100000));
+  await d.getByRole('textbox', { name: /^Prestador/ }).fill('Prestador E2E');
+  await d.getByRole('textbox', { name: /^RUT/ }).fill('19.111.222-9');
+  await d.getByLabel(/Monto bruto/).fill('500000');
+  await expect(d.getByLabel('Cálculo')).toContainText('$76.250'); // 15,25 % del demo
+  await expect(d.getByLabel('Cálculo')).toContainText('$423.750');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /Prestador E2E/ });
+  await expect(fila).toContainText('$423.750');
+  await fila.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Marcar pagada' }).click();
+  await expect(fila).toContainText('Pagada');
+  await page.screenshot(shots('32-honorarios'));
+  await fila.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Revertir pago' }).click();
+  await expect(fila).toContainText('Por pagar');
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
+});

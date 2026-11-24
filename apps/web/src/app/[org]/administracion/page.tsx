@@ -1,10 +1,10 @@
-import { configVigente, schema, withOrg } from '@winzer/db';
+import { configVigente, listarIndicadores, schema, withOrg } from '@winzer/db';
 import { fechaHoy, periodoInput, rangoPeriodo } from '@winzer/domain';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { NoAccess } from '@/components/no-access';
 import { PageHeader } from '@/components/ui/page';
 import { orgWith } from '@/lib/session';
-import { AdministracionView, type ActivoRow, type GastoRow, type PresupuestoRow, type RemuneracionFila, type TrabajadorFila } from './view';
+import { AdministracionView, type ActivoRow, type HonorarioFila, type GastoRow, type PresupuestoRow, type RemuneracionFila, type TrabajadorFila } from './view';
 
 export const metadata = { title: 'Sueldos y gastos' };
 
@@ -15,8 +15,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const periodo = q.periodo && periodoInput.safeParse(q.periodo).success ? q.periodo : fechaHoy().slice(0, 7);
   const { allowed, fueraDePlan, actor } = await orgWith(org, 'administracion');
   if (!allowed) return <NoAccess modulo="sueldos y gastos" plan={fueraDePlan} />;
-  const { gasto, presupuesto, proveedor, activo, trabajador, remuneracion } = schema;
-  const [gastos, presupuestos, proveedores, saldos, cfg, activos, trabajadores, rems, cfgMes] = await withOrg(actor.orgId, (tx) =>
+  const { gasto, presupuesto, proveedor, activo, trabajador, remuneracion, honorario } = schema;
+  const [gastos, presupuestos, proveedores, saldos, cfg, activos, trabajadores, rems, cfgMes, honorarios, indicadores] = await withOrg(actor.orgId, (tx) =>
     Promise.all([
       tx.select().from(gasto).where(isNull(gasto.deletedAt)),
       tx.select().from(presupuesto).where(isNull(presupuesto.deletedAt)),
@@ -29,7 +29,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         .select()
         .from(remuneracion)
         .where(and(eq(remuneracion.periodo, periodo), isNull(remuneracion.deletedAt))),
-      configVigente(tx, rangoPeriodo(periodo).hasta)
+      configVigente(tx, rangoPeriodo(periodo).hasta),
+      tx.select().from(honorario).where(isNull(honorario.deletedAt)),
+      listarIndicadores(tx)
     ])
   );
   const saldo = new Map(saldos.map((s) => [s.documento_id, Number(s.saldo)]));
@@ -73,13 +75,29 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     trabajadorFoto: r.trabajadorFoto as RemuneracionFila['trabajadorFoto'],
     parametros: r.parametros as RemuneracionFila['parametros']
   }));
+  const hs: HonorarioFila[] = honorarios.map((h) => ({
+    id: h.id,
+    version: h.version,
+    fecha: h.fecha,
+    nombre: h.nombre,
+    rut: h.rut,
+    numero: h.numero,
+    descripcion: h.descripcion,
+    bruto: h.bruto,
+    tasaRetencion: Number(h.tasaRetencion),
+    retencion: h.retencion,
+    liquido: h.liquido,
+    estado: h.estado,
+    fechaPago: h.fechaPago
+  }));
+  const tasas = indicadores.filter((i) => i.clave === 'retencion_honorarios').map((i) => ({ clave: i.clave, desde: i.fecha, valor: Number(i.valor) }));
   const ps: PresupuestoRow[] = presupuestos.map((p) => ({ anio: p.anio, categoria: p.categoria, monto: p.monto }));
   return (
     <>
       <PageHeader
         area="Finanzas"
         title="Sueldos y gastos"
-        description="Gastos de administración, ventas y producción con su IVA, presupuesto contra real y activos fijos con su depreciación. Trabajadores, remuneraciones y honorarios se migran en la fase de personas."
+        description="Trabajadores, remuneraciones con los indicadores de cada mes, honorarios, gastos con su IVA, presupuesto contra real y activos fijos con su depreciación."
       />
       <AdministracionView
         gastos={gs}
@@ -91,6 +109,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         periodo={periodo}
         remuneracionesMes={rs}
         indicadoresMes={cfgMes.remuneraciones}
+        honorarios={hs}
+        tasasRetencion={tasas}
         tasaIVA={cfg.tributario.tasaIVA}
       />
     </>

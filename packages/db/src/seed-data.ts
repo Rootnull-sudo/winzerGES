@@ -741,6 +741,55 @@ export const demoDump = {
       { id: 'rem_tra_d2_2026-11', trabajadorId: 'tra_d2', periodo: '2026-11', estado: 'calculada', _demo: true },
       { id: 'rem_tra_d3_2026-11', trabajadorId: 'tra_d3', periodo: '2026-11', estado: 'calculada', _demo: true }
     ],
+    honorario: [
+      {
+        id: 'hon_d1',
+        fecha: '2026-08-05',
+        nombre: 'Asesor Enológico Demo',
+        rut: '13.222.333-5',
+        numero: 101,
+        descripcion: 'Asesoría de vendimia',
+        bruto: 420000,
+        estado: 'pagada',
+        fechaPago: '2026-08-10',
+        _demo: true
+      },
+      {
+        id: 'hon_d2',
+        fecha: '2026-09-05',
+        nombre: 'Asesor Enológico Demo',
+        rut: '13.222.333-5',
+        numero: 102,
+        descripcion: 'Asesoría de vendimia',
+        bruto: 420000,
+        estado: 'pagada',
+        fechaPago: '2026-09-10',
+        _demo: true
+      },
+      {
+        id: 'hon_d3',
+        fecha: '2026-10-05',
+        nombre: 'Asesor Enológico Demo',
+        rut: '13.222.333-5',
+        numero: 103,
+        descripcion: 'Asesoría de vendimia',
+        bruto: 420000,
+        estado: 'pagada',
+        fechaPago: '2026-10-12',
+        _demo: true
+      },
+      {
+        id: 'hon_d4',
+        fecha: '2026-11-05',
+        nombre: 'Diseñadora Demo',
+        rut: '14.444.555-4',
+        numero: 58,
+        descripcion: 'Diseño de etiqueta Reserva',
+        bruto: 650000,
+        estado: 'pendiente',
+        _demo: true
+      }
+    ],
     movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {

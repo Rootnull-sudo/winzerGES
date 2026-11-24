@@ -412,3 +412,5 @@ Corregidos al migrar el viñedo (F1):
     Indicadores al último día del periodo con foto en `parametros`, foto del trabajador, pagadas intactas.
 43. **Pagos de sueldo**: "marcar pagada" usaba siempre la fecha de hoy y no se podía deshacer. → Fecha elegida y
     reversible.
+44. **Retención de honorarios con la tasa de hoy** (y fija en 15,25 % en el seed para todos los años). → Tasa vigente
+    en la fecha de la boleta, guardada como foto; N° único por RUT; pago con fecha y reversible.

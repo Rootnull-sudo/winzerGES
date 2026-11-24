@@ -111,7 +111,7 @@ movimientos (solo agregar); **D** = documento con estado.
 |---|---|---|---|
 | `trabajador` | — | `nombre`, `rut`, `cargo`, `area`, `contrato` (indefinido/plazo_fijo/obra), `ingreso`, `termino`, `sueldo_base`, `gratificacion` (art50/fija/ninguna), `gratificacion_monto`, `bonos`, `comisiones`, `colacion`, `movilizacion`, `afp`, `tasa_afp`, `salud` (Fonasa/Isapre), `plan_salud`, `vacaciones_pendientes`, `observaciones` | Sensible (auditado). RUT único. Los montos de gratificación fija y plan Isapre se limpian si no aplican |
 | `remuneracion` | D | `trabajador_id`, `periodo` (YYYY-MM), `estado` (calculada/pagada), `fecha_pago`; novedades `dias_trabajados`, `horas_extra_cantidad`; resultado de `liquidacion()` en columnas (`base`, `gratificacion`, `bonos`, `comisiones`, `horas_extra`, `no_imponible`, `imponible`, `afp`, `salud`, `cesantia`, `tributable`, `impuesto_unico`, `anticipos`, `descuentos`, `liquido`, `cesantia_empleador`, `sis`, `aporte_empleador`, `costo_empresa`); `trabajador_foto` jsonb (nombre, RUT, cargo, área, AFP, salud); `parametros` jsonb (UF/UTM/IMM/topes/tasas al último día del periodo) | Única por (trabajador, periodo), id derivado. Las pagadas no se recalculan. Alerta: sin pagar desde el día 5 del mes siguiente |
-| `honorario` | D | `fecha`, `nombre`, `rut`, `numero`, `descripcion`, `bruto`, `tasa_retencion`, `retencion`, `liquido`, `estado` (pendiente/pagada) | |
+| `honorario` | D | `fecha`, `nombre`, `rut`, `numero`, `descripcion`, `bruto`, `tasa_retencion` (foto: vigente en la fecha de la boleta), `retencion`, `liquido`, `estado` (pendiente/pagada), `fecha_pago` | N° único por (RUT, número). Pagada no se edita ni elimina (se revierte el pago) |
 
 ## 8. Tesorería
 

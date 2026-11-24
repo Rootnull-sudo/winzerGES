@@ -64,3 +64,14 @@ describe('trabajadores', () => {
     expect(diasEnPeriodo({ termino: '2026-10-31' }, '2026-11')).toBe(0);
   });
 });
+
+describe('honorarios', () => {
+  it('retención = round(bruto × tasa), paridad con retencionHonorarios de v1', async () => {
+    const { loadLegacy } = await import('./legacy');
+    const { calcularHonorario } = await import('../src/entities/honorario');
+    const v1 = loadLegacy(['js/calc/tax.js']).calc.tax;
+    for (const bruto of [420_000, 1_000_001, 87_654])
+      expect(calcularHonorario(bruto, DEFAULT_CONFIG.tributario.retencionHonorarios).retencion).toBe(v1.retencionHonorarios(bruto));
+    expect(calcularHonorario(420_000, 0.145)).toEqual({ bruto: 420_000, tasaRetencion: 0.145, retencion: 60_900, liquido: 359_100 });
+  });
+});

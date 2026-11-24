@@ -208,12 +208,12 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Corrige**: las notas de crédito se guardan en positivo; el signo lo pone el tipo.
 - **Hecho cuando**: una NC baja el crédito de IVA y el stock (lo contrario de v1, que estaba mal).
 
-### Sueldos y gastos · ⬜ · F3 (gastos y presupuesto) + F4 (personas) · L
+### Sueldos y gastos · ✅ · F3 (gastos y presupuesto) + F4 (personas) · L
 - **Tablas**: `gasto`, `presupuesto`, `trabajador`, `remuneracion`, `honorario`.
 - **Pantallas**:
   - trabajadores, con liquidación estimada en vivo ✅ F4-1;
   - remuneraciones ("calcular mes" con los indicadores del mes, novedades, liquidación imprimible, pago con fecha) ✅ F4-2;
-  - honorarios;
+  - honorarios con retención a la tasa vigente en la fecha de la boleta ✅ F4-3;
   - gastos con IVA solo en factura afecta, al contado o a crédito (se pagan en Por pagar) ✅ F3-4;
   - presupuesto vs real con todas las categorías editables en la fila ✅ F3-4.
 - **Cálculos**: `tax.liquidacion` (ya portado), usando los **indicadores del mes** y guardando la foto de los

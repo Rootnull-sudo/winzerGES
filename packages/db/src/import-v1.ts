@@ -17,6 +17,7 @@ import {
   presupuestoInput,
   trabajadorInput,
   remuneracionV1Input,
+  honorarioV1Input,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -66,6 +67,7 @@ import {
   presupuesto,
   trabajador,
   remuneracion,
+  honorario,
   estanque,
   fenologia,
   fermentacion,
@@ -86,7 +88,7 @@ import { metaProveedor } from './services/proveedores';
 import { metaCompra, registrarCompra } from './services/compras';
 import { metaPago, registrarPago } from './services/pagos';
 import { guardarGasto, guardarPresupuesto, metaGasto, metaPresupuesto } from './services/gastos';
-import { metaTrabajador } from './services/personas';
+import { guardarHonorario, marcarHonorarioPagado, metaHonorario, metaTrabajador } from './services/personas';
 import { importarRemuneracion, metaRemuneracion } from './services/remuneraciones';
 import { withOrg } from './tenancy';
 
@@ -378,6 +380,20 @@ const IMPORTERS: Record<string, Importer> = {
     meta: metaRemuneracion,
     refs: ['trabajadorId'],
     guardar: (tx, actor, data) => importarRemuneracion(tx, actor, data as never)
+  },
+  // La retención de v1 se conserva: su tasa = retención ÷ bruto (v1 no la guardaba).
+  honorario: {
+    table: honorario,
+    schema: honorarioV1Input,
+    meta: metaHonorario,
+    guardar: async (tx, actor, data) => {
+      const v1 = data as Record<string, unknown>;
+      const bruto = Number(v1.bruto) || 0;
+      const tasa = v1.retencion != null && bruto ? Number(v1.retencion) / bruto : undefined;
+      const rec = await guardarHonorario(tx, actor, data as never, undefined, tasa);
+      return v1.estado === 'pagada' ? marcarHonorarioPagado(tx, actor, String(rec.id), String(v1.fechaPago || v1.fecha)) : rec;
+    },
+    adaptar: (r) => ({ ...r, numero: r.numero || null })
   },
   movInsumo: {
     table: movInsumo,

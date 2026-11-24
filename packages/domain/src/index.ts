@@ -27,4 +27,5 @@ export * from './entities/gasto';
 export * from './entities/activo';
 export * from './entities/trabajador';
 export * from './entities/remuneracion';
+export * from './entities/honorario';
 export * from './sync';

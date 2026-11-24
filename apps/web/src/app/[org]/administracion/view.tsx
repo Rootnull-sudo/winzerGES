@@ -3,6 +3,7 @@ import type { OrgConfig } from '@winzer/domain';
 import { Tabs, useTab } from '@/components/ui/tabs';
 import { Activos } from './activos';
 import { Gastos } from './gastos';
+import { Honorarios } from './honorarios';
 import { Presupuesto } from './presupuesto';
 import { Remuneraciones } from './remuneraciones';
 import { Trabajadores } from './trabajadores';
@@ -35,6 +36,22 @@ export interface PresupuestoRow {
   monto: number;
 }
 export type ProveedorOpt = { id: string; nombre: string };
+export interface HonorarioFila {
+  id: string;
+  version: number;
+  fecha: string;
+  nombre: string;
+  rut: string;
+  numero: number | null;
+  descripcion: string | null;
+  bruto: number;
+  tasaRetencion: number;
+  retencion: number;
+  liquido: number;
+  estado: string;
+  fechaPago: string | null;
+}
+export type TasaVigente = { clave: string; desde: string; valor: number };
 export interface RemuneracionFila {
   id: string;
   version: number;
@@ -104,6 +121,7 @@ export interface ActivoRow {
 const TABS = [
   { id: 'trabajadores', label: 'Trabajadores' },
   { id: 'remuneraciones', label: 'Remuneraciones' },
+  { id: 'honorarios', label: 'Honorarios' },
   { id: 'gastos', label: 'Gastos' },
   { id: 'presupuesto', label: 'Presupuesto' },
   { id: 'activos', label: 'Activos fijos' }
@@ -119,6 +137,8 @@ export function AdministracionView({
   periodo,
   remuneracionesMes,
   indicadoresMes,
+  honorarios,
+  tasasRetencion,
   tasaIVA
 }: {
   gastos: GastoRow[];
@@ -130,6 +150,8 @@ export function AdministracionView({
   periodo: string;
   remuneracionesMes: RemuneracionFila[];
   indicadoresMes: OrgConfig['remuneraciones'];
+  honorarios: HonorarioFila[];
+  tasasRetencion: TasaVigente[];
   tasaIVA: number;
 }) {
   const [tab, setTab] = useTab(TABS);
@@ -138,6 +160,7 @@ export function AdministracionView({
       <Tabs tabs={TABS} actual={tab} onChange={setTab} />
       {tab === 'trabajadores' && <Trabajadores trabajadores={trabajadores} remuneraciones={remuneraciones} />}
       {tab === 'remuneraciones' && <Remuneraciones periodo={periodo} filas={remuneracionesMes} indicadores={indicadoresMes} />}
+      {tab === 'honorarios' && <Honorarios honorarios={honorarios} tasas={tasasRetencion} />}
       {tab === 'gastos' && <Gastos gastos={gastos} proveedores={proveedores} tasaIVA={tasaIVA} />}
       {tab === 'presupuesto' && <Presupuesto gastos={gastos} presupuestos={presupuestos} />}
       {tab === 'activos' && <Activos activos={activos} />}

@@ -4,12 +4,15 @@ import {
   ConflictError,
   calcularMes,
   eliminarGasto,
+  eliminarHonorario,
   eliminarRemuneracion,
   eliminarTrabajador,
   guardarGasto,
+  guardarHonorario,
   guardarNovedades,
   guardarPresupuesto,
   guardarTrabajador,
+  marcarHonorarioPagado,
   marcarRemuneracionPagada,
   ReglaError,
   revertirPagoRemuneracion,
@@ -21,12 +24,14 @@ import {
 import {
   activoInput,
   gastoInput,
+  honorarioInput,
   novedadesInput,
   periodoInput,
   PermissionError,
   presupuestoInput,
   trabajadorInput,
   type GastoInput,
+  type HonorarioInput,
   type NovedadesInput,
   type PresupuestoInput,
   type TrabajadorInput
@@ -132,4 +137,19 @@ export async function revertirRemuneracion(slug: string, id: string): Promise<Re
 
 export async function deleteRemuneracion(slug: string, id: string): Promise<Result> {
   return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => eliminarRemuneracion(tx, actor, id)));
+}
+
+export async function saveHonorario(slug: string, input: Record<string, unknown>, version?: number): Promise<Result> {
+  const p = honorarioInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => guardarHonorario(tx, actor, input as HonorarioInput, version)));
+}
+
+/** fechaPago null = revertir el pago. */
+export async function pagarHonorario(slug: string, id: string, fechaPago: string | null): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => marcarHonorarioPagado(tx, actor, id, fechaPago)));
+}
+
+export async function deleteHonorario(slug: string, id: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => eliminarHonorario(tx, actor, id)));
 }

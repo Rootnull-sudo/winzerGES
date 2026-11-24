@@ -194,6 +194,7 @@ describe('importador v1', () => {
       activo: 3,
       trabajador: 3,
       remuneracion: 7,
+      honorario: 4,
       cobro: 2,
       insumo: 7,
       movInsumo: 1,

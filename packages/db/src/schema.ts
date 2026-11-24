@@ -1258,3 +1258,31 @@ export const remuneracion = pgTable(
     index('remuneracion_periodo_idx').on(t.orgId, t.periodo)
   ]
 );
+
+/* --- Personas: honorarios (F4-3, online, sensible) --- */
+export const honorario = pgTable(
+  'honorario',
+  {
+    ...base(),
+    fecha: text('fecha').notNull(),
+    nombre: text('nombre').notNull(),
+    rut: text('rut').notNull(),
+    /** N° de boleta electrónica. */
+    numero: integer('numero'),
+    descripcion: text('descripcion'),
+    bruto: money('bruto').notNull(),
+    /** Foto: tasa vigente en la fecha de la boleta. */
+    tasaRetencion: num('tasa_retencion').notNull(),
+    retencion: money('retencion').notNull(),
+    liquido: money('liquido').notNull(),
+    /** pendiente | pagada */
+    estado: text('estado').notNull().default('pendiente'),
+    fechaPago: text('fecha_pago')
+  },
+  (t) => [
+    uniqueIndex('honorario_boleta_uq')
+      .on(t.orgId, t.rut, t.numero)
+      .where(sql`${t.deletedAt} is null and ${t.numero} is not null`),
+    index('honorario_fecha_idx').on(t.orgId, t.fecha)
+  ]
+);

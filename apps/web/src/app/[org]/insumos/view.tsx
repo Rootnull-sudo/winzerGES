@@ -499,7 +499,7 @@ function InsumoDialog({
   );
 }
 
-function AjusteDialog({ insumo, stock, onClose }: { insumo: InsumoRow; stock: number; onClose: () => void }) {
+export function AjusteDialog({ insumo, stock, onClose }: { insumo: { id: string; nombre: string; unidad: string }; stock: number; onClose: () => void }) {
   const { org } = useOrg();
   const { pending, errors, error, run } = useEnLinea(onClose);
   const [modo, setModo] = useState<'conteo' | 'diferencia'>('conteo');

@@ -428,3 +428,6 @@ Corregidos al migrar el viñedo (F1):
 48. **Cobranza**: un cobro se ligaba a una sola venta; "marcar pagada" ignoraba cobros anteriores; anular una venta
     dejaba sus cobros huérfanos; la mora sumaba el total de la venta aunque tuviera abonos. → Cobros aplicados a
     varias ventas con saldo real (`v_por_cobrar`), anticipos, anular bloqueado con cobros y mora sobre el saldo.
+49. **Inventario de producto terminado sin ajustes**: v1 solo ajustaba insumos; las botellas quebradas o usadas como
+    muestra seguían en stock y el mínimo por formato solo se veía como alerta. → Libro `mov_producto` con quiebre,
+    muestra y conteo físico (sin dejar stock negativo) y alerta por formato bajo el mínimo.

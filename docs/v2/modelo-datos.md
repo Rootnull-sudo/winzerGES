@@ -77,7 +77,7 @@ movimientos (solo agregar); **D** = documento con estado.
 | `insumo_precio` | — | `insumo_id`, `fecha`, `precio`, `proveedor_id`, `origen` (manual/compra), `compra_id` | Reemplaza `historialPrecios` (JSON). Incluye el precio inicial |
 | `mov_insumo` | S·L | `fecha`, `insumo_id`, `cantidad` (con signo, en la unidad del insumo), `tipo` (compra/aplicacion/aditivo/so2/consumo_envasado/ajuste/nota_credito), `costo_unitario`, `motivo`, `origen_tipo`, `origen_id` | `soloLectura`: lo escriben servicios (ajustes) y reacciones (aplicación). Stock en `v_stock_insumo` |
 | `formato` | — | `nombre`, `litros`, `envase`, `unidades_caja`, `stock_minimo` | Seed de 4 formatos |
-| `mov_producto` | L | `fecha`, `orden_envasado_id`, `formato_id`, `lote_id`, `unidades` (con signo), `tipo` (envasado/venta/anulacion/ajuste/muestra/quiebre), `costo_unitario`, `venta_linea_id` (FK en F5-3), `motivo` | **Nuevo**: stock de botellas por orden (v1 lo derivaba de las ventas). Vista `v_stock_producto` (stock × costo congelado) |
+| `mov_producto` | L | `fecha`, `orden_envasado_id`, `formato_id`, `lote_id`, `unidades` (con signo), `tipo` (envasado/venta/anulacion/ajuste/muestra/quiebre), `costo_unitario`, `venta_linea_id` (FK en F5-3), `motivo` | **Nuevo**: stock de botellas por orden (v1 lo derivaba de las ventas). Vista `v_stock_producto` (stock × costo congelado). Ajustes manuales con `ajustarProducto` (F5-5) |
 
 ## 5. Comercial
 

@@ -6,7 +6,7 @@ import type { Regla } from '../motor';
 import { desvioFA, fmlProlongada, mermaAlta, seguimientoAtrasado, so2Alto, so2Bajo, so2Critico, sobrecapacidad } from './bodega';
 import { insumoPorVencer, insumoVencido, stockBajo } from './insumos';
 import { temporadaSinCerrar } from './nucleo';
-import { marcaPorVencer, marcaVencida, mermaEnvasadoAlta, ventasEnMora } from './comercial';
+import { formatoBajoMinimo, marcaPorVencer, marcaVencida, mermaEnvasadoAlta, ventasEnMora } from './comercial';
 import { remuneracionesPorPagar } from './personas';
 import { porPagar } from './proveedores';
 import { cajonFueraDeRango, carenciaVigente, cosechaEnCarencia, desborreDesviado, desborreSinFin, desborreSinRegistrar } from './vinedo';
@@ -41,5 +41,6 @@ export const REGLAS: readonly Regla[] = [
   marcaVencida,
   marcaPorVencer,
   mermaEnvasadoAlta,
-  ventasEnMora
+  ventasEnMora,
+  formatoBajoMinimo
 ];

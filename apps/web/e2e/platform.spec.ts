@@ -1152,3 +1152,36 @@ test('cobranza: cobro parcial aplicado a una venta baja su saldo; al eliminarlo 
   await page.getByRole('tab', { name: 'Por cobrar' }).click();
   await expect(fila).toContainText('$1.611.440');
 });
+
+test('inventarios: ajuste de quiebre baja el stock de la orden; sin costos no se ven valores', async ({ page, browser }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/inventarios');
+  const primera = page.getByRole('row').nth(1);
+  const codigo = (await primera.innerText()).match(/OE-\d{4}-\d{4}/)![0];
+  const fila = page.getByRole('row').filter({ hasText: codigo });
+  const stock = async () => Number((await fila.getByRole('cell').nth(6).innerText()).replace(/\./g, ''));
+  const antes = await stock();
+  await fila.click();
+  const d = page.getByRole('dialog', { name: 'Ajuste de producto terminado' });
+  await d.getByLabel(/Unidades que salen/).fill('2');
+  await expect(d.getByText(`(-2)`)).toBeVisible();
+  await d.getByLabel('Motivo').fill('Botella quebrada');
+  await page.screenshot(shots('37-ajuste-producto'));
+  await d.getByRole('button', { name: 'Registrar ajuste' }).click();
+  await expect(d).toHaveCount(0);
+  await expect.poll(stock).toBe(antes - 2);
+  await page.getByRole('tab', { name: 'Movimientos de producto' }).click();
+  await expect(
+    page
+      .getByRole('row', { name: /Quiebre/ })
+      .filter({ hasText: codigo })
+      .first()
+  ).toContainText('-2');
+
+  const ventas = await newSession(browser, 'ventas@winzer.test');
+  await ventas.page.goto('/vina-demo/inventarios');
+  await expect(ventas.page.getByRole('columnheader', { name: 'Stock' })).toBeVisible();
+  await expect(ventas.page.getByRole('columnheader', { name: 'Valor' })).toHaveCount(0);
+  await expect(ventas.page.getByRole('button', { name: /Ajuste de producto/ })).toHaveCount(0);
+  await ventas.ctx.close();
+});

@@ -50,6 +50,28 @@ export const mermaEnvasadoAlta: Regla = {
 
 const clp = (v: number) => '$' + Math.round(v).toLocaleString('es-CL');
 
+/** Formato con stock de producto terminado bajo su mínimo (v1: alerts.js:61, con su texto). */
+export const formatoBajoMinimo: Regla = {
+  id: 'inventarios.formato_bajo_minimo',
+  modulo: 'inventarios',
+  severidad: 'warn',
+  async evaluar(tx) {
+    const filas = await tx.execute<{ id: string; nombre: string; stock_minimo: number; stock: string }>(
+      sql`select f.id, f.nombre, f.stock_minimo, coalesce(sum(s.stock), 0) as stock
+          from formato f left join v_stock_producto s on s.formato_id = f.id
+          where f.deleted_at is null and f.stock_minimo > 0
+          group by f.id having coalesce(sum(s.stock), 0) < f.stock_minimo`
+    );
+    return filas.map((f) => ({
+      registroId: f.id,
+      entidad: 'formato',
+      titulo: `Stock bajo de producto ${f.nombre}`,
+      mensaje: `${Number(f.stock).toLocaleString('es-CL')} unidades (mínimo ${Number(f.stock_minimo).toLocaleString('es-CL')}).`,
+      ruta: 'inventarios'
+    }));
+  }
+};
+
 /** Ventas vencidas con saldo (v1: alerts.js:93, "N ventas en mora"), ahora sobre el saldo real tras los cobros. */
 export const ventasEnMora: Regla = {
   id: 'clientes.mora',

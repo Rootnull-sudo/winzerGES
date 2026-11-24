@@ -193,3 +193,38 @@ export function validarRotulacion(x: {
     { item: 'Rotulación aprobada', ok: !!e?.aprobacionLegal, detalle: e?.aprobacionLegal ? 'Aprobada' : 'Pendiente de aprobación legal' }
   ];
 }
+
+/* ---------- Producto terminado (F5-5) ---------- */
+
+export interface StockOrdenFila {
+  formatoId: string;
+  /** Σ mov_producto.unidades de la orden. */
+  stock: number;
+  /** Costo unitario congelado al confirmar la orden. */
+  costoUnitario: number | null;
+}
+
+/**
+ * Stock y valor por formato (v1: inventory.stockPorFormato). Por formato:
+ * unidades = Σ stock de sus órdenes; valor = Σ stock × costo unitario congelado.
+ */
+export function stockPorFormato(filas: StockOrdenFila[]): Record<string, { unidades: number; valor: number }> {
+  const out: Record<string, { unidades: number; valor: number }> = {};
+  for (const f of filas) {
+    const g = (out[f.formatoId] ??= { unidades: 0, valor: 0 });
+    g.unidades += f.stock;
+    g.valor += f.stock * (f.costoUnitario ?? 0);
+  }
+  return out;
+}
+
+/** Valor del producto terminado = Σ valor por formato (v1: inventory.valorProductoTerminado). */
+export const valorProductoTerminado = (filas: StockOrdenFila[]) => Object.values(stockPorFormato(filas)).reduce((s, g) => s + g.valor, 0);
+
+/**
+ * Movimiento de un ajuste de producto terminado: quiebre y muestra sacan `cantidad` unidades (−cantidad);
+ * ajuste por conteo registra la diferencia contra el stock (contado − stock).
+ */
+export function deltaAjusteProducto(tipo: 'quiebre' | 'muestra' | 'ajuste', cantidad: number, stock: number): number {
+  return tipo === 'ajuste' ? cantidad - stock : -cantidad;
+}

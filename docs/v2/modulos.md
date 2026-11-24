@@ -167,11 +167,15 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Adjuntos**: certificado INAPI y diseños.
 - **Alerta**: marca por vencer (180 días o menos).
 
-### Inventarios · ⬜ · F5 · M
-- **Pantallas**: producto terminado, granel, insumos de envasado, insumos agrícolas y enológicos, y movimientos.
-- **Ajustes de inventario**: insumos (`mov_insumo`) y botellas (`mov_producto`, nuevo: quiebre, muestra, conteo).
-- **Lee**: las vistas `v_stock_*`.
-- **Hecho cuando**: el valor del inventario coincide con v1.
+### Inventarios · ✅ · F5-5 · M
+- **Pantallas** (`/[org]/inventarios`): producto terminado por orden y formato (gráfico de stock por formato con su
+  mínimo), vino a granel por estanque y lote (valorizado con `costoLitroLote`), insumos de envasado, insumos
+  agrícolas y enológicos, y movimientos de producto. Costos y valores solo llegan al navegador si el rol ve costos.
+- **Ajustes**: botellas con `ajustarProducto` (`mov_producto` quiebre, muestra o conteo físico; no deja stock
+  negativo) e insumos con `ajustarStock` de F1. Una orden con ajustes ya no se puede anular.
+- **Lee**: `v_stock_producto`, `v_stock_estanque`, `v_stock_insumo`.
+- **Alerta**: `inventarios.formato_bajo_minimo` ("Stock bajo de producto X · N unidades (mínimo M)").
+- **Paridad**: `stockPorFormato` y `valorProductoTerminado` coinciden con `js/calc/inventory.js`.
 
 ### Ventas · ✅ · F5 · L
 - **Tablas**: `venta`, `venta_linea`, `cobro_aplicacion` (migración de `cobro.venta_id`).

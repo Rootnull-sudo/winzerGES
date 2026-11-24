@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { calcularAlertas } from '../src/alertas/motor';
-import { marcaPorVencer, marcaVencida, ventasEnMora } from '../src/alertas/reglas/comercial';
+import { formatoBajoMinimo, marcaPorVencer, marcaVencida, ventasEnMora } from '../src/alertas/reglas/comercial';
 import { adminDb } from '../src/client';
 import type { Actor } from '../src/repo';
 import { organization } from '../src/schema';
@@ -17,6 +17,7 @@ import { upsert } from '../src/repo';
 import { cliente } from '../src/schema';
 import { anularVenta, clienteTieneVentas, confirmarVenta, guardarVenta } from '../src/services/ventas';
 import { eliminarCobro, registrarCobro } from '../src/services/cobros';
+import { ajustarProducto } from '../src/services/inventarios';
 import { withOrg } from '../src/tenancy';
 
 const run = randomUUID().slice(0, 8);
@@ -312,5 +313,33 @@ describe('ventas', () => {
     await withOrg(A, (tx) => eliminarCobro(tx, admin, String(cob.id)));
     expect(await saldo()).toBe(total);
     await withOrg(A, (tx) => anularVenta(tx, admin, String(c.id)));
+  });
+
+  it('inventario: quiebre y muestra bajan el stock; conteo registra la diferencia; no deja negativo; alerta por formato', async () => {
+    const antes = await stockOrden();
+    const aj = (tipo: 'quiebre' | 'muestra' | 'ajuste', cantidad: number) =>
+      withOrg(A, (tx) => ajustarProducto(tx, admin, { ordenEnvasadoId: OE, fecha: '2026-11-20', tipo, cantidad, motivo: 'Prueba' }));
+    await aj('quiebre', 2);
+    await aj('muestra', 1);
+    expect(await stockOrden()).toBe(antes - 3);
+    await aj('ajuste', antes - 10);
+    expect(await stockOrden()).toBe(antes - 10);
+    await expect(aj('ajuste', antes - 10)).rejects.toThrow(/no hay nada que ajustar/);
+    await expect(aj('quiebre', antes)).rejects.toThrow(/el stock de/);
+    await expect(withOrg(A, (tx) => anularOrden(tx, admin, OE))).rejects.toThrow(/ventas o ajustes/);
+    // El rol ventas solo ve inventarios.
+    await expect(
+      withOrg(A, (tx) => ajustarProducto(tx, { ...admin, role: 'ventas' }, { ordenEnvasadoId: OE, fecha: '2026-11-20', tipo: 'quiebre', cantidad: 1 }))
+    ).rejects.toThrow();
+
+    await withOrg(A, (tx) => guardarFormato(tx, admin, { nombre: 'Formato con mínimo', litros: 0.375, unidadesCaja: 24, stockMinimo: 500 }));
+    const r = await calcularAlertas(A, [formatoBajoMinimo], '2026-11-24');
+    expect(r.errores).toEqual([]);
+    const filas = await withOrg(A, (tx) =>
+      tx.execute<{ titulo: string; mensaje: string }>(
+        sql`select titulo, mensaje from alerta where regla = 'inventarios.formato_bajo_minimo' and estado = 'abierta'`
+      )
+    );
+    expect(filas.find((f) => f.titulo === 'Stock bajo de producto Formato con mínimo')?.mensaje).toBe('0 unidades (mínimo 500).');
   });
 });

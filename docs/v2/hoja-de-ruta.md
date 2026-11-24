@@ -87,7 +87,7 @@ flowchart LR
 | F4-2 Remuneraciones con indicadores del mes + liquidación imprimible (novedades del mes, foto del trabajador, pago reversible; el F29 y el flujo las leen en F6/F7) ✅ | `remuneracion` | L |
 | F4-3 Honorarios (retención con la tasa vigente en la fecha de la boleta) ✅ | `honorario` | S |
 
-## F5 · Comercial (junta los carriles)
+## F5 · Comercial (junta los carriles) ✅
 
 | Issue | Tablas | Tamaño |
 |---|---|---|
@@ -95,7 +95,7 @@ flowchart LR
 | F5-2 Órdenes de envasado + `confirmarEnvasado` (atómico; valida bodega, insumos y D.O.; anular; `costoLitroLote` y `costoEnvasado` con paridad v1; validador Ley 18.455) ✅ | `orden_envasado`, `mov_producto` | L |
 | F5-3 Ventas con líneas + `confirmarVenta` / `anularVenta` (DTE mínimo: tipo y folio por secuencia en la venta; la tabla `dte` la arma F6-1) ✅ | `venta`, `venta_linea` | L |
 | F5-4 Cobros aplicados y cuentas por cobrar (migrar `cobro.venta_id`; antigüedad; alerta de mora sobre el saldo) ✅ | `cobro_aplicacion` | M |
-| F5-5 Inventarios y ajustes | — | M |
+| F5-5 Inventarios y ajustes (producto terminado, granel e insumos valorizados; ajuste de botellas; alerta por formato) ✅ | — | M |
 
 ## F6 · Tributario
 

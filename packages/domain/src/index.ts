@@ -21,4 +21,5 @@ export * from './entities/aditivo';
 export * from './entities/analisis';
 export * from './entities/historico';
 export * from './entities/proveedor';
+export * from './entities/compra';
 export * from './sync';

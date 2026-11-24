@@ -22,7 +22,9 @@ export async function ensureTenancy(db: DB) {
   for (const t of GLOBAL_READONLY_TABLES) await db.execute(sql.raw(`revoke insert, update, delete, truncate on "${t}" from winzer_app`));
   // Vistas de derivados: después de los permisos, con security_invoker para que apliquen el RLS de quien consulta.
   for (const v of VISTAS) {
-    await db.execute(sql.raw(`create or replace view "${v.nombre}" with (security_invoker = true) as ${v.sql}`));
+    // drop + create (no `create or replace`): así una vista puede cambiar sus columnas entre versiones.
+    await db.execute(sql.raw(`drop view if exists "${v.nombre}"`));
+    await db.execute(sql.raw(`create view "${v.nombre}" with (security_invoker = true) as ${v.sql}`));
     await db.execute(sql.raw(`grant select on "${v.nombre}" to winzer_app`));
   }
   // Catálogo de planes: la fuente es PLANES (@winzer/domain); aquí se refleja en la tabla global.

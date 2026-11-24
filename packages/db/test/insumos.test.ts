@@ -85,10 +85,24 @@ describe('insumos', () => {
     expect((await sync.pull({ ...admin(), role: 'enologo' }, null)).records.some((x) => x.entity === 'insumo')).toBe(true);
   });
 
-  it('importa insumos y movimientos de v1 (sin los consumos de aplicaciones, que regenera la reacción)', async () => {
+  it('importa insumos y movimientos de v1 (sin los de aplicaciones ni compras, que regeneran la reacción y la compra)', async () => {
     const r = await importV1(admin(B), {
       app: 'vina-gestion',
       data: {
+        proveedor: [{ id: 'prv_1', nombre: 'Agro', rut: '76.333.444-9' }],
+        compra: [
+          {
+            id: 'com_1',
+            fecha: '2026-08-01',
+            proveedorId: 'prv_1',
+            documento: 'factura',
+            folio: '1',
+            insumoId: 'ins_1',
+            descripcion: 'Cobre',
+            cantidad: 20,
+            precioUnitario: 5000
+          }
+        ],
         insumo: [
           {
             id: 'ins_1',
@@ -112,7 +126,7 @@ describe('insumos', () => {
         ]
       }
     });
-    expect(r.importados).toMatchObject({ insumo: 1, movInsumo: 2 });
+    expect(r.importados).toMatchObject({ insumo: 1, compra: 1, movInsumo: 1 });
     const id = mapId(B, 'ins_1');
     expect(await withOrg(B, (tx) => stockActual(tx, id))).toBe(40 + 20 - 1);
     expect((await withOrg(B, (tx) => historialPrecios(tx, id))).map((p) => p.precio)).toEqual([5200, 5000]);

@@ -13,6 +13,7 @@ export * from './services/insumos';
 export * from './services/calendario';
 export * from './services/tareas';
 export * from './services/proveedores';
+export * from './services/compras';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

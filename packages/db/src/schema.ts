@@ -528,7 +528,7 @@ export const insumoPrecio = pgTable(
     proveedorId: text('proveedor_id').references((): AnyPgColumn => proveedor.id),
     /** manual | compra */
     origen: text('origen').notNull().default('manual'),
-    compraId: text('compra_id')
+    compraId: text('compra_id').references((): AnyPgColumn => compra.id)
   },
   (t) => [index('insumo_precio_insumo_idx').on(t.orgId, t.insumoId, t.fecha)]
 );
@@ -1027,4 +1027,54 @@ export const proveedor = pgTable(
       .on(t.orgId, t.rut)
       .where(sql`${t.deletedAt} is null`)
   ]
+);
+
+/* --- Abastecimiento: compras con líneas (F3-2, online) --- */
+export const compra = pgTable(
+  'compra',
+  {
+    ...base(),
+    fecha: text('fecha').notNull(),
+    proveedorId: text('proveedor_id')
+      .notNull()
+      .references(() => proveedor.id),
+    /** factura | factura_exenta | boleta | guia | nota_credito */
+    documento: text('documento').notNull(),
+    folio: text('folio').notNull(),
+    /** NC: compra que corrige. Factura: guía que factura (no vuelve a mover stock). */
+    referenciaCompraId: text('referencia_compra_id').references((): AnyPgColumn => compra.id),
+    vencimiento: text('vencimiento'),
+    /** registrada | anulada */
+    estado: text('estado').notNull().default('registrada'),
+    /** Totales SIEMPRE positivos: el signo lo da el documento. */
+    neto: money('neto').notNull().default(0),
+    exento: money('exento').notNull().default(0),
+    iva: money('iva').notNull().default(0),
+    total: money('total').notNull().default(0),
+    observaciones: text('observaciones')
+  },
+  (t) => [
+    uniqueIndex('compra_folio_uq')
+      .on(t.orgId, t.proveedorId, t.documento, t.folio)
+      .where(sql`${t.deletedAt} is null and ${t.estado} <> 'anulada'`),
+    index('compra_fecha_idx').on(t.orgId, t.fecha)
+  ]
+);
+
+export const compraLinea = pgTable(
+  'compra_linea',
+  {
+    ...base(),
+    compraId: text('compra_id')
+      .notNull()
+      .references(() => compra.id),
+    insumoId: text('insumo_id').references(() => insumo.id),
+    descripcion: text('descripcion').notNull(),
+    cantidad: num('cantidad').notNull(),
+    precioUnitario: num('precio_unitario').notNull(),
+    exenta: boolean('exenta').notNull().default(false),
+    /** round(cantidad × precio). */
+    neto: money('neto').notNull()
+  },
+  (t) => [index('compra_linea_compra_idx').on(t.orgId, t.compraId)]
 );

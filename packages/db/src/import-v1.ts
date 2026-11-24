@@ -11,6 +11,7 @@ import {
   adicionSO2Input,
   aditivoInput,
   analisisInput,
+  compraInput,
   anioDeFecha,
   aplicacionInput,
   clienteInput,
@@ -33,7 +34,7 @@ import {
   variedadInput,
   ventanaInput
 } from '@winzer/domain';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { idDerivado } from './ids';
 import type { z } from 'zod';
@@ -51,6 +52,7 @@ import {
   adicionSO2,
   aditivo,
   analisis,
+  compra,
   estanque,
   fenologia,
   fermentacion,
@@ -68,6 +70,7 @@ import {
 } from './schema';
 import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { metaProveedor } from './services/proveedores';
+import { metaCompra, registrarCompra } from './services/compras';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -99,6 +102,8 @@ interface Importer {
   entidadV2?: string;
   /** Referencias opcionales con FK: si el registro apuntado no existe en v2, quedan en null (v1 no tenía FK). */
   refsOpcionales?: Record<string, PgTable & { id: any }>;
+  /** Guardado propio (un servicio con sus efectos) en vez del upsert genérico. */
+  guardar?: (tx: Tx, actor: Actor, data: Record<string, unknown> & { id: string }) => Promise<Record<string, unknown>>;
   /** Escrituras extra después de importar el registro (p. ej. historial de precios). */
   despues?: (tx: Tx, actor: Actor, r: Record<string, unknown>, id: string) => Promise<void>;
 }
@@ -242,6 +247,46 @@ const IMPORTERS: Record<string, Importer> = {
     refs: ['loteId'],
     adaptar: (r) => ({ ...r, autorizadoSAG: !!r.autorizadoSAG, certificadoDO: !!r.certificadoDO })
   },
+  // v1: una línea por compra y la NC en negativo → compra + línea(s) con montos positivos; el exento, línea exenta.
+  // Los movimientos y precios los genera registrarCompra (se omiten los movInsumo de compra y el historial repetido).
+  compra: {
+    table: compra,
+    schema: compraInput,
+    meta: metaCompra,
+    refs: ['proveedorId'],
+    adaptar: (r, orgId) => {
+      const lineas: Record<string, unknown>[] = [];
+      if (Math.abs(Number(r.cantidad) || 0) > 0)
+        lineas.push({
+          id: mapId(orgId, `linea|${r.id}|0`),
+          insumoId: r.insumoId ? mapId(orgId, String(r.insumoId)) : null,
+          descripcion: r.descripcion || 'Compra',
+          cantidad: Math.abs(Number(r.cantidad)),
+          precioUnitario: Math.abs(Number(r.precioUnitario) || 0)
+        });
+      if (Math.abs(Number(r.exento) || 0) > 0)
+        lineas.push({ id: mapId(orgId, `linea|${r.id}|exento`), descripcion: 'Exento', cantidad: 1, precioUnitario: Math.abs(Number(r.exento)), exenta: true });
+      return {
+        fecha: r.fecha,
+        proveedorId: r.proveedorId,
+        documento: r.documento ?? 'factura',
+        folio: r.folio != null && String(r.folio).trim() ? String(r.folio) : `S/F ${String(r.id)}`,
+        referenciaCompraId: r.referenciaCompraId ?? null,
+        vencimiento: r.vencimiento || null,
+        lineas
+      };
+    },
+    refsOpcionales: { referenciaCompraId: compra },
+    guardar: async (tx, actor, data) => {
+      const rec = await registrarCompra(tx, actor, data as never);
+      // El historial de v1 ya traía estos precios (sin compraId): se quitan los repetidos.
+      await tx.execute(sql`update insumo_precio p set deleted_at = now()
+        from compra_linea l
+        where l.compra_id = ${rec.id} and l.deleted_at is null and p.insumo_id = l.insumo_id and p.compra_id is null
+          and p.origen = 'compra' and p.fecha = ${String(rec.fecha)} and p.precio = round(l.precio_unitario) and p.deleted_at is null`);
+      return rec;
+    }
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,
@@ -250,7 +295,7 @@ const IMPORTERS: Record<string, Importer> = {
     refs: ['insumoId'],
     // Los consumos de aplicaciones, SO₂ y aditivos los vuelven a generar sus reacciones (no se duplican).
     adaptar: (r, orgId) =>
-      r.tipo === 'aplicacion' || r.tipo === 'so2' || r.tipo === 'aditivo'
+      r.tipo === 'aplicacion' || r.tipo === 'so2' || r.tipo === 'aditivo' || r.tipo === 'compra'
         ? null
         : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
   }
@@ -306,7 +351,7 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
               .where(eq(tabla.id, data[campo] as string));
             if (!existe) data[campo] = null;
           }
-          const rec = await upsert(tx, imp.table, actor, imp.meta, data);
+          const rec = imp.guardar ? await imp.guardar(tx, actor, data) : await upsert(tx, imp.table, actor, imp.meta, data);
           // Mismos efectos que si llegara por sync (p. ej. aplicación → movimiento de insumo).
           await reaccionar(tx, actor, { entity: imp.entidadV2 ?? entidad, op: 'upsert', previo: previo ?? null, registro: rec, importando: true });
           if (imp.despues) await imp.despues(tx, actor, r0, String(rec.id));

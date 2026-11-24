@@ -98,7 +98,7 @@ movimientos (solo agregar); **D** = documento con estado.
 |---|---|---|---|
 | `proveedor` | — | `nombre`, `rut`, `categoria`, `contacto`, `email`, `telefono`, `condiciones`, `plazo` | RUT válido |
 | `compra` | D | `fecha`, `proveedor_id`, `documento` (factura/factura_exenta/boleta/guia/nota_credito), `folio`, `referencia_compra_id` (para las NC), `vencimiento`, `estado` (registrada/anulada), totales (**siempre positivos**): `neto`, `exento`, `iva`, `total`, `dte_id` | Folio único por (proveedor, documento). Adjunto: factura en PDF |
-| `compra_linea` | — | `compra_id`, `insumo_id` (opcional), `descripcion`, `cantidad`, `precio_unitario`, `exento`, `neto` | Servicio `registrarCompra` |
+| `compra_linea` | — | `compra_id`, `insumo_id` (opcional), `descripcion`, `cantidad`, `precio_unitario`, `exenta` (bool), `neto` | Servicio `registrarCompra`: `mov_insumo` (+ / − NC, 0 si la factura referencia una guía) y `insumo_precio` por línea, con id derivado |
 | `pago` | — | `fecha`, `proveedor_id`, `monto`, `medio` | |
 | `pago_aplicacion` | — | `pago_id`, `compra_id` o `gasto_id`, `monto` | |
 | `gasto` | — | `fecha`, `categoria`, `descripcion`, `proveedor_id`, `monto` (neto), `documento`, `folio`, `afecto_iva`, `medio_pago`, `estado` (pendiente/pagado), `tipo_costo` (fijo/variable), `area` (admin/ventas/produccion), `no_deducible`, `dte_id` | Adjunto: comprobante |
@@ -205,7 +205,7 @@ Los stocks y saldos **no se guardan**: se calculan con vistas, que heredan el RL
 | `v_stock_insumo` | `stock_inicial` + Σ `mov_insumo.cantidad`, × precio vigente |
 | `v_stock_producto` | Σ `mov_producto.unidades` por (orden, formato), × costo unitario congelado |
 | `v_saldo_venta` | `venta.total` − Σ `cobro_aplicacion.monto` (solo confirmadas) |
-| `v_saldo_compra` | `compra.total` × signo(documento) − Σ `pago_aplicacion.monto` |
+| `v_por_pagar` | Documentos con deuda (factura, factura exenta, boleta registradas; F3-4 suma gastos a crédito): `total` − Σ NC que lo referencian − Σ `pago_aplicacion.monto` = `saldo`. El estado de pago se deriva en el dominio (`estadoPagoDoc`) |
 | `v_balance_lote` | Entradas, envasado, granel, mermas, vinagre, ajustes y stock por lote, más kg de uva y L/kg |
 
 Los cálculos complejos (costo por litro, estado de resultados, F29) siguen como **funciones puras** en

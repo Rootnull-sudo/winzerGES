@@ -2,8 +2,8 @@
 /**
  * Proveedores y compras — módulo ONLINE: Server Actions → servicios de @winzer/db dentro de withOrg (RLS).
  */
-import { ConflictError, eliminarProveedor, guardarProveedor, ReglaError, withOrg } from '@winzer/db';
-import { PermissionError, proveedorInput } from '@winzer/domain';
+import { anularCompra, ConflictError, eliminarProveedor, guardarProveedor, registrarCompra, ReglaError, withOrg } from '@winzer/db';
+import { compraInput, PermissionError, proveedorInput, type CompraInput } from '@winzer/domain';
 import { revalidatePath } from 'next/cache';
 import { requireOrg } from '@/lib/session';
 
@@ -14,7 +14,8 @@ function fallo(e: unknown): Result {
   console.error('[proveedores]', e);
   return { ok: false, error: 'No se pudo guardar. Inténtalo de nuevo.' };
 }
-const campos = (issues: { path: PropertyKey[]; message: string }[]) => Object.fromEntries(issues.map((i) => [String(i.path[0]), i.message]));
+// Ruta completa del campo (`lineas.0.cantidad`) para marcar el error en la línea correcta.
+const campos = (issues: { path: PropertyKey[]; message: string }[]) => Object.fromEntries(issues.map((i) => [i.path.map(String).join('.'), i.message]));
 const invalido = (issues: { path: PropertyKey[]; message: string }[]): Result => ({
   ok: false,
   error: 'Revisa los campos marcados.',
@@ -38,6 +39,30 @@ export async function deleteProveedor(slug: string, id: string): Promise<Result>
   const { actor } = await requireOrg(slug);
   try {
     await withOrg(actor.orgId, (tx) => eliminarProveedor(tx, actor, id));
+    revalidatePath(`/${slug}/proveedores`);
+    return { ok: true };
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+export async function saveCompra(slug: string, input: Record<string, unknown>, version?: number): Promise<Result> {
+  const { actor } = await requireOrg(slug);
+  const p = compraInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  try {
+    const r = await withOrg(actor.orgId, (tx) => registrarCompra(tx, actor, input as CompraInput, version));
+    revalidatePath(`/${slug}/proveedores`);
+    return { ok: true, id: String(r.id) };
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+export async function anularCompraAction(slug: string, id: string): Promise<Result> {
+  const { actor } = await requireOrg(slug);
+  try {
+    await withOrg(actor.orgId, (tx) => anularCompra(tx, actor, id));
     revalidatePath(`/${slug}/proveedores`);
     return { ok: true };
   } catch (e) {

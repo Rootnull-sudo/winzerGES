@@ -434,10 +434,87 @@ export const demoDump = {
         _demo: true
       }
     ],
-    movInsumo: [
-      { id: 'mov_d1', fecha: '2026-09-01', insumoId: 'ins_mbk', cantidad: 10, tipo: 'compra', ref: 'compra:com_d1', costoUnitario: 6500, _demo: true },
-      { id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }
+    // Formato v1: una línea por compra (las de varias líneas se registran en v2). Los movimientos y precios los
+    // genera registrarCompra al importar.
+    compra: [
+      {
+        id: 'com_d1',
+        fecha: '2026-09-01',
+        proveedorId: 'prv_eno',
+        documento: 'factura',
+        folio: '5101',
+        insumoId: 'ins_mbk',
+        descripcion: 'Metabisulfito de potasio',
+        cantidad: 10,
+        precioUnitario: 6500,
+        exento: 0,
+        vencimiento: '2026-10-16',
+        estadoPago: 'pagado',
+        fechaPago: '2026-10-10',
+        _demo: true
+      },
+      {
+        id: 'com_d2',
+        fecha: '2026-10-05',
+        proveedorId: 'prv_vidrio',
+        documento: 'factura',
+        folio: '8801',
+        insumoId: 'ins_botella',
+        descripcion: 'Botella Bordelesa 750 mL',
+        cantidad: 6000,
+        precioUnitario: 420,
+        exento: 0,
+        vencimiento: '2026-11-04',
+        estadoPago: 'pendiente',
+        _demo: true
+      },
+      {
+        id: 'com_d3',
+        fecha: '2026-10-20',
+        proveedorId: 'prv_agro',
+        documento: 'factura',
+        folio: '3301',
+        insumoId: 'ins_azufre',
+        descripcion: 'Azufre mojable',
+        cantidad: 100,
+        precioUnitario: 1900,
+        exento: 0,
+        vencimiento: '2026-10-20',
+        estadoPago: 'pagado',
+        fechaPago: '2026-10-20',
+        _demo: true
+      },
+      {
+        id: 'com_d4',
+        fecha: '2026-11-10',
+        proveedorId: 'prv_etq',
+        documento: 'factura',
+        folio: '1201',
+        descripcion: 'Impresión de etiquetas Reserva',
+        cantidad: 1,
+        precioUnitario: 850000,
+        exento: 0,
+        vencimiento: '2026-12-10',
+        estadoPago: 'pendiente',
+        _demo: true
+      },
+      {
+        id: 'com_d5',
+        fecha: '2026-11-15',
+        proveedorId: 'prv_eno',
+        documento: 'factura',
+        folio: '5140',
+        insumoId: 'ins_levadura',
+        descripcion: 'Levadura seca activa',
+        cantidad: 2,
+        precioUnitario: 99000,
+        exento: 0,
+        vencimiento: '2026-12-30',
+        estadoPago: 'pendiente',
+        _demo: true
+      }
     ],
+    movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {
         id: 'fen_d1',

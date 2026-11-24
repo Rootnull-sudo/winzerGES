@@ -393,3 +393,7 @@ Corregidos al migrar el viñedo (F1):
     → En curso solo avisa si ya superó el plan; terminada, en ambos sentidos.
 34. **Mermas altas para siempre**: v1 avisaba también de lotes ya vendidos o envasados. → Solo lotes con stock.
 35. **Plazo 0 del proveedor = 30 días** (`plazo || 30`). → 0 es contado: vence el mismo día.
+36. **Editar una compra antigua retrocedía el precio del insumo** y anularla no lo revertía. → Precio vigente = el
+    del historial con la fecha más reciente; anular recalcula.
+37. **Guía y factura contaban dos veces** como deuda (y el stock, si ambas tenían insumo). → La guía mueve stock sin
+    deuda; la factura que la referencia no vuelve a mover stock.

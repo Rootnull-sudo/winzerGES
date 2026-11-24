@@ -52,3 +52,47 @@ export function ErrorForm({ error, className }: { error: string | null; classNam
     </p>
   );
 }
+
+export interface LineaRow {
+  id: string;
+  insumoId: string | null;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  exenta: boolean;
+  neto: number;
+}
+export interface CompraRow {
+  id: string;
+  version: number;
+  fecha: string;
+  proveedorId: string;
+  documento: string;
+  folio: string;
+  referenciaCompraId: string | null;
+  vencimiento: string | null;
+  estado: string;
+  neto: number;
+  exento: number;
+  iva: number;
+  total: number;
+  observaciones: string | null;
+  /** null = no genera deuda (guía, NC) o anulada. */
+  saldo: number | null;
+  notasCredito: number;
+  lineas: LineaRow[];
+}
+export interface InsumoOpt {
+  id: string;
+  nombre: string;
+  unidad: string;
+  precio: number;
+  stock: number;
+}
+export interface PrecioRow {
+  insumoId: string;
+  fecha: string;
+  precio: number;
+  origen: string;
+  proveedorId: string | null;
+}

@@ -6,7 +6,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { Tx } from '../client';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
-import { insumo, proveedor } from '../schema';
+import { compra, insumo, proveedor } from '../schema';
 
 export const metaProveedor: EntityMeta = { entity: 'proveedor', module: 'proveedores', label: 'proveedores', display: (r) => String(r.nombre) };
 
@@ -23,8 +23,12 @@ export async function guardarProveedor(tx: Tx, actor: Actor, input: ProveedorInp
   return upsert(tx, proveedor, actor, metaProveedor, { ...data, id }, { baseVersion, checkVersion: baseVersion != null });
 }
 
-/** Tablas que referencian al proveedor (F3-2 agrega compras y F3-4 gastos). */
-const REFERENCIAS: { tabla: typeof insumo; nombre: string }[] = [{ tabla: insumo, nombre: 'insumos' }];
+type ConProveedor = typeof insumo | typeof compra;
+/** Tablas que referencian al proveedor (F3-4 agrega gastos). */
+const REFERENCIAS: { tabla: ConProveedor; nombre: string }[] = [
+  { tabla: compra, nombre: 'compras' },
+  { tabla: insumo, nombre: 'insumos' }
+];
 
 /** Elimina un proveedor sin documentos ni insumos asociados (v1: "el proveedor tiene compras"). */
 export async function eliminarProveedor(tx: Tx, actor: Actor, id: string) {

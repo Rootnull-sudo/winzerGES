@@ -22,7 +22,7 @@ export function Dialog({
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'md' | 'lg';
+  size?: 'md' | 'lg' | 'xl';
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -45,7 +45,7 @@ export function Dialog({
       className={cn(
         'm-0 mt-auto w-full max-w-none rounded-t-[14px] border border-rule bg-raised p-0 text-ink backdrop:bg-black/40',
         'sm:m-auto sm:rounded-[12px]',
-        size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-lg',
+        size === 'xl' ? 'sm:max-w-5xl' : size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-lg',
         'open:animate-[dlg-in_200ms_cubic-bezier(0.23,1,0.32,1)]'
       )}
     >

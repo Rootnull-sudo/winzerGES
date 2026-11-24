@@ -759,3 +759,68 @@ test('proveedores: el administrativo crea un proveedor con RUT validado y lo eli
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(fila).toHaveCount(0);
 });
+
+test('compras: factura de 2 líneas sube stock y precio; la NC baja stock y saldo; anular revierte', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/proveedores?tab=compras&t=2027');
+  const folio = `E2E-${Date.now().toString(36)}`;
+  const stockBotella = async (d: import('@playwright/test').Locator) =>
+    Number(
+      (await d.getByRole('list', { name: 'Insumos de la compra' }).innerText())
+        .match(/Stock ([\d.,]+)/)![1]!
+        .replace(/\./g, '')
+        .replace(',', '.')
+    );
+
+  await page.getByRole('button', { name: 'Nueva compra' }).click();
+  let d = page.getByRole('dialog', { name: 'Nueva compra' });
+  await d.getByLabel('Proveedor', { exact: false }).first().selectOption({ label: 'Envases del Valle Demo SpA' });
+  await d.getByRole('textbox', { name: /^Folio/ }).fill(folio);
+  await d.getByLabel('Línea 1 · Insumo').selectOption({ label: 'Botella Bordelesa 750 mL (un)' });
+  await d.getByLabel('Línea 1 · Cantidad').fill('100');
+  await d.getByLabel('Línea 1 · Precio unitario').fill('450');
+  const antes = await stockBotella(d);
+  await d.getByRole('button', { name: 'Agregar línea' }).click();
+  await d.getByLabel('Línea 2 · Descripción').fill('Flete');
+  await d.getByLabel('Línea 2 · Precio unitario').fill('20000');
+  await d.getByRole('listitem', { name: 'Línea 2' }).getByLabel('Exenta').check();
+  const calc = d.getByRole('complementary', { name: 'Cálculo' });
+  await expect(calc).toContainText('$45.000'); // neto afecto
+  await expect(calc).toContainText('$8.550'); // IVA 19 %
+  await expect(calc).toContainText('$73.550'); // + exento 20.000
+  await page.screenshot(shots('25-compra'));
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const factura = page.getByRole('row', { name: new RegExp(`Factura ${folio}\\b`) });
+  await expect(factura).toContainText('$73.550');
+  await expect(factura).toContainText('Pendiente');
+
+  // Nota de crédito por 10 botellas.
+  await page.getByRole('button', { name: 'Nueva compra' }).click();
+  d = page.getByRole('dialog', { name: 'Nueva compra' });
+  await d.getByLabel('Proveedor', { exact: false }).first().selectOption({ label: 'Envases del Valle Demo SpA' });
+  await d.getByRole('combobox', { name: /^Documento( \*)?$/ }).selectOption('nota_credito');
+  await d.getByRole('textbox', { name: /^Folio/ }).fill(`${folio}-NC`);
+  const ref = d.getByLabel(/Documento que corrige/);
+  await ref.selectOption((await ref.locator('option', { hasText: `Factura ${folio} ` }).getAttribute('value'))!);
+  await d.getByLabel('Línea 1 · Insumo').selectOption({ label: 'Botella Bordelesa 750 mL (un)' });
+  await d.getByLabel('Línea 1 · Cantidad').fill('10');
+  await d.getByLabel('Línea 1 · Precio unitario').fill('450');
+  expect(await stockBotella(d)).toBe(antes + 100);
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect(factura).toContainText('$68.195'); // 73.550 − 5.355
+  await expect(factura).toContainText('Pago parcial');
+  await expect(page.getByRole('row', { name: new RegExp(`Nota de crédito ${folio}-NC`) })).toContainText('−$5.355');
+
+  // Anular: primero la NC, después la factura; el stock vuelve.
+  page.on('dialog', (x) => x.accept());
+  await page.getByRole('row', { name: new RegExp(`Nota de crédito ${folio}-NC`) }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Anular' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(`Nota de crédito ${folio}-NC`) })).toContainText('Anulada');
+  await factura.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Anular' }).click();
+  await expect(factura).toContainText('Anulada');
+  await page.getByRole('button', { name: 'Nueva compra' }).click();
+  d = page.getByRole('dialog', { name: 'Nueva compra' });
+  await d.getByLabel('Línea 1 · Insumo').selectOption({ label: 'Botella Bordelesa 750 mL (un)' });
+  expect(await stockBotella(d)).toBe(antes);
+});

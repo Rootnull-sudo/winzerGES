@@ -34,4 +34,5 @@ export * from './entities/envasado';
 export * from './entities/venta';
 export * from './entities/dte';
 export * from './entities/tributario';
+export * from './entities/banco';
 export * from './sync';

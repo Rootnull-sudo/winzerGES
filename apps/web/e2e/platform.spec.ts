@@ -1243,3 +1243,34 @@ test('tributario: pagar el F29 congela la foto, registra sus pagos y cumple la o
   await expect(item).toContainText('Cumplida');
   await page.screenshot(shots('41-calendario-tributario'));
 });
+
+test('conciliación: importar cartola CSV, registrar la diferencia como gasto financiero y deshacerla', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/conciliacion');
+  await expect(page.getByRole('row', { name: /Transferencia Distribuidora Andes/ })).toContainText('Conciliado');
+  const glosa = 'Comisión E2E ' + Date.now().toString(36);
+  await page.getByRole('button', { name: 'Importar cartola' }).click();
+  const d = page.getByRole('dialog', { name: /Importar cartola/ });
+  await d.getByLabel('Archivo CSV').setInputFiles({
+    name: 'cartola.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(`Fecha;Descripción;Cargos;Abonos\n24/11/2026;${glosa};1.500;\n`, 'utf8')
+  });
+  await expect(d.getByText('1 movimientos leídos · 1 nuevos')).toBeVisible();
+  await expect(d.getByRole('cell', { name: '$-1.500' })).toBeVisible();
+  await page.screenshot(shots('42-cartola'));
+  await d.getByRole('button', { name: 'Importar 1 movimientos' }).click();
+  await expect(d).toHaveCount(0);
+  const fila = page.getByRole('row', { name: new RegExp(glosa) });
+  await expect(fila).toContainText('Pendiente');
+  await fila.click();
+  const m = page.getByRole('dialog', { name: glosa });
+  await m.getByLabel('Registrar como diferencia').selectOption('Comisión bancaria');
+  await m.getByRole('button', { name: 'Registrar' }).click();
+  await expect(fila).toContainText('Conciliado');
+  await expect(fila).toContainText('Gasto · Comisión bancaria');
+  await page.screenshot(shots('43-conciliacion'));
+  await fila.click();
+  await page.getByRole('dialog', { name: glosa }).getByRole('button', { name: 'Deshacer conciliación' }).click();
+  await expect(fila).toContainText('Pendiente');
+});

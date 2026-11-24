@@ -103,7 +103,7 @@ flowchart LR
 |---|---|---|
 | F6-1 DTE: `ProveedorDTE` simulado, líneas, CAF, NC/ND, libros (DTE derivado de ventas, compras y gastos; folios sin reutilizar; XML en ISO-8859-1 real) ✅ | `dte`, `dte_linea`, `caf`, `emisor` | L |
 | F6-2 F29, PPM y calendario (portar `remanente`, `ppmAnual`, `calendario`; foto congelada al declarar; renta pasa a F7-2) ✅ | `f29`, `pago_impuesto`, `obligacion` | L |
-| F6-3 Conciliación bancaria (cartola adjunta) | `cuenta_banco`, `cartola`, `mov_banco`, `conciliacion_match` | L |
+| F6-3 Conciliación bancaria (cartola adjunta; candidatos reales y match único; diferencia → gasto conciliado) ✅ | `cuenta_banco`, `cartola`, `mov_banco`, `conciliacion_match` | L |
 | F6-4 Cumplimiento normativo | `cumplimiento` | M |
 
 ## F7 · Finanzas, dashboard y cierre de paridad

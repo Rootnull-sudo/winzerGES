@@ -1639,3 +1639,79 @@ export const obligacion = pgTable(
       .where(sql`${t.deletedAt} is null`)
   ]
 );
+
+/* --- Tesorería: cuentas, cartolas, libro de banco y conciliación (F6-3, online) --- */
+export const cuentaBanco = pgTable('cuenta_banco', {
+  ...base(),
+  banco: text('banco').notNull(),
+  tipo: text('tipo').notNull(),
+  numero: text('numero').notNull(),
+  moneda: text('moneda').notNull().default('CLP'),
+  fechaInicio: text('fecha_inicio').notNull(),
+  saldoInicial: money('saldo_inicial').notNull().default(0)
+});
+
+/** Cada importación de cartola queda trazable; el CSV va como adjunto de la cartola. */
+export const cartola = pgTable('cartola', {
+  ...base(),
+  cuentaId: text('cuenta_id')
+    .notNull()
+    .references(() => cuentaBanco.id),
+  archivo: text('archivo'),
+  mapeo: jsonb('mapeo').$type<Record<string, unknown>>().notNull(),
+  filasImportadas: integer('filas_importadas').notNull().default(0),
+  duplicadas: integer('duplicadas').notNull().default(0),
+  importadaEn: ts('importada_en').notNull().defaultNow()
+});
+
+export const movBanco = pgTable(
+  'mov_banco',
+  {
+    ...base(),
+    cuentaId: text('cuenta_id')
+      .notNull()
+      .references(() => cuentaBanco.id),
+    cartolaId: text('cartola_id').references(() => cartola.id),
+    fecha: text('fecha').notNull(),
+    glosa: text('glosa').notNull(),
+    /** + abono / − cargo */
+    monto: money('monto').notNull(),
+    /** pendiente | conciliado | diferencia */
+    estado: text('estado').notNull().default('pendiente'),
+    /** fecha|monto|glosa: un mismo movimiento no se importa dos veces en la cuenta. */
+    huella: text('huella').notNull(),
+    nota: text('nota')
+  },
+  (t) => [
+    uniqueIndex('mov_banco_huella_uq')
+      .on(t.orgId, t.cuentaId, t.huella)
+      .where(sql`${t.deletedAt} is null`),
+    index('mov_banco_cuenta_idx').on(t.orgId, t.cuentaId, t.fecha)
+  ]
+);
+
+export const conciliacionMatch = pgTable(
+  'conciliacion_match',
+  {
+    ...base(),
+    movBancoId: text('mov_banco_id')
+      .notNull()
+      .references(() => movBanco.id),
+    /** cobro | pago | gasto | remuneracion | honorario | pago_impuesto */
+    origenTipo: text('origen_tipo').notNull(),
+    origenId: text('origen_id').notNull(),
+    monto: money('monto').notNull(),
+    /** monto del movimiento − monto del origen */
+    diferencia: money('diferencia').notNull().default(0),
+    nota: text('nota'),
+    automatico: boolean('automatico').notNull().default(false),
+    /** El gasto financiero se creó al registrar la diferencia: deshacer el match lo elimina. */
+    generoGasto: boolean('genero_gasto').notNull().default(false)
+  },
+  (t) => [
+    uniqueIndex('conciliacion_match_origen_uq')
+      .on(t.orgId, t.origenTipo, t.origenId)
+      .where(sql`${t.deletedAt} is null`),
+    index('conciliacion_match_mov_idx').on(t.orgId, t.movBancoId)
+  ]
+);

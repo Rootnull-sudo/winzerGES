@@ -29,6 +29,10 @@ import {
   f29V1Input,
   pagoImpuestoInput,
   obligacionInput,
+  cuentaBancoInput,
+  movBancoV1Input,
+  huellaMov,
+  TIPOS_CUENTA,
   pagoInput,
   type PagoInput,
   type CobroInput,
@@ -92,6 +96,8 @@ import {
   f29,
   pagoImpuesto,
   obligacion,
+  cuentaBanco,
+  movBanco,
   estanque,
   fenologia,
   fermentacion,
@@ -119,6 +125,7 @@ import { confirmarEnvasado, guardarOrden, metaOrden } from './services/envasado'
 import { anularVenta, confirmarVenta, guardarVenta, metaVenta } from './services/ventas';
 import { aplicarCobro, metaCobro, registrarCobro } from './services/cobros';
 import { ajustarSecuencia } from './services/secuencias';
+import { conciliar, metaCuenta, metaMovBanco } from './services/conciliacion';
 import { guardarF29, marcarObligacion, metaF29, metaObligacion, metaPagoImpuesto } from './services/tributario';
 import { guardarEmisor, idDteCompra, idDteGasto, idDteVenta, importarDte, metaCaf, metaDte, metaEmisor } from './services/dte';
 import { withOrg } from './tenancy';
@@ -759,8 +766,89 @@ const IMPORTERS: Record<string, Importer> = {
         .where(and(eq(obligacion.clave, String(data.clave)), isNull(obligacion.deletedAt)));
       return o as Record<string, unknown>;
     }
+  },
+  // F6-3: cuentas y libro de banco. El matchRef de v1 ("venta:…", "compra:…") ya viene remapeado al cobro o pago
+  // de v2 (`origenesBanco`); el match se rehace con `conciliar` si el documento sigue siendo conciliable.
+  cuentaBanco: {
+    table: cuentaBanco,
+    schema: cuentaBancoInput,
+    meta: metaCuenta,
+    adaptar: (r) => ({
+      banco: r.banco,
+      tipo: (TIPOS_CUENTA as readonly string[]).includes(String(r.tipo)) ? r.tipo : 'Cuenta corriente',
+      numero: String(r.numero ?? 'S/N'),
+      moneda: ['CLP', 'USD', 'EUR'].includes(String(r.moneda)) ? r.moneda : 'CLP',
+      fechaInicio: r.fechaInicio || String(r.createdAt ?? '2026-01-01').slice(0, 10),
+      saldoInicial: Math.round(Number(r.saldoInicial) || 0)
+    })
+  },
+  movBanco: {
+    table: movBanco,
+    schema: movBancoV1Input,
+    meta: metaMovBanco,
+    refs: ['cuentaId'],
+    entidadV2: 'mov_banco',
+    guardar: async (tx, actor, data) => {
+      const r = data as Record<string, unknown> & { id: string; cuentaId: string; fecha: string; glosa: string; monto: number; estado: string };
+      const huella = huellaMov(r.fecha, r.monto, r.glosa);
+      const [ya] = await tx
+        .select()
+        .from(movBanco)
+        .where(and(eq(movBanco.cuentaId, r.cuentaId), eq(movBanco.huella, huella), isNull(movBanco.deletedAt)));
+      if (ya) return ya as Record<string, unknown>;
+      const nota = (r.nota as string) || (r.matchDesc as string) || null;
+      await upsert(tx, movBanco, actor, metaMovBanco, {
+        id: r.id,
+        cuentaId: r.cuentaId,
+        fecha: r.fecha,
+        glosa: r.glosa,
+        monto: r.monto,
+        estado: 'pendiente',
+        huella,
+        nota
+      });
+      const origen = r._origen as { tipo: string; id: string } | undefined;
+      let conciliado = false;
+      if (origen && r.estado !== 'pendiente') {
+        try {
+          await conciliar(tx, actor, { movId: r.id, origenTipo: origen.tipo, origenId: mapId(actor.orgId, origen.id), nota });
+          conciliado = true;
+        } catch {
+          conciliado = false;
+        }
+      }
+      if (!conciliado && r.estado !== 'pendiente') await upsert(tx, movBanco, actor, metaMovBanco, { id: r.id, estado: r.estado, nota });
+      const [m] = await tx.select().from(movBanco).where(eq(movBanco.id, r.id));
+      return m as Record<string, unknown>;
+    }
   }
 };
+
+/** movBanco de v1 con el origen de su matchRef traducido a v2 (venta → su cobro, compra → su pago). */
+function origenesBanco(data: V1Dump['data']): Record<string, unknown>[] {
+  const cobros = cobrosDeVentas(data);
+  const pagos = pagosDeCompras(data);
+  const TIPO: Record<string, string> = {
+    remuneracion: 'remuneracion',
+    gasto: 'gasto',
+    honorario: 'honorario',
+    pagoImpuesto: 'pago_impuesto',
+    cobro: 'cobro',
+    pago: 'pago'
+  };
+  return (data.movBanco ?? []).map((m) => {
+    const [tipo, id] = String(m.matchRef ?? '').split(':');
+    let origen: { tipo: string; id: string } | undefined;
+    if (tipo === 'venta' && id) {
+      const c = cobros.find((x) => String(x.ventaId ?? '') === id);
+      if (c) origen = { tipo: 'cobro', id: String(c.id) };
+    } else if (tipo === 'compra' && id) {
+      const p = pagos.find((x) => String(x.compraId ?? '') === id);
+      if (p) origen = { tipo: 'pago', id: String(p.id) };
+    } else if (tipo && id && TIPO[tipo]) origen = { tipo: TIPO[tipo]!, id };
+    return { ...m, _origen: origen };
+  });
+}
 
 /** Datos del emisor de v1 (config.empresa) como una entidad más del importador. */
 function emisorDeConfig(data: V1Dump['data']): Record<string, unknown>[] {
@@ -810,7 +898,16 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
   for (const [entidad, recs] of Object.entries(dump.data)) {
     if (!IMPORTERS[entidad] && recs.length && !['config', 'usuario', 'rol', 'auditoria'].includes(entidad)) report.pendientes[entidad] = recs.length;
   }
-  dump = { ...dump, data: { ...dump.data, pago: pagosDeCompras(dump.data), cobro: cobrosDeVentas(dump.data), emisor: emisorDeConfig(dump.data) } };
+  dump = {
+    ...dump,
+    data: {
+      ...dump.data,
+      pago: pagosDeCompras(dump.data),
+      cobro: cobrosDeVentas(dump.data),
+      emisor: emisorDeConfig(dump.data),
+      movBanco: origenesBanco(dump.data)
+    }
+  };
   await secuenciasDteV1(actor.orgId, dump.data);
   const temporadas = new Map<number, string>();
   for (const [entidad, imp] of Object.entries(IMPORTERS)) {

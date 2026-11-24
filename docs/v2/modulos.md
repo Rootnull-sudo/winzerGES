@@ -276,16 +276,17 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Alerta**: `tributario.calendario` (vence en 10 días: aviso; vencido hasta 30 días: error), solo con actividad
   tributaria registrada.
 
-### Conciliación bancaria · ⬜ · F6 · L
-- **Tablas**: `cuenta_banco`, `cartola`, `mov_banco`, `conciliacion_match`.
-- **Pantallas**:
-  - cuentas;
-  - importar cartola en CSV, con mapeo de columnas, vista previa y la cartola adjunta;
-  - movimientos con conciliación automática y manual;
-  - diferencia → gasto financiero;
-  - resumen por cuenta.
-- **Cálculos**: `recon.candidatos` y la regla de matching (monto ±1, fecha ±7 días).
-- **Corrige**: usa los cobros y pagos parciales, y filtra por cuenta.
+### Conciliación bancaria · ✅ · F6-3 · L
+- **Tablas**: `cuenta_banco`, `cartola`, `mov_banco`, `conciliacion_match`; vista `v_candidatos_banco`.
+- **Pantallas** (`/[org]/conciliacion`): cuentas; importar cartola CSV con mapeo de columnas, vista previa con
+  duplicados marcados y el archivo adjunto a la cartola; libro de banco con saldo y antigüedad; conciliación
+  automática y manual con sugerencias; diferencia → gasto financiero; conciliación de la cuenta.
+- **Cálculos** (paridad con `recon.js`): `parseCsv`, `normFecha`, `parseCartola`, `sugerencias` (±1 peso, ±7 días),
+  `autoConciliar`; `resumenCuenta` con la diferencia corregida.
+- **Alertas**: `conciliacion.pendientes` (por cuenta) y `conciliacion.diferencias`.
+- **Importador**: cuentas y movimientos; el `matchRef` de v1 (venta, compra…) se traduce al cobro o pago de v2.
+- **Límite**: las partidas en tránsito se suman a la conciliación solo con una cuenta (un cobro no dice por qué
+  cuenta pasó).
 
 ### Cumplimiento normativo · ⬜ · F6 · M
 - **Tablas**: `cumplimiento`.

@@ -440,3 +440,8 @@ Corregidos al migrar el viñedo (F1):
 51. **F29**: guardar el borrador o cambiar el estado de un F29 ya declarado sobrescribía su foto y cambiaba el
     remanente de los meses siguientes; volver de "pagado" dejaba los pagos de impuesto y la obligación cumplida. →
     Declarado y pagado congelan la foto; revertir recalcula y quita los pagos y reabre la obligación.
+52. **Conciliación**: candidatos desde ventas y compras marcadas "pagado" (ignoraba cobros y pagos parciales); el
+    filtro por cuenta nunca filtraba; un mismo documento podía usarse en varias cuentas; la diferencia con match
+    restaba el movimiento completo; el gasto financiero creado por la diferencia volvía a aparecer en tránsito y
+    quedaba al deshacer; los montos "1.395.000" de la cartola se leían como 1,395. → Candidatos reales con match
+    único, diferencia exacta, gasto conciliado que se elimina al deshacer y montos con punto de miles.

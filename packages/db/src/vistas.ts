@@ -107,5 +107,41 @@ export const VISTAS: Vista[] = [
             where a.venta_id = v.id and a.deleted_at is null
           ) ap
           where v.deleted_at is null and v.estado = 'confirmada'`
+  },
+  {
+    // Candidatos de conciliación bancaria (F6-3; v1: recon.candidatos). + entra al banco, − sale. Lo pagado en
+    // efectivo no pasa por el banco. `conciliado`: ya tiene un match vigente.
+    nombre: 'v_candidatos_banco',
+    sql: `select c.org_id, c.origen_tipo, c.origen_id, c.fecha, c.monto, c.descripcion,
+            exists (select 1 from conciliacion_match m where m.org_id = c.org_id and m.origen_tipo = c.origen_tipo
+                    and m.origen_id = c.origen_id and m.deleted_at is null) as conciliado
+          from (
+            select co.org_id, 'cobro' as origen_tipo, co.id as origen_id, co.fecha, co.monto::numeric as monto,
+              'Cobro · ' || coalesce(cl.nombre, '') as descripcion
+            from cobro co left join cliente cl on cl.id = co.cliente_id
+            where co.deleted_at is null and co.medio <> 'efectivo'
+            union all
+            select p.org_id, 'pago', p.id, p.fecha, -p.monto::numeric,
+              'Pago · ' || coalesce(pr.nombre, p.referencia, '')
+            from pago p left join proveedor pr on pr.id = p.proveedor_id
+            where p.deleted_at is null and p.medio <> 'efectivo'
+            union all
+            select g.org_id, 'gasto', g.id, g.fecha, -g.total::numeric, 'Gasto · ' || g.descripcion
+            from gasto g
+            where g.deleted_at is null and g.estado = 'pagado' and g.medio_pago <> 'efectivo'
+            union all
+            select r.org_id, 'remuneracion', r.id, coalesce(r.fecha_pago, r.periodo || '-28'), -r.liquido::numeric,
+              'Remuneración · ' || coalesce(r.trabajador_foto->>'nombre', '') || ' ' || r.periodo
+            from remuneracion r
+            where r.deleted_at is null and r.estado = 'pagada'
+            union all
+            select h.org_id, 'honorario', h.id, coalesce(h.fecha_pago, h.fecha), -h.liquido::numeric, 'Honorarios · ' || h.nombre
+            from honorario h
+            where h.deleted_at is null and h.estado = 'pagada'
+            union all
+            select pi.org_id, 'pago_impuesto', pi.id, pi.fecha, -pi.monto::numeric, 'Impuesto · ' || pi.tipo || ' ' || pi.periodo
+            from pago_impuesto pi
+            where pi.deleted_at is null and not pi.incluido_en_f29
+          ) c`
   }
 ];

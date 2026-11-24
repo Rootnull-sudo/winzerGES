@@ -37,6 +37,64 @@ export const demoDump = {
       { id: 'f29_d09', periodo: '2026-09', estado: 'pagado', folioSII: '7700000101', fechaPago: '2026-10-20', _demo: true },
       { id: 'f29_d10', periodo: '2026-10', estado: 'declarado', folioSII: '7700000102', _demo: true }
     ],
+    // Cuenta corriente con su libro de banco (F6-3): cobros y un pago conciliados, una comisión en diferencia y
+    // movimientos sin conciliar.
+    cuentaBanco: [
+      {
+        id: 'cta_d1',
+        banco: 'Banco Demo',
+        tipo: 'Cuenta corriente',
+        numero: '00-123-45678-9',
+        moneda: 'CLP',
+        fechaInicio: '2026-09-01',
+        saldoInicial: 18500000,
+        _demo: true
+      }
+    ],
+    movBanco: [
+      {
+        id: 'mb_d1',
+        cuentaId: 'cta_d1',
+        fecha: '2026-10-10',
+        glosa: 'Transferencia Distribuidora Andes',
+        monto: 3766500,
+        estado: 'conciliado',
+        matchRef: 'venta:ven_d1',
+        _demo: true
+      },
+      {
+        id: 'mb_d2',
+        cuentaId: 'cta_d1',
+        fecha: '2026-10-31',
+        glosa: 'Comisión mantención cuenta',
+        monto: -8900,
+        estado: 'diferencia',
+        nota: 'Comisión bancaria',
+        _demo: true
+      },
+      { id: 'mb_d3', cuentaId: 'cta_d1', fecha: '2026-10-31', glosa: 'Intereses', monto: 3200, estado: 'pendiente', _demo: true },
+      {
+        id: 'mb_d4',
+        cuentaId: 'cta_d1',
+        fecha: '2026-11-02',
+        glosa: 'Transferencia Restaurante El Parrón',
+        monto: 1000000,
+        estado: 'conciliado',
+        matchRef: 'venta:ven_d2',
+        _demo: true
+      },
+      {
+        id: 'mb_d5',
+        cuentaId: 'cta_d1',
+        fecha: '2026-11-18',
+        glosa: 'Pago Imprenta Etiquetas',
+        monto: -500000,
+        estado: 'conciliado',
+        matchRef: 'compra:com_d4',
+        _demo: true
+      },
+      { id: 'mb_d6', cuentaId: 'cta_d1', fecha: '2026-11-20', glosa: 'Cheque 004512', monto: -250000, estado: 'pendiente', _demo: true }
+    ],
     obligacion: [
       { id: 'obl_d1', key: 'CONTRIB-2026-3ª', estado: 'cumplida', fecha: '2026-09-28', _demo: true },
       { id: 'obl_d2', key: 'PATALC-2026-2ª cuota', estado: 'cumplida', fecha: '2026-07-25', _demo: true }

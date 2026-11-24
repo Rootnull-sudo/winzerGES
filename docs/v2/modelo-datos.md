@@ -117,10 +117,10 @@ movimientos (solo agregar); **D** = documento con estado.
 
 | Tabla | Tipo | Columnas clave | Notas |
 |---|---|---|---|
-| `cuenta_banco` | — | `banco`, `tipo`, `numero`, `moneda`, `fecha_inicio`, `saldo_inicial` | |
-| `cartola` | — | `cuenta_id`, `adjunto_id`, `mapeo_columnas` jsonb, `filas_importadas`, `importada_en` | Cada importación queda trazable |
-| `mov_banco` | L | `cuenta_id`, `cartola_id`, `fecha`, `glosa`, `monto` (+ abono / − cargo), `estado` (pendiente/conciliado/diferencia), `huella` (fecha + monto + glosa, única por cuenta) | |
-| `conciliacion_match` | — | `mov_banco_id`, `origen_tipo` (cobro/pago/remuneracion/gasto/pago_impuesto/honorario), `origen_id`, `monto`, `diferencia`, `nota`, `automatico` | Reemplaza `matchRef` (texto) |
+| `cuenta_banco` | — | `banco`, `tipo`, `numero`, `moneda`, `fecha_inicio`, `saldo_inicial` | Con movimientos no se elimina (F6-3) |
+| `cartola` | — | `cuenta_id`, `archivo`, `mapeo` jsonb, `filas_importadas`, `duplicadas`, `importada_en` | Cada importación queda trazable; el CSV es un adjunto de la cartola (entidad `cartola`) |
+| `mov_banco` | L | `cuenta_id`, `cartola_id`, `fecha`, `glosa`, `monto` (+ abono / − cargo), `estado` (pendiente/conciliado/diferencia), `huella` (fecha + monto + glosa, única por cuenta), `nota` | La cartola se lee en el navegador (`parseCartola`); el servidor omite las huellas repetidas |
+| `conciliacion_match` | — | `mov_banco_id`, `origen_tipo` (cobro/pago/remuneracion/gasto/pago_impuesto/honorario), `origen_id`, `monto`, `diferencia`, `nota`, `automatico`, `genero_gasto` | Reemplaza `matchRef` (texto). Origen único entre los vigentes. Vista `v_candidatos_banco`: cobros y pagos (no en efectivo), gastos pagados, remuneraciones y honorarios pagados e impuestos no incluidos en el F29 |
 
 ## 9. Tributario y cumplimiento
 

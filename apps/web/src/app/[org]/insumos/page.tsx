@@ -1,4 +1,5 @@
-import { configVigente, withOrg } from '@winzer/db';
+import { configVigente, schema, withOrg } from '@winzer/db';
+import { asc, isNull } from 'drizzle-orm';
 import { NoAccess } from '@/components/no-access';
 import { orgWith } from '@/lib/session';
 import { InsumosView } from './view';
@@ -13,6 +14,15 @@ export default async function Page({ params }: { params: Promise<{ org: string }
   const { org } = await params;
   const { allowed, fueraDePlan, actor } = await orgWith(org, 'insumos');
   if (!allowed) return <NoAccess modulo="insumos y labores" plan={fueraDePlan} />;
-  const cfg = await withOrg(actor.orgId, (tx) => configVigente(tx));
-  return <InsumosView diasAvisoVencimiento={cfg.alertas.stockMinimoDiasVencimiento} valorJornada={cfg.remuneraciones.valorJornada} />;
+  const [cfg, proveedores] = await withOrg(actor.orgId, (tx) =>
+    Promise.all([
+      configVigente(tx),
+      tx
+        .select({ id: schema.proveedor.id, nombre: schema.proveedor.nombre })
+        .from(schema.proveedor)
+        .where(isNull(schema.proveedor.deletedAt))
+        .orderBy(asc(schema.proveedor.nombre))
+    ])
+  );
+  return <InsumosView diasAvisoVencimiento={cfg.alertas.stockMinimoDiasVencimiento} valorJornada={cfg.remuneraciones.valorJornada} proveedores={proveedores} />;
 }

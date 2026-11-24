@@ -40,7 +40,17 @@ const TABS = [
   { id: 'labores', label: 'Labores' }
 ] as const;
 
-export function InsumosView({ diasAvisoVencimiento, valorJornada }: { diasAvisoVencimiento: number; valorJornada: number }) {
+type ProveedorOpt = { id: string; nombre: string };
+
+export function InsumosView({
+  diasAvisoVencimiento,
+  valorJornada,
+  proveedores
+}: {
+  diasAvisoVencimiento: number;
+  valorJornada: number;
+  proveedores: ProveedorOpt[];
+}) {
   const [tab, setTab] = useTab(TABS);
   const tabs = (acciones: React.ReactNode) => <Tabs tabs={TABS} actual={tab} onChange={setTab} acciones={acciones} />;
   return (
@@ -50,14 +60,16 @@ export function InsumosView({ diasAvisoVencimiento, valorJornada }: { diasAvisoV
         title="Insumos y labores"
         description="Maestro de insumos con su stock, aplicaciones en el cuartel y labores de campo. Aplicaciones y labores funcionan sin señal; el maestro se consulta sin señal y se edita con conexión."
       />
-      {tab === 'insumos' && <InsumosTab tabs={<Tabs tabs={TABS} actual={tab} onChange={setTab} />} diasAviso={diasAvisoVencimiento} />}
+      {tab === 'insumos' && (
+        <InsumosTab tabs={<Tabs tabs={TABS} actual={tab} onChange={setTab} />} diasAviso={diasAvisoVencimiento} proveedores={proveedores} />
+      )}
       {tab === 'aplicaciones' && <AplicacionesTab tabs={tabs} />}
       {tab === 'labores' && <LaboresTab tabs={tabs} valorJornada={valorJornada} />}
     </>
   );
 }
 
-function InsumosTab({ tabs, diasAviso }: { tabs: React.ReactNode; diasAviso: number }) {
+function InsumosTab({ tabs, diasAviso, proveedores }: { tabs: React.ReactNode; diasAviso: number; proveedores: ProveedorOpt[] }) {
   const can = useCan();
   const online = useSyncState()?.online ?? true;
   const { insumos, movs, stock } = useStock();
@@ -179,6 +191,7 @@ function InsumosTab({ tabs, diasAviso }: { tabs: React.ReactNode; diasAviso: num
       {editing && (
         <InsumoDialog
           insumo={editing === 'new' ? null : editing}
+          proveedores={proveedores}
           movs={(movs ?? []).filter((m) => editing !== 'new' && m.insumoId === editing.id)}
           stock={editing === 'new' ? 0 : (stock.get(editing.id) ?? 0)}
           editable={editing === 'new' ? can('insumos', 'c') && online : editable}
@@ -229,9 +242,11 @@ function InsumoDialog({
   editable,
   online,
   onAjustar,
-  onClose
+  onClose,
+  proveedores
 }: {
   insumo: InsumoRow | null;
+  proveedores: ProveedorOpt[];
   movs: MovRow[];
   stock: number;
   editable: boolean;
@@ -344,6 +359,18 @@ function InsumoDialog({
           <Field label="Precio por unidad" unit="CLP" required error={errors.precio}>
             {(id, d) => (
               <Input id={id} name="precio" type="number" min={0} step={1} defaultValue={i?.precio ?? ''} className="tabular" aria-describedby={d} required />
+            )}
+          </Field>
+          <Field label="Proveedor habitual" hint={proveedores.length ? undefined : 'Créalos en Proveedores y compras.'}>
+            {(id, d) => (
+              <Select id={id} name="proveedorId" defaultValue={i?.proveedorId ?? ''} aria-describedby={d}>
+                <option value="">—</option>
+                {proveedores.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </Select>
             )}
           </Field>
           <Field label="Stock inicial" error={errors.stockInicial}>

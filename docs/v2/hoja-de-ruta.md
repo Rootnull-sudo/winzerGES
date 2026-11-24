@@ -73,7 +73,7 @@ flowchart LR
 
 | Issue | Tablas | Tamaño |
 |---|---|---|
-| F3-1 Proveedores (+ FK `insumo.proveedor_id` e `insumo_precio.proveedor_id` → `proveedor`, hoy texto sin FK; selector de proveedor en el insumo) | `proveedor` | S |
+| F3-1 Proveedores (+ FK `insumo.proveedor_id` e `insumo_precio.proveedor_id` → `proveedor`; selector de proveedor en el insumo; usuario demo administrativo) ✅ | `proveedor` | S |
 | F3-2 Compras con líneas + servicio `registrarCompra` (requiere F1-1) | `compra`, `compra_linea` | L |
 | F3-3 Pagos aplicados y cuentas por pagar | `pago`, `pago_aplicacion` | M |
 | F3-4 Gastos y presupuesto | `gasto`, `presupuesto` | M |

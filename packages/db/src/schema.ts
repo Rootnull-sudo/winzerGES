@@ -495,8 +495,8 @@ export const insumo = pgTable(
     npk: text('npk'),
     /** Último precio por unidad (CLP). La historia está en insumo_precio. */
     precio: money('precio').notNull().default(0),
-    /** FK a proveedor: la agrega F3-1 (Proveedores) cuando exista la tabla. */
-    proveedorId: text('proveedor_id'),
+    /** Proveedor habitual (F3-1). */
+    proveedorId: text('proveedor_id').references((): AnyPgColumn => proveedor.id),
     stockMinimo: num('stock_minimo'),
     stockInicial: num('stock_inicial'),
     vencimiento: text('vencimiento'),
@@ -525,7 +525,7 @@ export const insumoPrecio = pgTable(
       .references(() => insumo.id),
     fecha: text('fecha').notNull(),
     precio: money('precio').notNull(),
-    proveedorId: text('proveedor_id'),
+    proveedorId: text('proveedor_id').references((): AnyPgColumn => proveedor.id),
     /** manual | compra */
     origen: text('origen').notNull().default('manual'),
     compraId: text('compra_id')
@@ -1005,4 +1005,26 @@ export const analisis = pgTable(
     observaciones: text('observaciones')
   },
   (t) => [index('analisis_lote_idx').on(t.orgId, t.loteId), index('analisis_sync_idx').on(t.orgId, t.seq)]
+);
+
+/* --- Abastecimiento: proveedores (F3-1, online) --- */
+export const proveedor = pgTable(
+  'proveedor',
+  {
+    ...base(),
+    nombre: text('nombre').notNull(),
+    rut: text('rut').notNull(),
+    categoria: text('categoria'),
+    contacto: text('contacto'),
+    email: text('email'),
+    telefono: text('telefono'),
+    condiciones: text('condiciones'),
+    /** Días de crédito (0 = contado). */
+    plazo: integer('plazo').notNull().default(30)
+  },
+  (t) => [
+    uniqueIndex('proveedor_rut_uq')
+      .on(t.orgId, t.rut)
+      .where(sql`${t.deletedAt} is null`)
+  ]
 );

@@ -127,6 +127,13 @@
       "when": 1795475582592,
       "tag": "0017_laboratorio",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795480348626,
+      "tag": "0018_proveedores",
+      "breakpoints": true
     }
   ]
 }

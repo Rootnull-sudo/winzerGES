@@ -27,6 +27,7 @@ import {
   loteInput,
   movBodegaInput,
   movInsumoInput,
+  proveedorInput,
   rangoPorDefecto,
   seguimientoInput,
   variedadInput,
@@ -60,11 +61,13 @@ import {
   lote,
   movBodega,
   movInsumo,
+  proveedor,
   seguimiento,
   variedad,
   ventana
 } from './schema';
 import { metaInsumo, metaMovInsumo } from './services/insumos';
+import { metaProveedor } from './services/proveedores';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -94,6 +97,8 @@ interface Importer {
   adaptar?: (r: Record<string, unknown>, orgId: string) => Record<string, unknown> | null;
   /** Entidad de v2 si el nombre cambia (p. ej. movInsumo → mov_insumo); por defecto, la misma clave. */
   entidadV2?: string;
+  /** Referencias opcionales con FK: si el registro apuntado no existe en v2, quedan en null (v1 no tenía FK). */
+  refsOpcionales?: Record<string, PgTable & { id: any }>;
   /** Escrituras extra después de importar el registro (p. ej. historial de precios). */
   despues?: (tx: Tx, actor: Actor, r: Record<string, unknown>, id: string) => Promise<void>;
 }
@@ -110,17 +115,20 @@ const IMPORTERS: Record<string, Importer> = {
   cuartel: { table: cuartel, schema: cuartelInput, meta: { entity: 'cuartel', module: 'catastro', label: 'cuarteles' } },
   cliente: { table: cliente, schema: clienteInput, meta: { entity: 'cliente', module: 'clientes', label: 'clientes' } },
   cobro: { table: cobro, schema: cobroInput, meta: { entity: 'cobro', module: 'clientes', label: 'cobros' }, refs: ['clienteId', 'ventaId'] },
+  proveedor: { table: proveedor, schema: proveedorInput, meta: metaProveedor },
   insumo: {
     table: insumo,
     schema: insumoInput,
     meta: metaInsumo,
     refs: ['proveedorId'],
+    refsOpcionales: { proveedorId: proveedor },
     adaptar: ({ historialPrecios: _h, ...r }) => r,
     // historialPrecios (JSON en v1) → filas de insumo_precio. v1 no guardaba el precio inicial: se agrega el actual.
     despues: async (tx, actor, r, id) => {
       await tx.delete(insumoPrecio).where(eq(insumoPrecio.insumoId, id));
       const hist = (Array.isArray(r.historialPrecios) ? r.historialPrecios : []) as { fecha?: string; precio?: number; proveedorId?: string }[];
       const filas = hist.filter((h) => h.fecha && h.precio != null);
+      const proveedores = new Set((await tx.select({ id: proveedor.id }).from(proveedor)).map((x) => x.id));
       if (!filas.length) filas.push({ fecha: String(r.updatedAt ?? r.createdAt ?? new Date().toISOString()).slice(0, 10), precio: Number(r.precio) || 0 });
       await tx.insert(insumoPrecio).values(
         filas.map((h) => ({
@@ -129,7 +137,7 @@ const IMPORTERS: Record<string, Importer> = {
           insumoId: id,
           fecha: String(h.fecha).slice(0, 10),
           precio: Math.round(Number(h.precio)),
-          proveedorId: h.proveedorId ? mapId(actor.orgId, h.proveedorId) : null,
+          proveedorId: h.proveedorId && proveedores.has(mapId(actor.orgId, h.proveedorId)) ? mapId(actor.orgId, h.proveedorId) : null,
           origen: 'compra',
           createdBy: actor.userId,
           updatedBy: actor.userId
@@ -289,7 +297,16 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
             .select()
             .from(imp.table)
             .where(eq(imp.table.id, input.id as string))) as Record<string, unknown>[];
-          const rec = await upsert(tx, imp.table, actor, imp.meta, parsed.data as Record<string, unknown> & { id: string });
+          const data = parsed.data as Record<string, unknown> & { id: string };
+          for (const [campo, tabla] of Object.entries(imp.refsOpcionales ?? {})) {
+            if (!data[campo]) continue;
+            const [existe] = await tx
+              .select({ id: tabla.id })
+              .from(tabla)
+              .where(eq(tabla.id, data[campo] as string));
+            if (!existe) data[campo] = null;
+          }
+          const rec = await upsert(tx, imp.table, actor, imp.meta, data);
           // Mismos efectos que si llegara por sync (p. ej. aplicación → movimiento de insumo).
           await reaccionar(tx, actor, { entity: imp.entidadV2 ?? entidad, op: 'upsert', previo: previo ?? null, registro: rec, importando: true });
           if (imp.despues) await imp.despues(tx, actor, r0, String(rec.id));

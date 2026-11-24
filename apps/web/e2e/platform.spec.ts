@@ -736,3 +736,26 @@ test('histórico kg y litros: trazabilidad por lote sin señal, con filtros', as
   await page.screenshot(shots('23-historico'));
   await context.setOffline(false);
 });
+
+test('proveedores: el administrativo crea un proveedor con RUT validado y lo elimina', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/proveedores?tab=proveedores');
+  await expect(page.getByRole('row', { name: /Envases del Valle Demo SpA/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Nuevo proveedor' }).click();
+  const d = page.getByRole('dialog', { name: 'Nuevo proveedor' });
+  await d.getByRole('textbox', { name: /^Razón social/ }).fill('Proveedor E2E');
+  await d.getByRole('textbox', { name: /^RUT/ }).fill('76.123.456-1');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect(d.getByText(/dígito verificador/)).toBeVisible();
+  await d.getByRole('textbox', { name: /^RUT/ }).fill('761234560');
+  await d.getByLabel(/Plazo de pago/).fill('0');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /Proveedor E2E/ });
+  await expect(fila).toContainText('76.123.456-0');
+  await expect(fila).toContainText('Contado');
+  await page.screenshot(shots('24-proveedores'));
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
+});

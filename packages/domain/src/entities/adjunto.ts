@@ -8,7 +8,8 @@ import { z } from 'zod';
 export const ADJUNTABLES: Record<string, string> = {
   cliente: 'clientes',
   cuartel: 'catastro',
-  analisis: 'laboratorio'
+  analisis: 'laboratorio',
+  proveedor: 'proveedores'
 };
 
 /** 20 MB por archivo. */

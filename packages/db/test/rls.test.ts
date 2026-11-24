@@ -186,6 +186,7 @@ describe('importador v1', () => {
     expect(r1.importados).toEqual({
       cuartel: 3,
       cliente: 6,
+      proveedor: 5,
       cobro: 2,
       insumo: 7,
       movInsumo: 2,

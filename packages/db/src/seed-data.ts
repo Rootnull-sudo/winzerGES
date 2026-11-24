@@ -137,9 +137,36 @@ export const demoDump = {
       { id: 'cob_2', fecha: '2026-11-02', clienteId: 'cli_rest', monto: 418500, medio: 'transferencia', _demo: true }
     ],
     // --- Viñedo (F1): datos ficticios de dos temporadas (2026 y 2027) ---
+    proveedor: [
+      {
+        id: 'prv_vidrio',
+        nombre: 'Envases del Valle Demo SpA',
+        rut: '76.111.222-8',
+        categoria: 'Envases vidrio',
+        contacto: 'Mesa de ventas',
+        telefono: '+56 9 0000 0001',
+        condiciones: '30 días',
+        plazo: 30,
+        _demo: true
+      },
+      {
+        id: 'prv_agro',
+        nombre: 'Agroinsumos Demo Ltda.',
+        rut: '76.333.444-9',
+        categoria: 'Insumos agrícolas',
+        contacto: 'Vendedor zona',
+        condiciones: 'Contado',
+        plazo: 0,
+        _demo: true
+      },
+      { id: 'prv_eno', nombre: 'Enología Demo S.A.', rut: '76.555.666-K', categoria: 'Insumos enológicos', condiciones: '45 días', plazo: 45, _demo: true },
+      { id: 'prv_etq', nombre: 'Etiquetas Demo SpA', rut: '76.777.888-0', categoria: 'Etiquetas', condiciones: '30 días', plazo: 30, _demo: true },
+      { id: 'prv_luz', nombre: 'Eléctrica Demo S.A.', rut: '76.999.000-3', categoria: 'Servicios básicos', condiciones: 'Mensual', plazo: 20, _demo: true }
+    ],
     insumo: [
       {
         id: 'ins_azufre',
+        proveedorId: 'prv_agro',
         nombre: 'Azufre mojable',
         categoria: 'agricola',
         tipo: 'Fungicida',
@@ -152,6 +179,7 @@ export const demoDump = {
       },
       {
         id: 'ins_cobre',
+        proveedorId: 'prv_agro',
         nombre: 'Oxicloruro de cobre',
         categoria: 'agricola',
         tipo: 'Fungicida',
@@ -163,9 +191,21 @@ export const demoDump = {
         vencimiento: '2027-03-31',
         _demo: true
       },
-      { id: 'ins_urea', nombre: 'Urea', categoria: 'agricola', tipo: 'Fertilizante', unidad: 'kg', precio: 780, stockInicial: 500, npk: '46-0-0', _demo: true },
+      {
+        id: 'ins_urea',
+        proveedorId: 'prv_agro',
+        nombre: 'Urea',
+        categoria: 'agricola',
+        tipo: 'Fertilizante',
+        unidad: 'kg',
+        precio: 780,
+        stockInicial: 500,
+        npk: '46-0-0',
+        _demo: true
+      },
       {
         id: 'ins_mbk',
+        proveedorId: 'prv_eno',
         nombre: 'Metabisulfito de potasio',
         categoria: 'enologico',
         tipo: 'Sulfitante',
@@ -178,6 +218,7 @@ export const demoDump = {
       },
       {
         id: 'ins_levadura',
+        proveedorId: 'prv_eno',
         nombre: 'Levadura seca activa',
         categoria: 'enologico',
         tipo: 'Levadura',
@@ -190,6 +231,7 @@ export const demoDump = {
       { id: 'ins_bento', nombre: 'Bentonita sódica', categoria: 'enologico', tipo: 'Clarificante', unidad: 'kg', precio: 4200, stockInicial: 50, _demo: true },
       {
         id: 'ins_botella',
+        proveedorId: 'prv_vidrio',
         nombre: 'Botella Bordelesa 750 mL',
         categoria: 'envasado',
         tipo: 'Envase vidrio',

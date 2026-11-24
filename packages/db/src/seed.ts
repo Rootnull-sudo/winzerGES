@@ -4,6 +4,7 @@
  *   - agronomo@winzer.test   → agrónomo en "Viña Demo"
  *   - ventas@winzer.test     → ventas en "Viña Demo"
  *   - enologo@winzer.test    → enólogo en "Viña Demo"
+ *   - administrativo@winzer.test → administrativo en "Viña Demo"
  * Los datos de negocio de "Viña Demo" se cargan importando el demo de v1 (mismo flujo que usará un cliente real).
  * Uso: npm run db:seed  (requiere que la app NO esté corriendo con otros usuarios; es idempotente)
  */
@@ -27,7 +28,8 @@ export const SEED_USERS = [
   { email: 'admin@winzer.test', name: 'Carolina Muñoz', password: 'winzer1234' },
   { email: 'agronomo@winzer.test', name: 'Diego Pérez', password: 'winzer1234' },
   { email: 'ventas@winzer.test', name: 'Valentina Rojas', password: 'winzer1234' },
-  { email: 'enologo@winzer.test', name: 'Tomás Fuentes', password: 'winzer1234' }
+  { email: 'enologo@winzer.test', name: 'Tomás Fuentes', password: 'winzer1234' },
+  { email: 'administrativo@winzer.test', name: 'Paula Soto', password: 'winzer1234' }
 ];
 
 /** Los usuarios se crean vía la API de Better Auth (hash de contraseña correcto). La app debe estar corriendo. */
@@ -59,7 +61,7 @@ async function ensureOrg(id: string, slug: string, nombre: string, rut: string) 
 }
 
 async function main() {
-  const [admin, agro, ventas, enologo] = await Promise.all(SEED_USERS.map(ensureUser));
+  const [admin, agro, ventas, enologo, administrativo] = await Promise.all(SEED_USERS.map(ensureUser));
   // Indicadores de ejemplo: los mismos valores por defecto de v1, fechados al inicio del año. NO son la serie oficial;
   // la carga real desde una fuente pública llega con el job de indicadores (F0-5).
   const inicioAnio = `${fechaHoy().slice(0, 4)}-01-01`;
@@ -78,6 +80,7 @@ async function main() {
   await add('org_demo', agro!, 'agronomo');
   await add('org_demo', ventas!, 'ventas');
   await add('org_demo', enologo!, 'enologo');
+  await add('org_demo', administrativo!, 'administrativo');
 
   const { demoDump } = await import('./seed-data');
   const actor = { orgId: 'org_demo', userId: admin!, userName: 'Carolina Muñoz', role: 'admin' };

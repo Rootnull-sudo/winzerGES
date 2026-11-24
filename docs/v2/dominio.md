@@ -392,3 +392,4 @@ Corregidos al migrar el viñedo (F1):
 33. **Desvío de FA en curso**: v1 comparaba los días transcurridos con el plan y avisaba "−8 días" apenas partía.
     → En curso solo avisa si ya superó el plan; terminada, en ambos sentidos.
 34. **Mermas altas para siempre**: v1 avisaba también de lotes ya vendidos o envasados. → Solo lotes con stock.
+35. **Plazo 0 del proveedor = 30 días** (`plazo || 30`). → 0 es contado: vence el mismo día.

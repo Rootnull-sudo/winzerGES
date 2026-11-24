@@ -34,7 +34,7 @@ for (const f of archivos(WEB)) {
 
 // 4. Módulos marcados como migrados ('v2') tienen página, y cada página de módulo está marcada como migrada.
 const modulos = readFileSync(join(ROOT, 'packages/domain/src/modules.ts'), 'utf8');
-const v2 = [...modulos.matchAll(/m\('([a-z]+)'[^)]*'v2'\)/g)].map((x) => x[1]);
+const v2 = [...modulos.matchAll(/m\('([a-z]+)'.*'v2'\)/g)].map((x) => x[1]);
 const ORG = join(WEB, 'app/[org]');
 const paginas = readdirSync(ORG).filter((d) => statSync(join(ORG, d)).isDirectory() && d !== 'm' && readdirSync(join(ORG, d)).includes('page.tsx'));
 for (const id of v2) if (!paginas.includes(id)) errores.push(`modules.ts marca '${id}' como 'v2' pero no existe apps/web/src/app/[org]/${id}/page.tsx`);

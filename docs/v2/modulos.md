@@ -250,16 +250,19 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 
 ## Tributario (online)
 
-### DTE (SII) · ⬜ · F6 · L
-- **Tablas**: `dte`, `dte_linea`, `caf`, `secuencia`.
-- **Pantallas**:
-  - documentos emitidos y recibidos, con XML y estados;
-  - nota de crédito total o parcial, y nota de débito (falta en v1);
-  - libros de compras y ventas;
-  - folios (CAF);
-  - datos del emisor.
-- **Integración**: `ProveedorDTE` con implementación `simulado` (paridad con v1). El XML se guarda como adjunto.
-- **Corrige**: los folios no se reutilizan y el XML usa una codificación correcta.
+### DTE (SII) · ✅ · F6-1 · L
+- **Tablas**: `dte`, `dte_linea`, `caf`, `emisor`, `secuencia`.
+- **Origen**: `confirmarVenta` emite el DTE; `anularVenta` emite la NC 61 (factura, con los montos originales) o
+  anula el DTE (boleta, guía); `registrarCompra`/`anularCompra` y `guardarGasto`/`eliminarGasto` sincronizan el
+  recibido. Todo en la misma transacción.
+- **Pantallas** (`/[org]/dte`):
+  - emitidos y recibidos con estados (transiciones validadas), detalle y XML por documento o por período;
+  - nota de crédito total o parcial y nota de débito (nueva), sin superar el total del documento;
+  - libros de compras y ventas: filas y totales con el mismo filtro;
+  - folios (CAF) con % de uso; datos del emisor con aviso de certificado.
+- **Alertas**: `dte.rechazado`, `dte.folios` (aviso desde `alertas.foliosPct`, error al agotarse), `dte.certificado`.
+- **Paridad**: libros (`docsLibro`) y XML idénticos a v1 con los mismos datos.
+- **Importador**: emisor (de `config.empresa`), CAF y DTE de v1 (estados; las NC conservan su folio).
 
 ### Tributario (F29, PPM, Renta) · ⬜ · F6 · L
 - **Tablas**: `f29`, `renta`, `pago_impuesto`, `obligacion`.

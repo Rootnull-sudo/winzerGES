@@ -23,6 +23,7 @@ export * from './services/envasado';
 export * from './services/ventas';
 export * from './services/cobros';
 export * from './services/inventarios';
+export * from './services/dte';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

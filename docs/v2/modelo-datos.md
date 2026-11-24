@@ -126,18 +126,23 @@ movimientos (solo agregar); **D** = documento con estado.
 
 | Tabla | Tipo | Columnas clave | Notas |
 |---|---|---|---|
-| `dte` | D | `direccion` (emitido/recibido), `tipo` (33/34/39/52/56/61), `folio`, `fecha`, `estado` (borrador/generado/enviado/aceptado/rechazado/anulado), `fechas_estado` jsonb, contraparte (`rut`, `razon_social`, `giro`, `direccion`, `comuna`), totales (`neto`, `exento`, `iva`, `ila`, `total`), `forma_pago`, `vencimiento`, `referencia` jsonb (para NC/ND), `venta_id`, `compra_id`, `gasto_id`, `xml_adjunto_id`, `proveedor_dte`, `id_externo` | Único (org, direccion, tipo, folio, rut contraparte). Ver la interfaz `ProveedorDTE` |
+| `dte` | D | `direccion` (emitido/recibido), `tipo` (33/34/39/52/56/61), `folio`, `fecha`, `estado` (borrador/generado/enviado/aceptado/rechazado/anulado), `fechas_estado` jsonb, contraparte (`rut`, `razon_social`, `giro`, `direccion`, `comuna`), totales (`neto`, `exento`, `iva`, `ila`, `total`), `forma_pago`, `vencimiento`, `referencia` jsonb (para NC/ND), `venta_id`, `compra_id`, `gasto_id`, `xml_adjunto_id`, `proveedor_dte`, `id_externo` | Único (org, direccion, tipo, folio, rut contraparte). `folio` es texto (los recibidos traen el del proveedor). `dte_ref_id` enlaza NC/ND con su documento. Lo derivan los servicios con id determinista: `venta:<id>`, `compra:<id>`, `gasto:<id>` (F6-1; migración 0031 con backfill) |
 | `dte_linea` | — | `dte_id`, `nombre`, `cantidad`, `unidad`, `precio`, `monto`, `cod_imp_adic` | |
-| `caf` | — | `tipo`, `desde`, `hasta`, `fecha_autorizacion`, `adjunto_id` (XML del CAF cuando sea real) | |
+| `caf` | — | `tipo`, `desde`, `hasta`, `fecha_autorizacion`, `vence`, `adjunto_id` (XML del CAF cuando sea real) | Rangos del mismo tipo no se cruzan; con folios usados no se borra ni se achica |
+| `emisor` | — | `giro`, `acteco`, `direccion`, `comuna`, `resolucion_numero`, `resolucion_fecha`, `ambiente` (simulado/certificacion/produccion), `certificado_vence` | Una fila por viña; RUT y razón social vienen de `organization` |
 | `f29` | D | `periodo`, `estado` (borrador/revisado/declarado/pagado), `folio_sii`, `snapshot` jsonb | Único por periodo |
-| `renta` | D | `anio_comercial`, `anio_tributario`, `estado`, `folio_sii`, `snapshot` jsonb | |
+| `renta` | D | `anio_comercial`, `anio_tributario`, `estado`, `folio_sii`, `snapshot` jsonb | F7-2 (necesita el estado de resultados) |
 | `pago_impuesto` | — | `tipo` (F29/PPM/renta/patente/contribuciones), `periodo`, `fecha`, `monto`, `folio_sii`, `incluido_en_f29` | Candidato de conciliación |
 | `obligacion` | — | `clave` (p. ej. `F29-2026-09`), `estado` (pendiente/cumplida), `fecha`, `folio` | El calendario se genera en código y esta tabla guarda el cumplimiento |
 | `cumplimiento` | — | `nombre`, `tipo` (SAG/SII/Patente/INAPI/D.O./Certificación/Municipal/Otro), `numero`, `estado`, `fecha`, `vencimiento`, `aviso_dias`, `responsable`, `notas` | Adjunto: resolución o certificado |
 
-**Interfaz `ProveedorDTE`** (en `packages/domain`, sin implementar todavía):
-`emitir(dte, lineas) → {estado, xml, id_externo}` · `consultarEstado(id_externo)` · `anular(dte)`. La implementación
-`simulado` reproduce v1. Una real (proveedor externo autorizado) se enchufa después sin tocar el modelo.
+**Interfaz `ProveedorDTE`** (`packages/domain/src/entities/dte.ts`):
+`emitir(dte, lineas) → {estado, idExterno}` · `consultarEstado(idExterno)` · `anular(dte)`. La implementación
+`simulado` reproduce v1: no envía nada y el XML se genera al descargar desde `dte` + `dte_linea` (en ISO-8859-1 real).
+Una real (proveedor externo autorizado) se enchufa después y guarda su XML en `xml_adjunto_id`.
+
+**Folios**: `siguienteFolio(tipo)` toma la secuencia `dte:<tipo>` y la ubica en los CAF (si cae en un hueco salta al
+siguiente rango; sin rangos disponibles, error). Sin CAF cargados solo se permite en ambiente simulado.
 
 ## Diagramas
 

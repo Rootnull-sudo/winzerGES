@@ -25,6 +25,8 @@ export interface Hallazgo {
   mensaje?: string;
   /** Ruta relativa a la viña, p. ej. `configuracion#temporadas`. */
   ruta?: string;
+  /** Severidad de este hallazgo si difiere de la de la regla (p. ej. aviso al 80 %, error al agotarse). */
+  severidad?: Severidad;
 }
 
 export interface ContextoRegla {
@@ -69,7 +71,7 @@ export async function calcularAlertas(orgId: string, reglas: readonly Regla[], h
                 id: randomUUID(),
                 orgId,
                 regla: regla.id,
-                severidad: regla.severidad,
+                severidad: h.severidad ?? regla.severidad,
                 modulo: regla.modulo,
                 entidad: h.entidad ?? null,
                 registroId: h.registroId ?? '',
@@ -80,7 +82,13 @@ export async function calcularAlertas(orgId: string, reglas: readonly Regla[], h
               .onConflictDoUpdate({
                 target: [alerta.orgId, alerta.regla, alerta.registroId],
                 targetWhere: sql`${alerta.estado} = 'abierta'`,
-                set: { severidad: regla.severidad, titulo: h.titulo, mensaje: h.mensaje ?? null, ruta: h.ruta ?? null, actualizadaEn: new Date() }
+                set: {
+                  severidad: h.severidad ?? regla.severidad,
+                  titulo: h.titulo,
+                  mensaje: h.mensaje ?? null,
+                  ruta: h.ruta ?? null,
+                  actualizadaEn: new Date()
+                }
               })
               // xmax = 0 solo en filas recién insertadas (no en las actualizadas por el conflicto).
               .returning({ nueva: sql<boolean>`(xmax = 0)` });

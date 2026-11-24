@@ -4,7 +4,7 @@
  * DTE, el folio de la secuencia `dte:<tipo>`. `anularVenta` revierte y asigna la nota de crédito a las facturas.
  * v1: listener sin atomicidad, códigos count + 1, edición con DTE emitido y anulación que dejaba cobros huérfanos.
  */
-import { tipoDte, totalesVenta, ventaInput, type VentaInput } from '@winzer/domain';
+import { fechaHoy, tipoDte, totalesVenta, ventaInput, type VentaInput } from '@winzer/domain';
 import { and, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { Tx } from '../client';
@@ -13,7 +13,8 @@ import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../
 import { cliente, cobroAplicacion, formato, movBodega, movProducto, ordenEnvasado, venta, ventaLinea } from '../schema';
 import { costoLitroLoteDb } from './envasado';
 import { configVigente } from './parametros';
-import { siguienteCodigo, siguienteNumero } from './secuencias';
+import { anularDteDeVenta, registrarDteVenta, siguienteFolio } from './dte';
+import { siguienteCodigo } from './secuencias';
 
 export const metaVenta: EntityMeta = {
   entity: 'venta',
@@ -183,7 +184,7 @@ export async function confirmarVenta(tx: Tx, actor: Actor, id: string, importand
 
   const codigo = v.codigo ?? importando?.codigo ?? (await siguienteCodigo(tx, 'venta', 'V-'));
   const dte = v.generarDte ? tipoDte(v.documento) : null;
-  const folio = dte ? (importando?.dteFolio ?? (await siguienteNumero(tx, `dte:${dte}`))) : null;
+  const folio = dte ? (importando?.dteFolio ?? (await siguienteFolio(tx, dte))) : null;
   const { tributario } = await configVigente(tx, v.fecha);
   const tot =
     importando?.totales ??
@@ -202,7 +203,7 @@ export async function confirmarVenta(tx: Tx, actor: Actor, id: string, importand
         lineas.map((l) => l.id)
       )
     );
-  return upsert(tx, venta, actor, metaVenta, {
+  const rec = await upsert(tx, venta, actor, metaVenta, {
     id,
     codigo,
     estado: 'confirmada',
@@ -213,6 +214,9 @@ export async function confirmarVenta(tx: Tx, actor: Actor, id: string, importand
     ila: tot.ila,
     total: tot.total
   });
+  // El DTE emitido se arma en la misma transacción (F6-1).
+  if (dte) await registrarDteVenta(tx, actor, id);
+  return rec;
 }
 
 /** Monto cobrado de la venta (Σ aplicaciones de cobros vigentes). */
@@ -224,7 +228,7 @@ export async function cobradoDeVenta(tx: Tx, ventaId: string): Promise<number> {
   return Number(r?.n ?? 0);
 }
 
-/** Anula una venta confirmada: revierte botellas y litros; si era factura con folio, asigna el folio de la NC (61). */
+/** Anula una venta confirmada: revierte botellas y litros; anula su DTE (factura: NC 61 con folio propio). */
 export async function anularVenta(tx: Tx, actor: Actor, id: string) {
   const [v] = await tx.select().from(venta).where(eq(venta.id, id)).for('update');
   if (!v || v.deletedAt) throw new ReglaError('La venta no existe.');
@@ -246,7 +250,8 @@ export async function anularVenta(tx: Tx, actor: Actor, id: string) {
       .set({ ...marca, version: sql`${movBodega.version} + 1` })
       .where(and(inArray(movBodega.id, ids), vivo(movBodega)));
   }
-  const nc = v.dteTipo === 33 && v.dteFolio ? await siguienteNumero(tx, 'dte:61') : null;
+  // Factura → NC 61 con los montos originales; boleta y guía → DTE anulado (F6-1).
+  const nc = v.dteTipo != null && v.dteFolio != null ? await anularDteDeVenta(tx, actor, id, fechaHoy(), `Anula venta ${v.codigo ?? ''}`.trim()) : null;
   return upsert(tx, venta, actor, metaVenta, { id, estado: 'anulada', anuladaEn: new Date(), ncFolio: nc });
 }
 

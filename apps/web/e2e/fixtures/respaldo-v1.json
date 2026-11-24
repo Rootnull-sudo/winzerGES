@@ -65,10 +65,10 @@
         "tipo": "Empresa"
       }
     ],
-    "dte": [
+    "renta": [
       {
         "id": "dte_1",
-        "_e": "dte",
+        "_e": "renta",
         "tipo": 33,
         "folio": 1
       }

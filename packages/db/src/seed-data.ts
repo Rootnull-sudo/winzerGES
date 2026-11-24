@@ -13,6 +13,25 @@ const rutOk = (r: string) => {
 export const demoDump = {
   app: 'vina-gestion',
   data: {
+    // Emisor de DTE (v1: config.empresa) con datos ficticios, y folios autorizados de prueba (F6-1).
+    config: [
+      {
+        id: 'main',
+        empresa: {
+          giro: 'Elaboración de vinos',
+          acteco: '110200',
+          direccion: 'Camino Los Robles km 4',
+          comuna: 'Santa Cruz',
+          resolucionSII: { numero: '80', fecha: '2014-08-22' },
+          certificadoVence: '2027-09-30'
+        }
+      }
+    ],
+    caf: [
+      { id: 'caf_33', tipo: 33, desde: 1, hasta: 200, fechaAutorizacion: '2026-01-15', _demo: true },
+      { id: 'caf_39', tipo: 39, desde: 1, hasta: 500, fechaAutorizacion: '2026-01-15', _demo: true },
+      { id: 'caf_61', tipo: 61, desde: 1, hasta: 100, fechaAutorizacion: '2026-01-15', _demo: true }
+    ],
     cuartel: [
       {
         id: 'cua_c1',

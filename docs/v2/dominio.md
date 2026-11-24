@@ -431,3 +431,9 @@ Corregidos al migrar el viñedo (F1):
 49. **Inventario de producto terminado sin ajustes**: v1 solo ajustaba insumos; las botellas quebradas o usadas como
     muestra seguían en stock y el mínimo por formato solo se veía como alerta. → Libro `mov_producto` con quiebre,
     muestra y conteo físico (sin dejar stock negativo) y alerta por formato bajo el mínimo.
+50. **DTE**: folios que rellenaban huecos y se repetían; transiciones de estado sin validar; NC recalculada con las
+    tasas vigentes y emitida también para guías; NC de compra con neto negativo que sumaba en el libro y no bajaba el
+    IVA crédito; DTE recibido que quedaba al cambiar el documento; filas del libro distintas de sus totales; XML que
+    truncaba después de escapar y declaraba ISO-8859-1 escribiendo UTF-8 (bug 12). → Folios por secuencia dentro de
+    los CAF, transiciones validadas, NC con los montos originales (guía y boleta se anulan), NC de compra positiva
+    restada por tipo, recibido sincronizado con su compra o gasto, mismo filtro en filas y totales y XML en Latin-1.

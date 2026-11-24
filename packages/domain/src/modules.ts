@@ -48,7 +48,7 @@ export const MODULES: readonly ModuleDef[] = [
   m('administracion', 'Sueldos y gastos', 'finanzas', 'wallet', 'v2'),
   m('proveedores', 'Proveedores y compras', 'finanzas', 'truck', 'v2'),
   m('cumplimiento', 'Cumplimiento normativo', 'tributario', 'shield-check'),
-  m('dte', 'DTE (SII)', 'tributario', 'receipt'),
+  m('dte', 'DTE (SII)', 'tributario', 'receipt', 'v2'),
   m('conciliacion', 'Conciliación bancaria', 'tributario', 'landmark'),
   m('tributario', 'Tributario (F29, PPM, Renta)', 'tributario', 'file-text'),
   m('usuarios', 'Usuarios y permisos', 'administracion', 'user-cog', 'v2'),

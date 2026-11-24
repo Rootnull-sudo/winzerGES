@@ -1485,3 +1485,101 @@ export const cobroAplicacion = pgTable(
   },
   (t) => [index('cobro_aplicacion_cobro_idx').on(t.orgId, t.cobroId), index('cobro_aplicacion_venta_idx').on(t.orgId, t.ventaId)]
 );
+
+/* --- Tributario: DTE emitidos y recibidos, folios autorizados y datos del emisor (F6-1, online) --- */
+export const emisor = pgTable(
+  'emisor',
+  {
+    ...base(),
+    giro: text('giro'),
+    acteco: text('acteco'),
+    direccion: text('direccion'),
+    comuna: text('comuna'),
+    resolucionNumero: text('resolucion_numero'),
+    resolucionFecha: text('resolucion_fecha'),
+    /** simulado | certificacion | produccion */
+    ambiente: text('ambiente').notNull().default('simulado'),
+    certificadoVence: text('certificado_vence')
+  },
+  (t) => [uniqueIndex('emisor_org_uq').on(t.orgId)]
+);
+
+export const caf = pgTable(
+  'caf',
+  {
+    ...base(),
+    tipo: integer('tipo').notNull(),
+    desde: integer('desde').notNull(),
+    hasta: integer('hasta').notNull(),
+    fechaAutorizacion: text('fecha_autorizacion').notNull(),
+    vence: text('vence'),
+    adjuntoId: text('adjunto_id')
+  },
+  (t) => [index('caf_tipo_idx').on(t.orgId, t.tipo)]
+);
+
+export const dte = pgTable(
+  'dte',
+  {
+    ...base(),
+    /** emitido | recibido */
+    direccion: text('direccion').notNull(),
+    /** 33 | 34 | 39 | 52 | 56 | 61 */
+    tipo: integer('tipo').notNull(),
+    /** Texto: los recibidos traen el folio del proveedor. Los emitidos vienen de la secuencia `dte:<tipo>`. */
+    folio: text('folio').notNull(),
+    fecha: text('fecha').notNull(),
+    /** borrador | generado | enviado | aceptado | rechazado | anulado */
+    estado: text('estado').notNull(),
+    /** { generado: ISO, enviado: ISO, … } */
+    fechasEstado: jsonb('fechas_estado').$type<Record<string, string>>().notNull().default({}),
+    contraparteRut: text('contraparte_rut'),
+    contraparte: text('contraparte'),
+    giro: text('giro'),
+    direccionContraparte: text('direccion_contraparte'),
+    comuna: text('comuna'),
+    neto: money('neto').notNull().default(0),
+    exento: money('exento').notNull().default(0),
+    iva: money('iva').notNull().default(0),
+    ila: money('ila').notNull().default(0),
+    total: money('total').notNull().default(0),
+    /** 1 contado | 2 crédito */
+    formaPago: integer('forma_pago'),
+    vencimiento: text('vencimiento'),
+    /** NC/ND: { tipo, folio, fecha, codigo, razon } */
+    referencia: jsonb('referencia').$type<{ tipo: number; folio: string; fecha: string; codigo: number; razon: string }>(),
+    dteRefId: text('dte_ref_id').references((): AnyPgColumn => dte.id),
+    ventaId: text('venta_id').references(() => venta.id),
+    compraId: text('compra_id').references(() => compra.id),
+    gastoId: text('gasto_id').references(() => gasto.id),
+    xmlAdjuntoId: text('xml_adjunto_id'),
+    proveedorDte: text('proveedor_dte').notNull().default('simulado'),
+    idExterno: text('id_externo')
+  },
+  (t) => [
+    uniqueIndex('dte_folio_uq')
+      .on(t.orgId, t.direccion, t.tipo, t.folio, t.contraparteRut)
+      .where(sql`${t.deletedAt} is null`),
+    index('dte_fecha_idx').on(t.orgId, t.direccion, t.fecha),
+    index('dte_venta_idx').on(t.orgId, t.ventaId),
+    index('dte_compra_idx').on(t.orgId, t.compraId),
+    index('dte_gasto_idx').on(t.orgId, t.gastoId)
+  ]
+);
+
+export const dteLinea = pgTable(
+  'dte_linea',
+  {
+    ...base(),
+    dteId: text('dte_id')
+      .notNull()
+      .references(() => dte.id),
+    nombre: text('nombre').notNull(),
+    cantidad: num('cantidad').notNull(),
+    unidad: text('unidad'),
+    precio: num('precio').notNull(),
+    monto: money('monto').notNull(),
+    codImpAdic: integer('cod_imp_adic')
+  },
+  (t) => [index('dte_linea_dte_idx').on(t.orgId, t.dteId)]
+);

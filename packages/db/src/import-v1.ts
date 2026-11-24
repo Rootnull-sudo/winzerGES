@@ -23,6 +23,9 @@ import {
   etiquetaInput,
   ordenEnvasadoInput,
   ventaInput,
+  emisorInput,
+  cafInput,
+  dteV1Input,
   pagoInput,
   type PagoInput,
   type CobroInput,
@@ -80,6 +83,9 @@ import {
   etiqueta,
   ordenEnvasado,
   venta,
+  emisor,
+  caf,
+  dte,
   estanque,
   fenologia,
   fermentacion,
@@ -107,6 +113,7 @@ import { confirmarEnvasado, guardarOrden, metaOrden } from './services/envasado'
 import { anularVenta, confirmarVenta, guardarVenta, metaVenta } from './services/ventas';
 import { aplicarCobro, metaCobro, registrarCobro } from './services/cobros';
 import { ajustarSecuencia } from './services/secuencias';
+import { guardarEmisor, idDteCompra, idDteGasto, idDteVenta, importarDte, metaCaf, metaDte, metaEmisor } from './services/dte';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -563,8 +570,173 @@ const IMPORTERS: Record<string, Importer> = {
       r.tipo === 'aplicacion' || r.tipo === 'so2' || r.tipo === 'aditivo' || r.tipo === 'compra' || r.tipo === 'consumo_envasado'
         ? null
         : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
+  },
+  // F6-1: datos del emisor (de config.empresa de v1), folios autorizados y DTE.
+  emisor: {
+    table: emisor,
+    schema: emisorInput,
+    meta: metaEmisor,
+    guardar: (tx, actor, data) => guardarEmisor(tx, actor, data as never)
+  },
+  caf: { table: caf, schema: cafInput, meta: metaCaf },
+  // Los DTE de ventas, compras y gastos ya los generaron sus servicios: de v1 se conserva el estado y, para las NC
+  // que emitió anularVenta al importar, el folio de v1. El resto (NC sueltas, recibidos sin compra) se copia.
+  dte: {
+    table: dte,
+    schema: dteV1Input,
+    meta: metaDte,
+    adaptar: (r, orgId) => ({
+      ...r,
+      ventaId: r.ventaId ? mapId(orgId, String(r.ventaId)) : null,
+      compraId: r.compraId ? mapId(orgId, String(r.compraId)) : null,
+      gastoId: r.gastoId ? mapId(orgId, String(r.gastoId)) : null
+    }),
+    guardar: async (tx, actor, data) => {
+      const r = data as Record<string, unknown> & { id: string; direccion: string; tipo: number; folio: string; fecha: string; estado: string };
+      const fechasEstado = Object.fromEntries(
+        Object.entries(r)
+          .filter(([k, v]) => k.startsWith('fecha_') && typeof v === 'string')
+          .map(([k, v]) => [k.slice(6), v as string])
+      );
+      const conservar = async (id: string) => {
+        const [d] = await tx
+          .select()
+          .from(dte)
+          .where(and(eq(dte.id, id), isNull(dte.deletedAt)));
+        if (!d) return null;
+        await tx
+          .update(dte)
+          .set({ estado: r.estado, fechasEstado: { ...d.fechasEstado, ...fechasEstado } })
+          .where(eq(dte.id, id));
+        return d as Record<string, unknown>;
+      };
+      if (r.ventaId && r.tipo !== 61 && r.tipo !== 56) {
+        const ya = await conservar(idDteVenta(actor.orgId, String(r.ventaId)));
+        if (ya) return ya;
+      }
+      if (r.compraId) {
+        const ya = await conservar(idDteCompra(actor.orgId, String(r.compraId)));
+        if (ya) return ya;
+      }
+      if (r.gastoId) {
+        const ya = await conservar(idDteGasto(actor.orgId, String(r.gastoId)));
+        if (ya) return ya;
+      }
+      const ref = r.referencia as { tipo?: number; folio?: unknown; fecha?: string; codigo?: number; razon?: string } | null | undefined;
+      let refId: string | null = null;
+      if (ref?.folio != null) {
+        const [o] = await tx
+          .select({ id: dte.id, ventaId: dte.ventaId })
+          .from(dte)
+          .where(and(eq(dte.direccion, r.direccion), eq(dte.tipo, Number(ref.tipo)), eq(dte.folio, String(ref.folio)), isNull(dte.deletedAt)));
+        refId = o?.id ?? null;
+        // NC que ya emitió anularVenta al importar la venta anulada: toma el folio y el estado de v1.
+        if (o && r.tipo === 61) {
+          const [nc] = await tx
+            .select({ id: dte.id })
+            .from(dte)
+            .where(and(eq(dte.dteRefId, o.id), eq(dte.tipo, 61), isNull(dte.deletedAt)));
+          if (nc) {
+            await tx.update(dte).set({ folio: r.folio, fecha: r.fecha }).where(eq(dte.id, nc.id));
+            if (o.ventaId)
+              await tx
+                .update(venta)
+                .set({ ncFolio: Number(r.folio) || null })
+                .where(eq(venta.id, o.ventaId));
+            return (await conservar(nc.id))!;
+          }
+        }
+      }
+      const n = (v: unknown) => Math.round(Number(v) || 0);
+      const detalle = (Array.isArray(r.detalle) ? r.detalle : []) as Record<string, unknown>[];
+      await importarDte(
+        tx,
+        actor,
+        r.id,
+        {
+          direccion: r.direccion,
+          tipo: Number(r.tipo),
+          folio: r.folio,
+          fecha: r.fecha,
+          estado: r.estado,
+          fechasEstado,
+          contraparteRut: (r.contraparteRut as string) ?? null,
+          contraparte: (r.contraparte as string) ?? null,
+          giro: (r.giro as string) || null,
+          direccionContraparte: (r.direccionContraparte as string) || null,
+          comuna: (r.comuna as string) || null,
+          neto: n(r.neto),
+          exento: n(r.exento),
+          iva: n(r.iva),
+          ila: n(r.ila),
+          total: n(r.total),
+          formaPago: r.formaPago ? Number(r.formaPago) : null,
+          vencimiento: (r.vencimiento as string) || null,
+          referencia:
+            ref?.folio != null
+              ? {
+                  tipo: Number(ref.tipo),
+                  folio: String(ref.folio),
+                  fecha: String(ref.fecha ?? ''),
+                  codigo: Number(ref.codigo) || 1,
+                  razon: String(ref.razon ?? '')
+                }
+              : null,
+          dteRefId: refId,
+          ventaId: null,
+          compraId: null,
+          gastoId: null
+        },
+        detalle.map((l) => ({
+          nombre: String(l.nombre ?? 'Ítem'),
+          cantidad: Number(l.cantidad) || 1,
+          unidad: String(l.unidad ?? 'UN'),
+          precio: Number(l.precio) || 0,
+          monto: n(l.monto)
+        }))
+      );
+      const [d] = await tx.select().from(dte).where(eq(dte.id, r.id));
+      return d as Record<string, unknown>;
+    }
   }
 };
+
+/** Datos del emisor de v1 (config.empresa) como una entidad más del importador. */
+function emisorDeConfig(data: V1Dump['data']): Record<string, unknown>[] {
+  const e = (data.config?.find((c) => c.id === 'main') ?? data.config?.[0])?.empresa as Record<string, unknown> | undefined;
+  if (!e || !(e.giro || e.direccion || e.acteco)) return [];
+  const res = (e.resolucionSII ?? {}) as Record<string, unknown>;
+  return [
+    {
+      id: 'emisor',
+      giro: e.giro ?? null,
+      acteco: e.acteco ? String(e.acteco) : null,
+      direccion: e.direccion ?? null,
+      comuna: e.comuna ?? null,
+      resolucionNumero: res.numero != null ? String(res.numero) : null,
+      resolucionFecha: res.fecha || null,
+      ambiente: 'simulado',
+      certificadoVence: e.certificadoVence || null
+    }
+  ];
+}
+
+/**
+ * Antes de importar ventas: las secuencias `dte:<tipo>` parten después del mayor folio emitido de v1, para que las
+ * NC que emite anularVenta (y cualquier DTE nuevo) no choquen con los folios de v1.
+ */
+async function secuenciasDteV1(orgId: string, data: V1Dump['data']) {
+  const max = new Map<number, number>();
+  for (const d of data.dte ?? []) {
+    if (d.direccion !== 'emitido') continue;
+    const f = Number(d.folio);
+    if (Number.isFinite(f) && f > (max.get(Number(d.tipo)) ?? 0)) max.set(Number(d.tipo), f);
+  }
+  if (!max.size) return;
+  await withOrg(orgId, async (tx) => {
+    for (const [tipo, f] of max) await ajustarSecuencia(tx, `dte:${tipo}`, f + 1);
+  });
+}
 export const IMPORTABLE_ENTITIES = Object.keys(IMPORTERS);
 
 export function isV1Dump(x: unknown): x is V1Dump {
@@ -577,7 +749,8 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
   for (const [entidad, recs] of Object.entries(dump.data)) {
     if (!IMPORTERS[entidad] && recs.length && !['config', 'usuario', 'rol', 'auditoria'].includes(entidad)) report.pendientes[entidad] = recs.length;
   }
-  dump = { ...dump, data: { ...dump.data, pago: pagosDeCompras(dump.data), cobro: cobrosDeVentas(dump.data) } };
+  dump = { ...dump, data: { ...dump.data, pago: pagosDeCompras(dump.data), cobro: cobrosDeVentas(dump.data), emisor: emisorDeConfig(dump.data) } };
+  await secuenciasDteV1(actor.orgId, dump.data);
   const temporadas = new Map<number, string>();
   for (const [entidad, imp] of Object.entries(IMPORTERS)) {
     const recs = dump.data[entidad] ?? [];

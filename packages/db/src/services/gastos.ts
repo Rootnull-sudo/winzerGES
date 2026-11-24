@@ -6,6 +6,7 @@
 import { gastoInput, presupuestoInput, totalesGasto, type GastoInput, type PresupuestoInput } from '@winzer/domain';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { sincronizarRecibidoGasto } from './dte';
 import type { Tx } from '../client';
 import { idDerivado } from '../ids';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
@@ -37,12 +38,16 @@ export async function guardarGasto(tx: Tx, actor: Actor, input: GastoInput, base
   const pagado = await aplicado(tx, id);
   if (pagado > 0 && data.estado === 'pagado') throw new ReglaError('El gasto tiene pagos aplicados: elimínalos antes de marcarlo al contado.');
   if (pagado > tot.total) throw new ReglaError(`El total no puede quedar bajo lo ya pagado (${clp(pagado)}).`);
-  return upsert(tx, gasto, actor, metaGasto, { ...data, id, ...tot }, { baseVersion, checkVersion: baseVersion != null });
+  const rec = await upsert(tx, gasto, actor, metaGasto, { ...data, id, ...tot }, { baseVersion, checkVersion: baseVersion != null });
+  await sincronizarRecibidoGasto(tx, actor, id);
+  return rec;
 }
 
 export async function eliminarGasto(tx: Tx, actor: Actor, id: string) {
   if ((await aplicado(tx, id)) > 0) throw new ReglaError('No se puede eliminar: el gasto tiene pagos aplicados. Elimina los pagos primero.');
-  return softDelete(tx, gasto, actor, metaGasto, id);
+  const rec = await softDelete(tx, gasto, actor, metaGasto, id);
+  await sincronizarRecibidoGasto(tx, actor, id);
+  return rec;
 }
 
 /** Presupuesto anual de una categoría: una fila por (año, categoría), con id determinista. */

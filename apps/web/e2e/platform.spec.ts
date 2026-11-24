@@ -115,7 +115,7 @@ test('(d) importar un respaldo de v1 y ver clientes y cuarteles', async ({ page 
   await expect(page.getByText('Importación terminada')).toBeVisible();
   await expect(page.getByText('✓ 2 cuartel')).toBeVisible();
   await expect(page.getByText('✓ 2 cliente')).toBeVisible();
-  await expect(page.getByText(/dte \(1\)/)).toBeVisible(); // pendiente hasta F6
+  await expect(page.getByText(/renta \(1\)/)).toBeVisible(); // pendiente hasta F7-2
   await page.screenshot(shots('04-importar'));
   await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Clientes y cobranza' }).click();
   await expect(page.getByRole('cell', { name: /Vinoteca Importada/ })).toBeVisible();
@@ -1184,4 +1184,41 @@ test('inventarios: ajuste de quiebre baja el stock de la orden; sin costos no se
   await expect(ventas.page.getByRole('columnheader', { name: 'Valor' })).toHaveCount(0);
   await expect(ventas.page.getByRole('button', { name: /Ajuste de producto/ })).toHaveCount(0);
   await ventas.ctx.close();
+});
+
+test('DTE: nota de crédito parcial desde una factura, aparece en el libro; XML en ISO-8859-1', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/dte');
+  const factura = page
+    .getByRole('row')
+    .filter({ hasText: 'Factura' })
+    .filter({ hasText: 'Generado' })
+    .filter({ hasNotText: /Nota|Anulada con NC/ })
+    .first();
+  const folio = (await factura.getByRole('cell').nth(2).innerText()).trim();
+  await factura.click();
+  const d = page.getByRole('dialog', { name: new RegExp(`Factura electrónica N° ${folio}`) });
+  const [xml] = await Promise.all([page.waitForEvent('download'), d.getByRole('link', { name: 'XML' }).click()]);
+  expect(xml.suggestedFilename()).toBe(`DTE_T33_F${folio}.xml`);
+  const bytes = await (await import('node:fs/promises')).readFile((await xml.path())!);
+  expect(bytes.subarray(0, 44).toString('latin1')).toContain('encoding="ISO-8859-1"');
+  expect(bytes.includes(Buffer.from([0xc3, 0xb3]))).toBe(false); // ninguna "ó" en UTF-8: el archivo es Latin-1
+  await d.getByRole('button', { name: 'Emitir nota' }).click();
+  const n = page.getByRole('dialog', { name: /Nota sobre Factura/ });
+  await n.getByLabel('Alcance').selectOption('parcial');
+  await n.getByLabel(/Neto de la nota/).fill('1000');
+  await n.getByLabel(/Razón/).fill('Descuento E2E');
+  await page.screenshot(shots('38-nota-credito'));
+  await n.getByRole('button', { name: 'Emitir nota' }).click();
+  await expect(n).toHaveCount(0);
+  await expect(
+    page
+      .getByRole('row')
+      .filter({ hasText: 'Nota de crédito' })
+      .filter({ hasText: `Factura N° ${folio}` })
+      .first()
+  ).toBeVisible();
+  await page.getByRole('tab', { name: 'Libros' }).click();
+  await expect(page.getByRole('row').filter({ hasText: '61' }).filter({ hasText: '$1.000' }).first()).toBeVisible();
+  await page.screenshot(shots('39-libro-ventas'));
 });

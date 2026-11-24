@@ -7,6 +7,7 @@
 import { compraInput, docGeneraDeuda, netoLinea, signoStock, totalesCompra, type CompraInput, type DocumentoCompra } from '@winzer/domain';
 import { and, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { sincronizarRecibidoCompra } from './dte';
 import type { Tx } from '../client';
 import { idDerivado } from '../ids';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
@@ -237,6 +238,7 @@ export async function registrarCompra(tx: Tx, actor: Actor, input: CompraInput, 
     }
   }
   for (const ins of tocados) await recalcularPrecioInsumo(tx, actor, ins);
+  await sincronizarRecibidoCompra(tx, actor, id);
   return rec;
 }
 
@@ -266,5 +268,6 @@ export async function anularCompra(tx: Tx, actor: Actor, id: string) {
     lineas.map((l) => l.id)
   );
   for (const ins of new Set(lineas.map((l) => l.insumoId).filter((x): x is string => !!x))) await recalcularPrecioInsumo(tx, actor, ins);
+  await sincronizarRecibidoCompra(tx, actor, id);
   return rec;
 }

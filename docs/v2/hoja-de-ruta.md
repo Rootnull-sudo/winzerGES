@@ -101,8 +101,8 @@ flowchart LR
 
 | Issue | Tablas | Tamaño |
 |---|---|---|
-| F6-1 DTE: `ProveedorDTE` simulado, líneas, CAF, NC/ND, libros | `dte`, `dte_linea`, `caf` | L |
-| F6-2 F29, PPM, renta y calendario (portar `remanente`, `ppmAnual`, `renta`, `calendario`) | `f29`, `renta`, `pago_impuesto`, `obligacion` | L |
+| F6-1 DTE: `ProveedorDTE` simulado, líneas, CAF, NC/ND, libros (DTE derivado de ventas, compras y gastos; folios sin reutilizar; XML en ISO-8859-1 real) ✅ | `dte`, `dte_linea`, `caf`, `emisor` | L |
+| F6-2 F29, PPM y calendario (portar `remanente`, `ppmAnual`, `calendario`; renta pasa a F7-2) | `f29`, `pago_impuesto`, `obligacion` | L |
 | F6-3 Conciliación bancaria (cartola adjunta) | `cuenta_banco`, `cartola`, `mov_banco`, `conciliacion_match` | L |
 | F6-4 Cumplimiento normativo | `cumplimiento` | M |
 
@@ -111,7 +111,7 @@ flowchart LR
 | Issue | Tamaño |
 |---|---|
 | F7-1 Costos por botella/litro | M |
-| F7-2 Financiero: estado de resultados, ratios, punto de equilibrio, simulador, flujo de caja, rankings | L |
+| F7-2 Financiero: estado de resultados, ratios, punto de equilibrio, simulador, flujo de caja, rankings; renta (IDPC, tabla `renta`, portar `tax.renta`) | L |
 | F7-3 Dashboard completo con comparación entre temporadas | L |
 | F7-4 Importador v1 completo (las 49 entidades, [mapeo](modelo-datos.md#mapeo-v1--v2-las-49-entidades)) + prueba con el respaldo demo | L |
 | F7-5 Ayuda | S |

@@ -218,6 +218,13 @@
       "when": 1795528034475,
       "tag": "0030_cobro_aplicacion",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1795533398922,
+      "tag": "0031_dte",
+      "breakpoints": true
     }
   ]
 }

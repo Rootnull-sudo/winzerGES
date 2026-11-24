@@ -134,7 +134,7 @@ movimientos (solo agregar); **D** = documento con estado.
 | `renta` | D | `anio_comercial`, `anio_tributario`, `estado`, `folio_sii`, `snapshot` jsonb | F7-2 (necesita el estado de resultados) |
 | `pago_impuesto` | — | `tipo` (F29/PPM/renta/patente/contribuciones/otro), `periodo`, `fecha`, `monto`, `folio_sii`, `incluido_en_f29`, `f29_id` | Candidato de conciliación. Los del F29 (id determinista) se crean al pagarlo y se quitan al revertirlo |
 | `obligacion` | — | `clave` (p. ej. `F29-2026-09`), `estado` (pendiente/cumplida), `fecha`, `folio` | Única por clave. El calendario se genera en código (`calendarioTributario`) y esta tabla guarda el cumplimiento |
-| `cumplimiento` | — | `nombre`, `tipo` (SAG/SII/Patente/INAPI/D.O./Certificación/Municipal/Otro), `numero`, `estado`, `fecha`, `vencimiento`, `aviso_dias`, `responsable`, `notas` | Adjunto: resolución o certificado |
+| `cumplimiento` | — | `nombre`, `tipo` (SAG/SII/Patente/INAPI/D.O./Certificación/Municipal/Otro), `numero`, `estado` (vigente/pendiente), `fecha`, `vencimiento`, `aviso_dias`, `responsable`, `notas` | Adjunto: resolución o certificado. "Por vencer" y "vencido" se derivan (`estadoCumplimiento`) |
 
 **Interfaz `ProveedorDTE`** (`packages/domain/src/entities/dte.ts`):
 `emitir(dte, lineas) → {estado, idExterno}` · `consultarEstado(idExterno)` · `anular(dte)`. La implementación

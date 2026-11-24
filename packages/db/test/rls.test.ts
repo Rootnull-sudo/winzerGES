@@ -222,7 +222,8 @@ describe('importador v1', () => {
       f29: 2,
       obligacion: 2,
       cuentaBanco: 1,
-      movBanco: 6
+      movBanco: 6,
+      cumplimiento: 9
     });
     expect(r1.omitidos).toEqual([]);
     expect(r1.pendientes).toEqual({ renta: 2 });

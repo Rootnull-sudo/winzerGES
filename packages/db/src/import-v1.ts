@@ -30,6 +30,8 @@ import {
   pagoImpuestoInput,
   obligacionInput,
   cuentaBancoInput,
+  cumplimientoInput,
+  TIPOS_CUMPLIMIENTO,
   movBancoV1Input,
   huellaMov,
   TIPOS_CUENTA,
@@ -98,6 +100,7 @@ import {
   obligacion,
   cuentaBanco,
   movBanco,
+  cumplimiento,
   estanque,
   fenologia,
   fermentacion,
@@ -126,6 +129,7 @@ import { anularVenta, confirmarVenta, guardarVenta, metaVenta } from './services
 import { aplicarCobro, metaCobro, registrarCobro } from './services/cobros';
 import { ajustarSecuencia } from './services/secuencias';
 import { conciliar, metaCuenta, metaMovBanco } from './services/conciliacion';
+import { metaCumplimiento } from './services/cumplimiento';
 import { guardarF29, marcarObligacion, metaF29, metaObligacion, metaPagoImpuesto } from './services/tributario';
 import { guardarEmisor, idDteCompra, idDteGasto, idDteVenta, importarDte, metaCaf, metaDte, metaEmisor } from './services/dte';
 import { withOrg } from './tenancy';
@@ -769,6 +773,17 @@ const IMPORTERS: Record<string, Importer> = {
   },
   // F6-3: cuentas y libro de banco. El matchRef de v1 ("venta:…", "compra:…") ya viene remapeado al cobro o pago
   // de v2 (`origenesBanco`); el match se rehace con `conciliar` si el documento sigue siendo conciliable.
+  cumplimiento: {
+    table: cumplimiento,
+    schema: cumplimientoInput,
+    meta: metaCumplimiento,
+    adaptar: (r) => ({
+      ...r,
+      tipo: (TIPOS_CUMPLIMIENTO as readonly string[]).includes(String(r.tipo)) ? r.tipo : 'Otro',
+      estado: r.estado === 'pendiente' ? 'pendiente' : 'vigente',
+      avisoDias: r.avisoDias === '' || r.avisoDias == null ? 30 : Number(r.avisoDias)
+    })
+  },
   cuentaBanco: {
     table: cuentaBanco,
     schema: cuentaBancoInput,

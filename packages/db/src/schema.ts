@@ -1715,3 +1715,19 @@ export const conciliacionMatch = pgTable(
     index('conciliacion_match_mov_idx').on(t.orgId, t.movBancoId)
   ]
 );
+
+/* --- Tributario: cumplimiento normativo (F6-4, online) --- */
+export const cumplimiento = pgTable('cumplimiento', {
+  ...base(),
+  nombre: text('nombre').notNull(),
+  /** SAG | SII | Patente | INAPI | D.O. | Certificación | Municipal | Otro */
+  tipo: text('tipo').notNull(),
+  numero: text('numero'),
+  /** vigente | pendiente (el estado "por vencer"/"vencido" se deriva del vencimiento) */
+  estado: text('estado').notNull().default('vigente'),
+  fecha: text('fecha'),
+  vencimiento: text('vencimiento'),
+  avisoDias: integer('aviso_dias').notNull().default(30),
+  responsable: text('responsable'),
+  notas: text('notas')
+});

@@ -1274,3 +1274,25 @@ test('conciliación: importar cartola CSV, registrar la diferencia como gasto fi
   await page.getByRole('dialog', { name: glosa }).getByRole('button', { name: 'Deshacer conciliación' }).click();
   await expect(fila).toContainText('Pendiente');
 });
+
+test('cumplimiento: registrar una obligación por vencer y descargar el libro de existencias', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/cumplimiento');
+  await expect(page.getByRole('region', { name: 'Verificaciones automáticas' })).toBeVisible();
+  const nombre = 'Resolución sanitaria E2E ' + Date.now().toString(36);
+  await page.getByRole('button', { name: 'Nueva obligación' }).click();
+  const d = page.getByRole('dialog', { name: 'Nueva obligación' });
+  await d.getByLabel(/Obligación o registro/).fill(nombre);
+  await d.getByLabel('Tipo').selectOption('Municipal');
+  const en10 = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+  await d.getByLabel(/Vencimiento/).fill(en10);
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect(d).toHaveCount(0);
+  await expect(page.getByRole('row', { name: new RegExp(nombre) })).toContainText('Por vencer');
+  await page.screenshot(shots('44-cumplimiento'));
+  const [csv] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Libro de existencias/ }).click()]);
+  expect(csv.suggestedFilename()).toMatch(/^libro-existencias-\d{4}-\d{2}-\d{2}\.csv$/);
+  const texto = (await (await import('node:fs/promises')).readFile((await csv.path())!)).toString('utf8');
+  expect(texto.split('\r\n')[0]).toBe('﻿Ubicación;Lote;Variedad;Tipo;Añada;Estado;Litros');
+  expect(texto).toContain('Bodega PT');
+});

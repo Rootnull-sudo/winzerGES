@@ -37,6 +37,76 @@ export const demoDump = {
       { id: 'f29_d09', periodo: '2026-09', estado: 'pagado', folioSII: '7700000101', fechaPago: '2026-10-20', _demo: true },
       { id: 'f29_d10', periodo: '2026-10', estado: 'declarado', folioSII: '7700000102', _demo: true }
     ],
+    // Registro de cumplimiento normativo (F6-4), con números y responsables ficticios.
+    cumplimiento: [
+      {
+        id: 'cum_d1',
+        nombre: 'Inscripción de productos en el SAG',
+        tipo: 'SAG',
+        numero: 'SAG-DEMO-001',
+        estado: 'vigente',
+        fecha: '2015-03-10',
+        responsable: 'Encargada de calidad',
+        notas: 'Inscribir cada producto nuevo antes de comercializar.',
+        _demo: true
+      },
+      { id: 'cum_d2', nombre: 'Inicio de actividades SII', tipo: 'SII', numero: 'Res. demo', estado: 'vigente', fecha: '2014-06-01', _demo: true },
+      { id: 'cum_d3', nombre: 'Inscripción como viña/bodega ante SAG', tipo: 'SAG', estado: 'vigente', fecha: '2014-07-15', _demo: true },
+      {
+        id: 'cum_d4',
+        nombre: 'Patente de alcoholes (Ley 19.925) — 2º semestre',
+        tipo: 'Patente',
+        numero: 'PA-DEMO-1',
+        estado: 'vigente',
+        fecha: '2026-07-28',
+        vencimiento: '2027-01-31',
+        avisoDias: 45,
+        _demo: true
+      },
+      {
+        id: 'cum_d5',
+        nombre: 'Registro de marca INAPI',
+        tipo: 'INAPI',
+        numero: 'INAPI-DEMO-1',
+        estado: 'vigente',
+        fecha: '2019-05-14',
+        vencimiento: '2029-05-14',
+        avisoDias: 180,
+        _demo: true
+      },
+      {
+        id: 'cum_d6',
+        nombre: 'Certificado D.O. — cosecha 2026',
+        tipo: 'D.O.',
+        numero: 'DO-DEMO-118',
+        estado: 'vigente',
+        fecha: '2026-07-30',
+        vencimiento: '2027-07-30',
+        _demo: true
+      },
+      {
+        id: 'cum_d7',
+        nombre: 'Certificación Código Nacional de Sustentabilidad',
+        tipo: 'Certificación',
+        numero: 'CS-DEMO-1',
+        estado: 'vigente',
+        fecha: '2023-12-01',
+        vencimiento: '2026-12-01',
+        avisoDias: 30,
+        _demo: true
+      },
+      { id: 'cum_d8', nombre: 'Libro de existencias de vino (actualizado)', tipo: 'SAG', estado: 'vigente', fecha: '2026-10-31', _demo: true },
+      {
+        id: 'cum_d9',
+        nombre: 'Análisis en laboratorio autorizado SAG (lotes 2026)',
+        tipo: 'SAG',
+        estado: 'pendiente',
+        vencimiento: '2026-11-30',
+        avisoDias: 30,
+        notas: 'Falta el análisis autorizado de un lote.',
+        _demo: true
+      }
+    ],
     // Cuenta corriente con su libro de banco (F6-3): cobros y un pago conciliados, una comisión en diferencia y
     // movimientos sin conciliar.
     cuentaBanco: [

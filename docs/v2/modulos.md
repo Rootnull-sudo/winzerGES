@@ -288,15 +288,15 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Límite**: las partidas en tránsito se suman a la conciliación solo con una cuenta (un cobro no dice por qué
   cuenta pasó).
 
-### Cumplimiento normativo · ⬜ · F6 · M
-- **Tablas**: `cumplimiento`.
-- **Pantallas**:
-  - registro con vencimientos;
-  - recordatorios del SAG;
-  - controles automáticos (lotes sin análisis SAG, D.O. sin respaldo);
-  - libro de existencias en CSV.
-- **Adjuntos**: resoluciones y certificados.
-
+### Cumplimiento normativo · ✅ · F6-4 · M
+- **Tablas**: `cumplimiento` (adjunto: resolución o certificado).
+- **Pantalla** (`/[org]/cumplimiento`): registro con estado derivado (vigente, por vencer según los días de aviso,
+  vencido, pendiente); declaraciones SAG del año (cosecha con los kg de la temporada, existencias con los litros);
+  patentes del calendario; verificaciones automáticas (lotes sin análisis autorizado SAG, D.O. sin respaldo,
+  inscripción de productos); libro de existencias en CSV (granel y producto terminado).
+- **Alertas**: `cumplimiento.vencimiento` (por vencer: aviso; vencido: error), `envasado.do_sin_respaldo` (error) y
+  `cumplimiento.calendario` (patentes y SAG, solo con registros de cumplimiento).
+- **Importador**: `cumplimiento` de v1.
 ---
 
 ## Administración

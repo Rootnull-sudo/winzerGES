@@ -26,6 +26,7 @@ export * from './services/inventarios';
 export * from './services/dte';
 export * from './services/tributario';
 export * from './services/conciliacion';
+export * from './services/cumplimiento';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

@@ -103,7 +103,7 @@ movimientos (solo agregar); **D** = documento con estado.
 | `pago_aplicacion` | — | `pago_id`, `compra_id` o `gasto_id` (exactamente uno, check), `monto` | Σ = monto del pago; cada una ≤ saldo del documento |
 | `gasto` | — | `fecha`, `categoria`, `descripcion`, `proveedor_id`, `monto` (neto), `documento`, `folio`, `afecto_iva`, `medio_pago`, `estado` (pendiente/pagado), `tipo_costo` (fijo/variable), `area` (admin/ventas/produccion), `no_deducible`, `iva` y `total` (foto con la tasa de la fecha), `observaciones` | Adjunto: comprobante. `afecto_iva` solo en factura. A crédito (`pendiente`) entra a `v_por_pagar`. El DTE recibido lo arma F6 |
 | `presupuesto` | — | `anio`, `categoria`, `monto` | Único por (anio, categoría) |
-| `activo` | — | `nombre`, `valor`, `vida_util_anios`, `fecha_compra`, `fecha_baja` | |
+| `activo` | — | `nombre`, `valor`, `vida_util_anios`, `fecha_compra`, `fecha_baja`, `compra_id` (opcional), `observaciones` | Módulo `administracion`. La depreciación se calcula (`depreciacionEntre`, `valorLibro`): lineal diaria, termina con la vida útil o la baja |
 
 ## 7. Personas
 

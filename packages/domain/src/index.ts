@@ -24,4 +24,5 @@ export * from './entities/proveedor';
 export * from './entities/compra';
 export * from './entities/pago';
 export * from './entities/gasto';
+export * from './entities/activo';
 export * from './sync';

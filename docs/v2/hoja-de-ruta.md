@@ -77,7 +77,7 @@ flowchart LR
 | F3-2 Compras con líneas + servicio `registrarCompra` (stock, precio vigente por fecha, NC y guía; `v_por_pagar`; el DTE recibido lo arma F6 desde `compra`) ✅ | `compra`, `compra_linea` | L |
 | F3-3 Pagos aplicados y cuentas por pagar (+ alerta por pagar) ✅ | `pago`, `pago_aplicacion` | M |
 | F3-4 Gastos y presupuesto (gastos a crédito pagables desde Por pagar; FK `pago_aplicacion.gasto_id`) ✅ | `gasto`, `presupuesto` | M |
-| F3-5 Activos fijos | `activo` | S |
+| F3-5 Activos fijos (pestaña en Sueldos y gastos; la pantalla de costos de F7 los lee) ✅ | `activo` | S |
 
 ## F4 · Personas (carril B)
 

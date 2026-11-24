@@ -344,7 +344,8 @@ v1 recalcula todo en cada lectura (`js/core/alerts.js`). En v2, un **job** por v
    a sumarlos; con los honorarios pasa lo mismo (`financial.js:292-295`). → Líquido + F29.
 3. **Cobros y pagos parciales**: "marcar pagada" ignora los anteriores y la conciliación solo ve la venta completa;
    la entidad `pago` no se usa (`ventas:114`, `recon.js:43`). → Aplicaciones a documentos.
-4. **Depreciación sin fin y amortización de marca sin fechas** (`financial.js:145-156`).
+4. **Depreciación sin fin y amortización de marca sin fechas** (`financial.js:145-156`). → La depreciación se
+   prorratea por día y termina con la vida útil o la baja (F3-5); la marca, en F5-1.
 5. **Resumen bancario sin filtro por cuenta** (`recon.js:89`).
 6. **Códigos y folios reutilizados** (count + 1 y relleno de huecos). → Secuencias.
 7. **Balance de masa tautológico** (`inventory.js:111-119`): siempre cuadra. → Comparar contra los kg de uva.

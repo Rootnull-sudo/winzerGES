@@ -571,15 +571,15 @@ test('bodega: un trasiego sin señal se sincroniza como una sola operación y la
   await d.getByLabel(/Merma en el trasiego/).fill('20');
   await d.getByRole('button', { name: 'Registrar trasiego' }).click();
   await expect(d).toHaveCount(0);
-  expect(await litrosDe('E-03')).toBe(e3 - 1020);
+  await expect.poll(() => litrosDe('E-03')).toBe(e3 - 1020);
   await page.screenshot(shots('19-bodega-offline'));
 
   await context.setOffline(false);
   await waitSynced(page);
   await page.reload();
   await waitSynced(page);
-  expect(await litrosDe('E-03')).toBe(e3 - 1020);
-  if (destino === 'E-01') expect(await litrosDe('E-01')).toBe(e1 + 1000);
+  await expect.poll(() => litrosDe('E-03')).toBe(e3 - 1020);
+  if (destino === 'E-01') await expect.poll(() => litrosDe('E-01')).toBe(e1 + 1000);
 
   // Limpieza: borrar el trasiego completo (los tres movimientos juntos).
   await page.getByRole('tab', { name: 'Movimientos' }).click();
@@ -885,4 +885,35 @@ test('gastos y presupuesto: factura afecta con IVA a crédito y presupuesto de u
   await arriendo.getByLabel('Presupuesto Arriendo').fill('0');
   await arriendo.getByLabel('Presupuesto Arriendo').press('Enter');
   await expect(page.getByText('Presupuesto de arriendo actualizado.').last()).toBeVisible();
+});
+
+test('activos fijos: depreciación anual, fin de vida útil y baja', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/administracion?tab=activos');
+  // Demo: la prensa de 2018 con 10 años sigue en uso; la bomba de 2019 con 5 años ya está depreciada.
+  await expect(page.getByRole('row', { name: /Bomba de trasiego/ })).toContainText('Depreciado');
+  await expect(page.getByRole('row', { name: /Bomba de trasiego/ })).toContainText('$0');
+  await page.getByRole('button', { name: 'Nuevo activo' }).click();
+  const d = page.getByRole('dialog', { name: 'Nuevo activo' });
+  await d.getByRole('textbox', { name: /^Nombre/ }).fill('Activo E2E');
+  await d.getByLabel(/Valor neto/).fill('3650000');
+  await d.getByLabel(/Vida útil/).fill('10');
+  await d.getByLabel(/Fecha de compra/).fill('2026-01-01');
+  await expect(d.getByLabel('Cálculo')).toContainText('$365.000');
+  await expect(d.getByLabel('Cálculo')).toContainText('31 dic 2035');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: /Activo E2E/ });
+  await expect(fila).toContainText('En uso');
+  await page.screenshot(shots('29-activos'));
+  await fila.click();
+  await page
+    .getByRole('dialog')
+    .getByLabel(/Fecha de baja/)
+    .fill('2026-02-01');
+  await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click();
+  await expect(fila).toContainText('De baja');
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
 });

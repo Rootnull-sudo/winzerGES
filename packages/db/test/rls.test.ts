@@ -191,6 +191,7 @@ describe('importador v1', () => {
       pago: 3,
       gasto: 10,
       presupuesto: 7,
+      activo: 3,
       cobro: 2,
       insumo: 7,
       movInsumo: 1,

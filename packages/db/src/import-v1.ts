@@ -11,6 +11,7 @@ import {
   adicionSO2Input,
   aditivoInput,
   analisisInput,
+  activoInput,
   compraInput,
   gastoInput,
   presupuestoInput,
@@ -56,6 +57,7 @@ import {
   adicionSO2,
   aditivo,
   analisis,
+  activo,
   compra,
   gasto,
   pago,
@@ -344,6 +346,16 @@ const IMPORTERS: Record<string, Importer> = {
     meta: metaPresupuesto,
     adaptar: (r) => ({ ...r, monto: Math.round(Number(r.monto) || 0) }),
     guardar: (tx, actor, data) => guardarPresupuesto(tx, actor, data as never)
+  },
+  activo: {
+    table: activo,
+    schema: activoInput,
+    meta: { entity: 'activo', module: 'administracion', label: 'activos fijos', sensitive: true },
+    adaptar: ({ vidaUtil, ...r }) => ({
+      ...r,
+      vidaUtilAnios: Math.max(1, Math.round(Number(r.vidaUtilAnios ?? vidaUtil) || 1)),
+      valor: Math.round(Number(r.valor) || 0)
+    })
   },
   movInsumo: {
     table: movInsumo,

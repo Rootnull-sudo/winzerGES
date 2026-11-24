@@ -1,7 +1,8 @@
 'use server';
 /** Sueldos y gastos — módulo ONLINE: Server Actions → servicios de @winzer/db dentro de withOrg (RLS). */
-import { ConflictError, eliminarGasto, guardarGasto, guardarPresupuesto, ReglaError, withOrg } from '@winzer/db';
-import { gastoInput, PermissionError, presupuestoInput, type GastoInput, type PresupuestoInput } from '@winzer/domain';
+import { ConflictError, eliminarGasto, guardarGasto, guardarPresupuesto, ReglaError, schema, softDelete, upsert, withOrg } from '@winzer/db';
+import { activoInput, gastoInput, PermissionError, presupuestoInput, type GastoInput, type PresupuestoInput } from '@winzer/domain';
+import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { requireOrg } from '@/lib/session';
 import type { Result } from '../proveedores/actions';
@@ -43,4 +44,26 @@ export async function savePresupuesto(slug: string, input: Record<string, unknow
   const p = presupuestoInput.safeParse(input);
   if (!p.success) return invalido(p.error.issues);
   return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => guardarPresupuesto(tx, actor, input as PresupuestoInput)));
+}
+
+const metaActivo = {
+  entity: 'activo',
+  module: 'administracion',
+  label: 'activos fijos',
+  sensitive: true,
+  display: (r: Record<string, unknown>) => String(r.nombre)
+};
+
+export async function saveActivo(slug: string, input: Record<string, unknown>, version?: number): Promise<Result> {
+  const p = activoInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, (actor) =>
+    withOrg(actor.orgId, (tx) =>
+      upsert(tx, schema.activo, actor, metaActivo, { ...p.data, id: p.data.id ?? randomUUID() }, { baseVersion: version, checkVersion: version != null })
+    )
+  );
+}
+
+export async function deleteActivo(slug: string, id: string): Promise<Result> {
+  return ejecutar(slug, (actor) => withOrg(actor.orgId, (tx) => softDelete(tx, schema.activo, actor, metaActivo, id)));
 }

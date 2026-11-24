@@ -226,7 +226,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   - resumen: costo por litro ponderado, indirectos y costo de ventas;
   - tarjetas por formato con costo directo + indirecto y margen;
   - costo directo por lote;
-  - activos fijos con su depreciación.
+  - activos fijos con su depreciación (los registra Sueldos y gastos desde F3-5; aquí se leen).
 - **Cálculos**: `financial.costoLitroLote`, depreciación y amortización.
 - **Corrige**: la depreciación termina al cumplir la vida útil y se prorratea desde la fecha de compra.
 

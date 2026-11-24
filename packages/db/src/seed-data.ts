@@ -677,6 +677,11 @@ export const demoDump = {
       { id: 'pre_d6', anio: 2026, categoria: 'patentes', monto: 650000, _demo: true },
       { id: 'pre_d7', anio: 2026, categoria: 'profesionales', monto: 2400000, _demo: true }
     ],
+    activo: [
+      { id: 'act_d1', nombre: 'Prensa neumática 50 hL', valor: 18000000, vidaUtil: 10, fechaCompra: '2018-02-01', _demo: true },
+      { id: 'act_d2', nombre: 'Equipo de frío 30 kW', valor: 12500000, vidaUtil: 12, fechaCompra: '2021-09-15', _demo: true },
+      { id: 'act_d3', nombre: 'Bomba de trasiego', valor: 2400000, vidaUtil: 5, fechaCompra: '2019-03-01', _demo: true }
+    ],
     movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {

@@ -1160,3 +1160,15 @@ export const presupuesto = pgTable(
       .where(sql`${t.deletedAt} is null`)
   ]
 );
+
+/* --- Administración: activos fijos (F3-5, online; la depreciación se calcula, no se guarda) --- */
+export const activo = pgTable('activo', {
+  ...base(),
+  nombre: text('nombre').notNull(),
+  valor: money('valor').notNull(),
+  vidaUtilAnios: integer('vida_util_anios').notNull(),
+  fechaCompra: text('fecha_compra').notNull(),
+  fechaBaja: text('fecha_baja'),
+  compraId: text('compra_id').references(() => compra.id),
+  observaciones: text('observaciones')
+});

@@ -12,6 +12,8 @@ import {
   aditivoInput,
   analisisInput,
   compraInput,
+  pagoInput,
+  type PagoInput,
   anioDeFecha,
   aplicacionInput,
   clienteInput,
@@ -53,6 +55,7 @@ import {
   aditivo,
   analisis,
   compra,
+  pago,
   estanque,
   fenologia,
   fermentacion,
@@ -71,6 +74,7 @@ import {
 import { metaInsumo, metaMovInsumo } from './services/insumos';
 import { metaProveedor } from './services/proveedores';
 import { metaCompra, registrarCompra } from './services/compras';
+import { metaPago, registrarPago } from './services/pagos';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -287,6 +291,33 @@ const IMPORTERS: Record<string, Importer> = {
       return rec;
     }
   },
+  // v1: un pago por compra, sin saldo. Se aplica a su compra hasta el saldo (v1 dejaba "pagada" con cualquier monto).
+  pago: {
+    table: pago,
+    schema: pagoInput,
+    meta: metaPago,
+    refs: ['proveedorId'],
+    adaptar: (r, orgId) => ({
+      fecha: r.fecha,
+      proveedorId: r.proveedorId,
+      monto: Math.round(Math.abs(Number(r.monto) || 0)),
+      medio: ['transferencia', 'cheque', 'efectivo', 'tarjeta'].includes(String(r.medio)) ? r.medio : 'transferencia',
+      referencia: r.referencia ?? null,
+      aplicaciones: r.compraId ? [{ compraId: mapId(orgId, String(r.compraId)), monto: Math.round(Math.abs(Number(r.monto) || 0)) }] : []
+    }),
+    guardar: async (tx, actor, data) => {
+      const [existe] = await tx.select().from(pago).where(eq(pago.id, data.id));
+      if (existe) return existe as Record<string, unknown>;
+      const aps = (data.aplicaciones as { compraId: string; monto: number }[]).map((a) => ({ ...a }));
+      for (const a of aps) {
+        const [s0] = await tx.execute<{ saldo: string }>(sql`select saldo from v_por_pagar where documento_id = ${a.compraId}`);
+        a.monto = Math.min(a.monto, Math.max(0, Math.round(Number(s0?.saldo ?? 0))));
+      }
+      const validas = aps.filter((a) => a.monto > 0);
+      if (!validas.length) throw new Error('El documento del pago ya no tiene saldo.');
+      return registrarPago(tx, actor, { ...(data as never as PagoInput), monto: validas.reduce((t, a) => t + a.monto, 0), aplicaciones: validas });
+    }
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,
@@ -312,6 +343,7 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
   for (const [entidad, recs] of Object.entries(dump.data)) {
     if (!IMPORTERS[entidad] && recs.length && !['config', 'usuario', 'rol', 'auditoria'].includes(entidad)) report.pendientes[entidad] = recs.length;
   }
+  dump = { ...dump, data: { ...dump.data, pago: pagosDeCompras(dump.data) } };
   const temporadas = new Map<number, string>();
   for (const [entidad, imp] of Object.entries(IMPORTERS)) {
     const recs = dump.data[entidad] ?? [];
@@ -369,6 +401,29 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
     if (recs.length) report.importados[entidad] = ok;
   }
   return report;
+}
+
+/**
+ * Pagos de v1 + uno sintético por cada compra marcada "pagado" que no tiene pago (v1 marcaba el estado sin crear
+ * el pago al editar la compra a mano).
+ */
+function pagosDeCompras(data: V1Dump['data']): Record<string, unknown>[] {
+  const pagos = [...(data.pago ?? [])];
+  const conPago = new Set(pagos.map((p) => String(p.compraId ?? '')));
+  for (const c of data.compra ?? []) {
+    if (c.estadoPago !== 'pagado' || conPago.has(String(c.id)) || c.documento === 'nota_credito' || c.documento === 'guia') continue;
+    pagos.push({
+      id: `pago|${c.id}`,
+      fecha: c.fechaPago || c.fecha,
+      proveedorId: c.proveedorId,
+      compraId: c.id,
+      // Sin total (v1 lo calculaba al guardar): paga el saldo completo; `guardar` acota cada aplicación al saldo.
+      monto: Math.abs(Number(c.total) || 0) || Number.MAX_SAFE_INTEGER,
+      medio: 'transferencia',
+      _demo: c._demo
+    });
+  }
+  return pagos;
 }
 
 /** Id de la temporada `anio` de la viña; la crea con el rango por defecto si no existe (temporadas de v1). */

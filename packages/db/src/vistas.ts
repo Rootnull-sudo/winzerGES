@@ -63,12 +63,16 @@ export const VISTAS: Vista[] = [
     // que generan deuda (la guía no; la NC resta en su referencia). Estado y días al vencimiento se calculan en el dominio.
     nombre: 'v_por_pagar',
     sql: `select c.org_id, 'compra'::text as origen, c.id as documento_id, c.proveedor_id, c.documento, c.folio, c.fecha,
-            c.vencimiento, c.total, nc.total as notas_credito, 0::numeric as aplicado, c.total - nc.total as saldo
+            c.vencimiento, c.total, nc.total as notas_credito, ap.total as aplicado, c.total - nc.total - ap.total as saldo
           from compra c
           cross join lateral (
             select coalesce(sum(x.total), 0)::numeric as total from compra x
             where x.referencia_compra_id = c.id and x.documento = 'nota_credito' and x.estado = 'registrada' and x.deleted_at is null
           ) nc
+          cross join lateral (
+            select coalesce(sum(a.monto), 0)::numeric as total from pago_aplicacion a
+            where a.compra_id = c.id and a.deleted_at is null
+          ) ap
           where c.deleted_at is null and c.estado = 'registrada' and c.documento in ('factura', 'factura_exenta', 'boleta')`
   }
 ];

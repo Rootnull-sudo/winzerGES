@@ -514,6 +514,8 @@ export const demoDump = {
         _demo: true
       }
     ],
+    // Pago parcial de la factura de etiquetas; las compras "pagado" sin pago reciben uno al importar.
+    pago: [{ id: 'pag_d1', fecha: '2026-11-18', proveedorId: 'prv_etq', compraId: 'com_d4', monto: 500000, medio: 'transferencia', _demo: true }],
     movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {

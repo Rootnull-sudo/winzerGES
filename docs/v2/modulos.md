@@ -195,14 +195,16 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 
 ## Finanzas (online)
 
-### Proveedores y compras · ⬜ · F3 · L
+### Proveedores y compras · ✅ · F3 · L
 - **Tablas**: `proveedor`, `compra`, `compra_linea`, `pago`, `pago_aplicacion`, `insumo_precio`.
 - **Pantallas**:
   - compras **con varias líneas** y factura adjunta;
   - maestro de proveedores;
-  - cuentas por pagar;
+  - cuentas por pagar (total, vencido, vence en 7 días) y pagos aplicados en parte o en total a varios documentos;
   - evolución de precios por insumo.
-- **Servicio `registrarCompra`**: `mov_insumo`, precio e historial, y DTE recibido.
+- **Servicio `registrarCompra`**: `mov_insumo` y precio con historial (el precio vigente es el de fecha más
+  reciente). El DTE recibido lo arma F6 desde `compra`. **`registrarPago`** valida contra el saldo de `v_por_pagar`.
+- **Alertas**: facturas vencidas o por vencer en 7 días (`proveedores.por_pagar`).
 - **Corrige**: las notas de crédito se guardan en positivo; el signo lo pone el tipo.
 - **Hecho cuando**: una NC baja el crédito de IVA y el stock (lo contrario de v1, que estaba mal).
 

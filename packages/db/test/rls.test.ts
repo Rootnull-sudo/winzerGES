@@ -188,6 +188,7 @@ describe('importador v1', () => {
       cliente: 6,
       proveedor: 5,
       compra: 5,
+      pago: 3,
       cobro: 2,
       insumo: 7,
       movInsumo: 1,

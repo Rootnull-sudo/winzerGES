@@ -824,3 +824,29 @@ test('compras: factura de 2 líneas sube stock y precio; la NC baja stock y sald
   await d.getByLabel('Línea 1 · Insumo').selectOption({ label: 'Botella Bordelesa 750 mL (un)' });
   expect(await stockBotella(d)).toBe(antes);
 });
+
+test('pagos: pago parcial en Por pagar baja el saldo; al eliminarlo vuelve', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/proveedores?tab=por-pagar');
+  // Demo: factura 1201 de etiquetas por $1.011.500 con un abono de $500.000.
+  const fila = page.getByRole('row', { name: /Etiquetas Demo SpA.*Factura 1201/ });
+  await expect(fila).toContainText('$511.500');
+  await expect(fila).toContainText('Pago parcial');
+  await fila.click();
+  const d = page.getByRole('dialog', { name: 'Registrar pago' });
+  await expect(d.getByLabel('Aplicar a Factura 1201')).toHaveValue('511500');
+  await d.getByLabel(/Monto del pago/).fill('200000');
+  await expect(d.getByLabel('Aplicar a Factura 1201')).toHaveValue('200000');
+  await d.getByLabel(/Referencia/).fill('TRF-E2E');
+  await page.screenshot(shots('26-pago'));
+  await d.getByRole('button', { name: 'Registrar pago' }).click();
+  await expect(fila).toContainText('$311.500');
+
+  await page.getByRole('tab', { name: 'Pagos' }).click();
+  await page.getByRole('row', { name: /TRF-E2E/ }).click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(page.getByRole('row', { name: /TRF-E2E/ })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Por pagar' }).click();
+  await expect(fila).toContainText('$511.500');
+});

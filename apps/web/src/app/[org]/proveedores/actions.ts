@@ -2,8 +2,18 @@
 /**
  * Proveedores y compras — módulo ONLINE: Server Actions → servicios de @winzer/db dentro de withOrg (RLS).
  */
-import { anularCompra, ConflictError, eliminarProveedor, guardarProveedor, registrarCompra, ReglaError, withOrg } from '@winzer/db';
-import { compraInput, PermissionError, proveedorInput, type CompraInput } from '@winzer/domain';
+import {
+  anularCompra,
+  ConflictError,
+  eliminarPago,
+  eliminarProveedor,
+  guardarProveedor,
+  registrarCompra,
+  registrarPago,
+  ReglaError,
+  withOrg
+} from '@winzer/db';
+import { compraInput, pagoInput, PermissionError, proveedorInput, type CompraInput, type PagoInput } from '@winzer/domain';
 import { revalidatePath } from 'next/cache';
 import { requireOrg } from '@/lib/session';
 
@@ -63,6 +73,30 @@ export async function anularCompraAction(slug: string, id: string): Promise<Resu
   const { actor } = await requireOrg(slug);
   try {
     await withOrg(actor.orgId, (tx) => anularCompra(tx, actor, id));
+    revalidatePath(`/${slug}/proveedores`);
+    return { ok: true };
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+export async function savePago(slug: string, input: Record<string, unknown>): Promise<Result> {
+  const { actor } = await requireOrg(slug);
+  const p = pagoInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  try {
+    await withOrg(actor.orgId, (tx) => registrarPago(tx, actor, input as PagoInput));
+    revalidatePath(`/${slug}/proveedores`);
+    return { ok: true };
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+export async function deletePago(slug: string, id: string): Promise<Result> {
+  const { actor } = await requireOrg(slug);
+  try {
+    await withOrg(actor.orgId, (tx) => eliminarPago(tx, actor, id));
     revalidatePath(`/${slug}/proveedores`);
     return { ok: true };
   } catch (e) {

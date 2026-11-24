@@ -96,3 +96,26 @@ export interface PrecioRow {
   origen: string;
   proveedorId: string | null;
 }
+
+/** Documento con deuda (v_por_pagar): compra o, desde F3-4, gasto a crédito. */
+export interface DocPorPagar {
+  origen: 'compra' | 'gasto';
+  id: string;
+  proveedorId: string | null;
+  documento: string;
+  folio: string | null;
+  fecha: string;
+  vencimiento: string | null;
+  total: number;
+  saldo: number;
+}
+export interface PagoRow {
+  id: string;
+  fecha: string;
+  proveedorId: string | null;
+  monto: number;
+  medio: string;
+  referencia: string | null;
+  observaciones: string | null;
+  aplicaciones: { compraId: string | null; gastoId: string | null; monto: number }[];
+}

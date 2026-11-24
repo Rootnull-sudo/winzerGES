@@ -141,6 +141,13 @@
       "when": 1795480971974,
       "tag": "0019_compras",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795482192325,
+      "tag": "0020_pagos",
+      "breakpoints": true
     }
   ]
 }

@@ -99,8 +99,8 @@ movimientos (solo agregar); **D** = documento con estado.
 | `proveedor` | — | `nombre`, `rut`, `categoria`, `contacto`, `email`, `telefono`, `condiciones`, `plazo` | RUT válido |
 | `compra` | D | `fecha`, `proveedor_id`, `documento` (factura/factura_exenta/boleta/guia/nota_credito), `folio`, `referencia_compra_id` (para las NC), `vencimiento`, `estado` (registrada/anulada), totales (**siempre positivos**): `neto`, `exento`, `iva`, `total`, `dte_id` | Folio único por (proveedor, documento). Adjunto: factura en PDF |
 | `compra_linea` | — | `compra_id`, `insumo_id` (opcional), `descripcion`, `cantidad`, `precio_unitario`, `exenta` (bool), `neto` | Servicio `registrarCompra`: `mov_insumo` (+ / − NC, 0 si la factura referencia una guía) y `insumo_precio` por línea, con id derivado |
-| `pago` | — | `fecha`, `proveedor_id`, `monto`, `medio` | |
-| `pago_aplicacion` | — | `pago_id`, `compra_id` o `gasto_id`, `monto` | |
+| `pago` | — | `fecha`, `proveedor_id`, `monto`, `medio`, `referencia`, `observaciones` | No se edita: se elimina y se registra de nuevo |
+| `pago_aplicacion` | — | `pago_id`, `compra_id` o `gasto_id` (exactamente uno, check), `monto` | Σ = monto del pago; cada una ≤ saldo del documento |
 | `gasto` | — | `fecha`, `categoria`, `descripcion`, `proveedor_id`, `monto` (neto), `documento`, `folio`, `afecto_iva`, `medio_pago`, `estado` (pendiente/pagado), `tipo_costo` (fijo/variable), `area` (admin/ventas/produccion), `no_deducible`, `dte_id` | Adjunto: comprobante |
 | `presupuesto` | — | `anio`, `categoria`, `monto` | Único por (anio, categoría) |
 | `activo` | — | `nombre`, `valor`, `vida_util_anios`, `fecha_compra`, `fecha_baja` | |
@@ -236,7 +236,7 @@ Guía para el importador (`packages/db/src/import-v1.ts`, `IMPORTERS`).
 | trabajador, remuneracion, honorario | igual | remuneracion: guardar `parametros` vacío (no se conocían) |
 | gasto, presupuesto, activo, proveedor | igual | |
 | compra | `compra` + 1 `compra_linea` | NC: pasar montos a positivo |
-| pago | `pago` + `pago_aplicacion` | |
+| pago | `pago` + `pago_aplicacion` | Compra "pagado" sin pago → pago sintético por su saldo |
 | cumplimiento, caf, f29, renta, pagoImpuesto, obligacion | igual (`pago_impuesto`) | |
 | dte | `dte` + `dte_linea` | `detalle[]` → filas; `xml` → adjunto |
 | cuentaBanco, movBanco | `cuenta_banco`, `mov_banco` + `conciliacion_match` | `matchRef` → match |

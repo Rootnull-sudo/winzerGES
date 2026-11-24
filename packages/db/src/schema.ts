@@ -16,6 +16,7 @@ import {
   bigint,
   boolean,
   customType,
+  check,
   index,
   integer,
   jsonb,
@@ -1077,4 +1078,40 @@ export const compraLinea = pgTable(
     neto: money('neto').notNull()
   },
   (t) => [index('compra_linea_compra_idx').on(t.orgId, t.compraId)]
+);
+
+/* --- Abastecimiento: pagos a proveedores y sus aplicaciones (F3-3, online) --- */
+export const pago = pgTable(
+  'pago',
+  {
+    ...base(),
+    fecha: text('fecha').notNull(),
+    proveedorId: text('proveedor_id').references(() => proveedor.id),
+    monto: money('monto').notNull(),
+    /** transferencia | cheque | efectivo | tarjeta */
+    medio: text('medio').notNull().default('transferencia'),
+    referencia: text('referencia'),
+    observaciones: text('observaciones')
+  },
+  (t) => [index('pago_fecha_idx').on(t.orgId, t.fecha)]
+);
+
+/** Parte de un pago aplicada a UN documento (compra o gasto). El saldo se deriva en v_por_pagar. */
+export const pagoAplicacion = pgTable(
+  'pago_aplicacion',
+  {
+    ...base(),
+    pagoId: text('pago_id')
+      .notNull()
+      .references(() => pago.id),
+    compraId: text('compra_id').references(() => compra.id),
+    /** FK a gasto: la agrega F3-4 (Gastos). */
+    gastoId: text('gasto_id'),
+    monto: money('monto').notNull()
+  },
+  (t) => [
+    index('pago_aplicacion_pago_idx').on(t.orgId, t.pagoId),
+    index('pago_aplicacion_compra_idx').on(t.orgId, t.compraId),
+    check('pago_aplicacion_un_documento', sql`(${t.compraId} is null) <> (${t.gastoId} is null)`)
+  ]
 );

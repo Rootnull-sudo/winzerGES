@@ -1,12 +1,15 @@
 'use client';
 import { Tabs, useTab } from '@/components/ui/tabs';
-import type { CompraRow, InsumoOpt, PrecioRow, ProveedorRow } from './comun';
+import type { CompraRow, DocPorPagar, InsumoOpt, PagoRow, PrecioRow, ProveedorRow } from './comun';
 import { Compras } from './compras';
 import { Maestro } from './maestro';
+import { Pagos, PorPagar } from './pagos';
 import { Precios } from './precios';
 
 const TABS = [
   { id: 'compras', label: 'Compras' },
+  { id: 'por-pagar', label: 'Por pagar' },
+  { id: 'pagos', label: 'Pagos' },
   { id: 'precios', label: 'Precios' },
   { id: 'proveedores', label: 'Proveedores' }
 ] as const;
@@ -16,19 +19,25 @@ export function ProveedoresView({
   compras,
   insumos,
   precios,
-  tasaIVA
+  tasaIVA,
+  porPagar,
+  pagos
 }: {
   proveedores: ProveedorRow[];
   compras: CompraRow[];
   insumos: InsumoOpt[];
   precios: PrecioRow[];
   tasaIVA: number;
+  porPagar: DocPorPagar[];
+  pagos: PagoRow[];
 }) {
   const [tab, setTab] = useTab(TABS);
   return (
     <>
       <Tabs tabs={TABS} actual={tab} onChange={setTab} />
       {tab === 'compras' && <Compras compras={compras} proveedores={proveedores} insumos={insumos} tasaIVA={tasaIVA} />}
+      {tab === 'por-pagar' && <PorPagar docs={porPagar} proveedores={proveedores} />}
+      {tab === 'pagos' && <Pagos pagos={pagos} docs={porPagar} proveedores={proveedores} />}
       {tab === 'precios' && <Precios precios={precios} insumos={insumos} proveedores={proveedores} />}
       {tab === 'proveedores' && <Maestro proveedores={proveedores} />}
     </>

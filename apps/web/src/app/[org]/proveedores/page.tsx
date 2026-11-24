@@ -3,7 +3,7 @@ import { asc, isNull, sql } from 'drizzle-orm';
 import { NoAccess } from '@/components/no-access';
 import { PageHeader } from '@/components/ui/page';
 import { orgWith } from '@/lib/session';
-import type { CompraRow, InsumoOpt, PrecioRow } from './comun';
+import type { CompraRow, DocPorPagar, InsumoOpt, PagoRow, PrecioRow } from './comun';
 import { ProveedoresView } from './view';
 
 export const metadata = { title: 'Proveedores y compras' };
@@ -13,13 +13,24 @@ export default async function Page({ params }: { params: Promise<{ org: string }
   const { org } = await params;
   const { allowed, fueraDePlan, actor } = await orgWith(org, 'proveedores');
   if (!allowed) return <NoAccess modulo="proveedores y compras" plan={fueraDePlan} />;
-  const { proveedor, compra, compraLinea, insumoPrecio } = schema;
-  const [proveedores, compras, lineas, saldos, insumos, precios, cfg] = await withOrg(actor.orgId, (tx) =>
+  const { proveedor, compra, compraLinea, insumoPrecio, pago, pagoAplicacion } = schema;
+  const [proveedores, compras, lineas, saldos, insumos, precios, cfg, pagos, aplicaciones] = await withOrg(actor.orgId, (tx) =>
     Promise.all([
       tx.select().from(proveedor).where(isNull(proveedor.deletedAt)).orderBy(asc(proveedor.nombre)),
       tx.select().from(compra).where(isNull(compra.deletedAt)),
       tx.select().from(compraLinea).where(isNull(compraLinea.deletedAt)),
-      tx.execute<{ documento_id: string; saldo: string; notas_credito: string }>(sql`select documento_id, saldo, notas_credito from v_por_pagar`),
+      tx.execute<{
+        origen: 'compra' | 'gasto';
+        documento_id: string;
+        proveedor_id: string | null;
+        documento: string;
+        folio: string | null;
+        fecha: string;
+        vencimiento: string | null;
+        total: string;
+        saldo: string;
+        notas_credito: string;
+      }>(sql`select origen, documento_id, proveedor_id, documento, folio, fecha, vencimiento, total, saldo, notas_credito from v_por_pagar`),
       tx.execute<{ insumo_id: string; nombre: string; unidad: string; precio: string; stock: string }>(
         sql`select insumo_id, nombre, unidad, precio, stock from v_stock_insumo order by nombre`
       ),
@@ -34,7 +45,9 @@ export default async function Page({ params }: { params: Promise<{ org: string }
         .from(insumoPrecio)
         .where(isNull(insumoPrecio.deletedAt))
         .orderBy(asc(insumoPrecio.fecha)),
-      configVigente(tx)
+      configVigente(tx),
+      tx.select().from(pago).where(isNull(pago.deletedAt)),
+      tx.select().from(pagoAplicacion).where(isNull(pagoAplicacion.deletedAt))
     ])
   );
   const saldo = new Map(saldos.map((s) => [s.documento_id, s]));
@@ -69,6 +82,27 @@ export default async function Page({ params }: { params: Promise<{ org: string }
   }));
   const ins: InsumoOpt[] = insumos.map((i) => ({ id: i.insumo_id, nombre: i.nombre, unidad: i.unidad, precio: Number(i.precio), stock: Number(i.stock) }));
   const prs: PrecioRow[] = precios.map((p) => ({ ...p, precio: Number(p.precio) }));
+  const docs: DocPorPagar[] = saldos.map((d) => ({
+    origen: d.origen,
+    id: d.documento_id,
+    proveedorId: d.proveedor_id,
+    documento: d.documento,
+    folio: d.folio,
+    fecha: d.fecha,
+    vencimiento: d.vencimiento,
+    total: Number(d.total),
+    saldo: Number(d.saldo)
+  }));
+  const pgs: PagoRow[] = pagos.map((p) => ({
+    id: p.id,
+    fecha: p.fecha,
+    proveedorId: p.proveedorId,
+    monto: p.monto,
+    medio: p.medio,
+    referencia: p.referencia,
+    observaciones: p.observaciones,
+    aplicaciones: aplicaciones.filter((a) => a.pagoId === p.id).map((a) => ({ compraId: a.compraId, gastoId: a.gastoId, monto: a.monto }))
+  }));
   return (
     <>
       <PageHeader
@@ -94,6 +128,8 @@ export default async function Page({ params }: { params: Promise<{ org: string }
         insumos={ins}
         precios={prs}
         tasaIVA={cfg.tributario.tasaIVA}
+        porPagar={docs}
+        pagos={pgs}
       />
     </>
   );

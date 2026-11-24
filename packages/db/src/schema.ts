@@ -1286,3 +1286,48 @@ export const honorario = pgTable(
     index('honorario_fecha_idx').on(t.orgId, t.fecha)
   ]
 );
+
+/* --- Comercial: formatos, marcas y etiquetas (F5-1, online) --- */
+export const formato = pgTable('formato', {
+  ...base(),
+  nombre: text('nombre').notNull(),
+  litros: num('litros').notNull(),
+  /** vidrio | PET | BIB | lata */
+  envase: text('envase').notNull().default('vidrio'),
+  unidadesCaja: integer('unidades_caja').notNull().default(12),
+  stockMinimo: integer('stock_minimo').notNull().default(0)
+});
+
+export const marca = pgTable('marca', {
+  ...base(),
+  nombre: text('nombre').notNull(),
+  titular: text('titular'),
+  numeroINAPI: text('numero_inapi'),
+  clases: text('clases'),
+  fechaRegistro: text('fecha_registro').notNull(),
+  vencimiento: text('vencimiento').notNull(),
+  costo: money('costo').notNull().default(0)
+});
+
+export const etiqueta = pgTable('etiqueta', {
+  ...base(),
+  nombre: text('nombre').notNull(),
+  /** Versión del diseño (no confundir con `version` de base(), que es el control de concurrencia). */
+  versionDiseno: integer('version_diseno').notNull().default(1),
+  marcaId: text('marca_id').references(() => marca.id),
+  fecha: text('fecha'),
+  disenador: text('disenador'),
+  aprobacionLegal: boolean('aprobacion_legal').notNull().default(false),
+  costoDiseno: money('costo_diseno').notNull().default(0),
+  costoFotografia: money('costo_fotografia').notNull().default(0),
+  costoIlustracion: money('costo_ilustracion').notNull().default(0),
+  tirajeEstimado: integer('tiraje_estimado').notNull().default(0),
+  tirajeMinimo: integer('tiraje_minimo').notNull().default(0),
+  costoImpresion: num('costo_impresion').notNull().default(0),
+  proveedorId: text('proveedor_id').references(() => proveedor.id),
+  varietal: text('varietal'),
+  graduacion: num('graduacion'),
+  do: text('do'),
+  denominacion: text('denominacion'),
+  contenido: text('contenido')
+});

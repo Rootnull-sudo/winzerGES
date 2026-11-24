@@ -161,7 +161,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Hecho cuando**: confirmar una orden descuenta bodega e insumos en una sola transacción y el costo unitario
   coincide con v1.
 
-### Marca y etiquetas · ⬜ · F5 · S
+### Marca y etiquetas · ✅ · F5 · S
 - **Tablas**: `marca`, `etiqueta`.
 - **Pantallas**: marcas con su estado de vigencia INAPI; etiquetas por versión, con costos y declaraciones.
 - **Adjuntos**: certificado INAPI y diseños.

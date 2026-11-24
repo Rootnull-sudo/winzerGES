@@ -1016,3 +1016,27 @@ test('honorarios: retención a la tasa vigente, pago y reversa', async ({ page }
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(fila).toHaveCount(0);
 });
+
+test('marca y etiquetas: marca por renovar y etiqueta con prorrateo del diseño', async ({ page }) => {
+  await login(page, 'admin@winzer.test'); // el administrativo crea y edita, pero no borra (marca: vcex)
+  await page.goto('/vina-demo/marca');
+  const nombre = `Etiqueta E2E ${Date.now().toString(36)}`;
+  await expect(page.getByRole('row', { name: /Viña Demo Reserva/ })).toContainText('Renovar'); // vence en marzo de 2027
+  await page.getByRole('tab', { name: 'Etiquetas' }).click();
+  await page.getByRole('button', { name: 'Nueva versión' }).click();
+  const d = page.getByRole('dialog', { name: 'Nueva versión de etiqueta' });
+  await d.getByRole('textbox', { name: /^Nombre del diseño/ }).fill(nombre);
+  await d.getByLabel(/^Diseño/).fill('100000');
+  await d.getByLabel(/Botellas estimadas/).fill('10000');
+  await d.getByLabel(/Impresión por etiqueta/).fill('50');
+  // 100.000 ÷ máx(0 producidas, 10.000 estimadas) = $10 por botella + $50 de impresión.
+  await expect(d.getByLabel('Costo por botella')).toContainText('$60');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  const fila = page.getByRole('row', { name: new RegExp(nombre) });
+  await expect(fila).toContainText('$60');
+  await page.screenshot(shots('33-etiquetas'));
+  await fila.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(fila).toHaveCount(0);
+});

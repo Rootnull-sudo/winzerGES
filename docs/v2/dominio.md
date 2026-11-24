@@ -414,3 +414,5 @@ Corregidos al migrar el viñedo (F1):
     reversible.
 44. **Retención de honorarios con la tasa de hoy** (y fija en 15,25 % en el seed para todos los años). → Tasa vigente
     en la fecha de la boleta, guardada como foto; N° único por RUT; pago con fecha y reversible.
+45. **Amortización de marca sin fechas** (costo ÷ 120 por mes, para siempre). → Prorrateo diario entre el registro y
+    el vencimiento (`amortizacionMarca`). Una etiqueta usada por órdenes no se borra.

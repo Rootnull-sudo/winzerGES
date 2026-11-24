@@ -18,6 +18,7 @@ export * from './services/pagos';
 export * from './services/gastos';
 export * from './services/personas';
 export * from './services/remuneraciones';
+export * from './services/marcas';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

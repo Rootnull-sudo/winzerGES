@@ -13,7 +13,9 @@ export const ADJUNTABLES: Record<string, string> = {
   compra: 'proveedores',
   gasto: 'administracion',
   trabajador: 'administracion',
-  honorario: 'administracion'
+  honorario: 'administracion',
+  marca: 'marca',
+  etiqueta: 'marca'
 };
 
 /** 20 MB por archivo. */

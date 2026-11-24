@@ -1,0 +1,1 @@
+ALTER TABLE "etiqueta" ADD COLUMN "version_diseno" integer DEFAULT 1 NOT NULL;

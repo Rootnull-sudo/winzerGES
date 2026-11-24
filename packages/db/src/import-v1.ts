@@ -18,6 +18,9 @@ import {
   trabajadorInput,
   remuneracionV1Input,
   honorarioV1Input,
+  formatoInput,
+  marcaInput,
+  etiquetaInput,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -68,6 +71,9 @@ import {
   trabajador,
   remuneracion,
   honorario,
+  formato,
+  marca,
+  etiqueta,
   estanque,
   fenologia,
   fermentacion,
@@ -90,6 +96,7 @@ import { metaPago, registrarPago } from './services/pagos';
 import { guardarGasto, guardarPresupuesto, metaGasto, metaPresupuesto } from './services/gastos';
 import { guardarHonorario, marcarHonorarioPagado, metaHonorario, metaTrabajador } from './services/personas';
 import { importarRemuneracion, metaRemuneracion } from './services/remuneraciones';
+import { metaEtiqueta, metaFormato, metaMarca } from './services/marcas';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -394,6 +401,16 @@ const IMPORTERS: Record<string, Importer> = {
       return v1.estado === 'pagada' ? marcarHonorarioPagado(tx, actor, String(rec.id), String(v1.fechaPago || v1.fecha)) : rec;
     },
     adaptar: (r) => ({ ...r, numero: r.numero || null })
+  },
+  formato: { table: formato, schema: formatoInput, meta: metaFormato },
+  marca: { table: marca, schema: marcaInput, meta: metaMarca },
+  etiqueta: {
+    table: etiqueta,
+    schema: etiquetaInput,
+    meta: metaEtiqueta,
+    refs: ['marcaId', 'proveedorId'],
+    refsOpcionales: { marcaId: marca, proveedorId: proveedor },
+    adaptar: ({ version, ...r }) => ({ ...r, versionDiseno: version ?? 1 })
   },
   movInsumo: {
     table: movInsumo,

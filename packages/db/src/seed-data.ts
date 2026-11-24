@@ -230,6 +230,51 @@ export const demoDump = {
       },
       { id: 'ins_bento', nombre: 'Bentonita sódica', categoria: 'enologico', tipo: 'Clarificante', unidad: 'kg', precio: 4200, stockInicial: 50, _demo: true },
       {
+        id: 'ins_corcho',
+        nombre: 'Corcho natural 45 mm',
+        categoria: 'envasado',
+        tipo: 'Cierre',
+        unidad: 'un',
+        precio: 170,
+        stockInicial: 6000,
+        stockMinimo: 2000,
+        _demo: true
+      },
+      {
+        id: 'ins_capsula',
+        nombre: 'Cápsula de estaño',
+        categoria: 'envasado',
+        tipo: 'Cápsula',
+        unidad: 'un',
+        precio: 65,
+        stockInicial: 6000,
+        stockMinimo: 2000,
+        _demo: true
+      },
+      {
+        id: 'ins_caja',
+        nombre: 'Caja de cartón 12 botellas',
+        categoria: 'envasado',
+        tipo: 'Caja',
+        unidad: 'un',
+        precio: 980,
+        stockInicial: 500,
+        stockMinimo: 150,
+        _demo: true
+      },
+      {
+        id: 'ins_etq_sb',
+        nombre: 'Etiqueta Reserva Sauvignon Blanc',
+        categoria: 'etiquetado',
+        tipo: 'Etiqueta',
+        unidad: 'un',
+        precio: 92,
+        proveedorId: 'prv_etq',
+        stockInicial: 5000,
+        stockMinimo: 1500,
+        _demo: true
+      },
+      {
         id: 'ins_botella',
         proveedorId: 'prv_vidrio',
         nombre: 'Botella Bordelesa 750 mL',
@@ -787,6 +832,71 @@ export const demoDump = {
         descripcion: 'Diseño de etiqueta Reserva',
         bruto: 650000,
         estado: 'pendiente',
+        _demo: true
+      }
+    ],
+    formato: [
+      { id: 'fmt_075', nombre: 'Botella 0,75 L', litros: 0.75, envase: 'vidrio', unidadesCaja: 12, stockMinimo: 600, _demo: true },
+      { id: 'fmt_15', nombre: 'Magnum 1,5 L', litros: 1.5, envase: 'vidrio', unidadesCaja: 6, stockMinimo: 60, _demo: true },
+      { id: 'fmt_bib3', nombre: 'Bag in box 3 L', litros: 3, envase: 'BIB', unidadesCaja: 4, stockMinimo: 40, _demo: true },
+      { id: 'fmt_bib5', nombre: 'Bag in box 5 L', litros: 5, envase: 'BIB', unidadesCaja: 2, stockMinimo: 20, _demo: true }
+    ],
+    marca: [
+      {
+        id: 'mar_d1',
+        nombre: 'Viña Demo Reserva',
+        titular: 'Viña Demo SpA',
+        numeroINAPI: '1.000.001',
+        clases: '33',
+        fechaRegistro: '2017-03-10',
+        vencimiento: '2027-03-10',
+        costo: 1350000,
+        _demo: true
+      }
+    ],
+    etiqueta: [
+      {
+        id: 'etq_sb',
+        nombre: 'Reserva Sauvignon Blanc',
+        version: 2,
+        marcaId: 'mar_d1',
+        fecha: '2026-02-10',
+        disenador: 'Estudio Gráfico Demo',
+        aprobacionLegal: true,
+        costoDiseno: 850000,
+        costoFotografia: 0,
+        costoIlustracion: 250000,
+        tirajeEstimado: 20000,
+        tirajeMinimo: 5000,
+        costoImpresion: 92,
+        proveedorId: 'prv_etq',
+        varietal: 'Sauvignon Blanc',
+        graduacion: 13,
+        do: 'Valle de Casablanca',
+        denominacion: 'Vino',
+        contenido: '750 mL',
+        _demo: true
+      },
+      {
+        id: 'etq_cs',
+        nombre: 'Reserva Cabernet Sauvignon',
+        version: 1,
+        marcaId: 'mar_d1',
+        fecha: '2026-03-20',
+        disenador: 'Estudio Gráfico Demo',
+        aprobacionLegal: false,
+        costoDiseno: 900000,
+        costoFotografia: 300000,
+        costoIlustracion: 0,
+        tirajeEstimado: 25000,
+        tirajeMinimo: 5000,
+        costoImpresion: 98,
+        proveedorId: 'prv_etq',
+        varietal: 'Cabernet Sauvignon',
+        graduacion: 14,
+        do: 'Valle del Maipo',
+        denominacion: 'Vino',
+        contenido: '750 mL',
         _demo: true
       }
     ],

@@ -130,10 +130,10 @@ movimientos (solo agregar); **D** = documento con estado.
 | `dte_linea` | — | `dte_id`, `nombre`, `cantidad`, `unidad`, `precio`, `monto`, `cod_imp_adic` | |
 | `caf` | — | `tipo`, `desde`, `hasta`, `fecha_autorizacion`, `vence`, `adjunto_id` (XML del CAF cuando sea real) | Rangos del mismo tipo no se cruzan; con folios usados no se borra ni se achica |
 | `emisor` | — | `giro`, `acteco`, `direccion`, `comuna`, `resolucion_numero`, `resolucion_fecha`, `ambiente` (simulado/certificacion/produccion), `certificado_vence` | Una fila por viña; RUT y razón social vienen de `organization` |
-| `f29` | D | `periodo`, `estado` (borrador/revisado/declarado/pagado), `folio_sii`, `snapshot` jsonb | Único por periodo |
+| `f29` | D | `periodo`, `estado` (borrador/revisado/declarado/pagado), `folio_sii`, `fecha_pago`, `snapshot` jsonb | Único por periodo. Declarado o pagado = foto congelada (su remanente encadena el mes siguiente); servicio `guardarF29` (F6-2) |
 | `renta` | D | `anio_comercial`, `anio_tributario`, `estado`, `folio_sii`, `snapshot` jsonb | F7-2 (necesita el estado de resultados) |
-| `pago_impuesto` | — | `tipo` (F29/PPM/renta/patente/contribuciones), `periodo`, `fecha`, `monto`, `folio_sii`, `incluido_en_f29` | Candidato de conciliación |
-| `obligacion` | — | `clave` (p. ej. `F29-2026-09`), `estado` (pendiente/cumplida), `fecha`, `folio` | El calendario se genera en código y esta tabla guarda el cumplimiento |
+| `pago_impuesto` | — | `tipo` (F29/PPM/renta/patente/contribuciones/otro), `periodo`, `fecha`, `monto`, `folio_sii`, `incluido_en_f29`, `f29_id` | Candidato de conciliación. Los del F29 (id determinista) se crean al pagarlo y se quitan al revertirlo |
+| `obligacion` | — | `clave` (p. ej. `F29-2026-09`), `estado` (pendiente/cumplida), `fecha`, `folio` | Única por clave. El calendario se genera en código (`calendarioTributario`) y esta tabla guarda el cumplimiento |
 | `cumplimiento` | — | `nombre`, `tipo` (SAG/SII/Patente/INAPI/D.O./Certificación/Municipal/Otro), `numero`, `estado`, `fecha`, `vencimiento`, `aviso_dias`, `responsable`, `notas` | Adjunto: resolución o certificado |
 
 **Interfaz `ProveedorDTE`** (`packages/domain/src/entities/dte.ts`):

@@ -437,3 +437,6 @@ Corregidos al migrar el viñedo (F1):
     truncaba después de escapar y declaraba ISO-8859-1 escribiendo UTF-8 (bug 12). → Folios por secuencia dentro de
     los CAF, transiciones validadas, NC con los montos originales (guía y boleta se anulan), NC de compra positiva
     restada por tipo, recibido sincronizado con su compra o gasto, mismo filtro en filas y totales y XML en Latin-1.
+51. **F29**: guardar el borrador o cambiar el estado de un F29 ya declarado sobrescribía su foto y cambiaba el
+    remanente de los meses siguientes; volver de "pagado" dejaba los pagos de impuesto y la obligación cumplida. →
+    Declarado y pagado congelan la foto; revertir recalcula y quita los pagos y reabre la obligación.

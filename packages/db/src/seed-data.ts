@@ -32,6 +32,15 @@ export const demoDump = {
       { id: 'caf_39', tipo: 39, desde: 1, hasta: 500, fechaAutorizacion: '2026-01-15', _demo: true },
       { id: 'caf_61', tipo: 61, desde: 1, hasta: 100, fechaAutorizacion: '2026-01-15', _demo: true }
     ],
+    // F29 de septiembre pagado y octubre declarado (sin foto: se calculan al importar) y obligaciones cumplidas (F6-2).
+    f29: [
+      { id: 'f29_d09', periodo: '2026-09', estado: 'pagado', folioSII: '7700000101', fechaPago: '2026-10-20', _demo: true },
+      { id: 'f29_d10', periodo: '2026-10', estado: 'declarado', folioSII: '7700000102', _demo: true }
+    ],
+    obligacion: [
+      { id: 'obl_d1', key: 'CONTRIB-2026-3ª', estado: 'cumplida', fecha: '2026-09-28', _demo: true },
+      { id: 'obl_d2', key: 'PATALC-2026-2ª cuota', estado: 'cumplida', fecha: '2026-07-25', _demo: true }
+    ],
     cuartel: [
       {
         id: 'cua_c1',

@@ -1222,3 +1222,24 @@ test('DTE: nota de crédito parcial desde una factura, aparece en el libro; XML 
   await expect(page.getByRole('row').filter({ hasText: '61' }).filter({ hasText: '$1.000' }).first()).toBeVisible();
   await page.screenshot(shots('39-libro-ventas'));
 });
+
+test('tributario: pagar el F29 congela la foto, registra sus pagos y cumple la obligación', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/tributario?periodo=2026-11');
+  await expect(page.getByRole('region', { name: 'Borrador F29 2026-11' })).toContainText('Total débito fiscal IVA');
+  await page.getByRole('button', { name: 'Cambiar estado' }).click();
+  const d = page.getByRole('dialog', { name: /Estado del F29/ });
+  await d.getByLabel('Estado').selectOption('pagado');
+  await d.getByLabel(/Folio SII/).fill('7700000199');
+  await d.getByLabel(/Fecha de pago/).fill('2026-12-18');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect(d).toHaveCount(0);
+  await expect(page.getByText('Foto congelada al declarar')).toBeVisible();
+  await page.screenshot(shots('40-f29'));
+  await page.getByRole('tab', { name: 'Pagos de impuesto' }).click();
+  await expect(page.getByRole('row').filter({ hasText: 'nov 26' }).filter({ hasText: 'F29 pagado' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Calendario' }).click();
+  const item = page.getByRole('listitem').filter({ hasText: 'F29 y PPM período nov 26' });
+  await expect(item).toContainText('Cumplida');
+  await page.screenshot(shots('41-calendario-tributario'));
+});

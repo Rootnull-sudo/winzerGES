@@ -2,6 +2,7 @@
  * Reglas de alerta activas. Un archivo por módulo (`reglas/<modulo>.ts`) y una línea aquí, para que dos ramas en
  * paralelo no choquen. Al portar una regla de js/core/alerts.js, agrega su test en packages/db/test/alertas.test.ts.
  */
+import { vencimientosTributarios } from './tributario';
 import { certificadoPorVencer, dteRechazado, foliosPorAgotarse } from './dte';
 import type { Regla } from '../motor';
 import { desvioFA, fmlProlongada, mermaAlta, seguimientoAtrasado, so2Alto, so2Bajo, so2Critico, sobrecapacidad } from './bodega';
@@ -47,5 +48,7 @@ export const REGLAS: readonly Regla[] = [
   // DTE (F6-1)
   dteRechazado,
   foliosPorAgotarse,
-  certificadoPorVencer
+  certificadoPorVencer,
+  // Tributario (F6-2)
+  vencimientosTributarios
 ];

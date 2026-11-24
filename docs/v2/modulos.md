@@ -264,15 +264,17 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Paridad**: libros (`docsLibro`) y XML idénticos a v1 con los mismos datos.
 - **Importador**: emisor (de `config.empresa`), CAF y DTE de v1 (estados; las NC conservan su folio).
 
-### Tributario (F29, PPM, Renta) · ⬜ · F6 · L
-- **Tablas**: `f29`, `renta`, `pago_impuesto`, `obligacion`.
-- **Pantallas**: F29 con códigos del formulario y estados, PPM, renta, calendario tributario y configuración del
-  régimen.
-- **Cálculos**:
-  - `tax.f29` (ya portado);
-  - portar `remanente`, `ppmAnual`, `renta` y `calendario`.
-- **Servicio `pagarF29`**: crea los pagos de impuesto y cumple la obligación.
-- **Alertas**: vencimientos del calendario.
+### Tributario (F29, PPM) · ✅ · F6-2 · L
+- **Tablas**: `f29`, `pago_impuesto`, `obligacion`. Renta (IDPC) pasa a F7-2, con el estado de resultados.
+- **Cálculo**: `f29Periodos` arma cada mes desde los libros de DTE, las retenciones de honorarios y el impuesto único
+  de las remuneraciones, y encadena el remanente desde el primer mes con DTE (`encadenarF29`, paridad con
+  `tax.remanente`/`tax.f29`). `calendarioTributario` y `resumenPpm` con paridad v1.
+- **Servicio `guardarF29`**: declarado o pagado congela la foto; pagado crea los pagos F29 y PPM (incluido en el F29)
+  y cumple la obligación; volver a borrador o revisado lo deshace.
+- **Pantallas** (`/[org]/tributario`): F29 con códigos del formulario, estado y CSV; PPM del año; pagos de impuesto;
+  calendario con cumplida/pendiente/vencida; régimen (enlace a Configuración › Parámetros).
+- **Alerta**: `tributario.calendario` (vence en 10 días: aviso; vencido hasta 30 días: error), solo con actividad
+  tributaria registrada.
 
 ### Conciliación bancaria · ⬜ · F6 · L
 - **Tablas**: `cuenta_banco`, `cartola`, `mov_banco`, `conciliacion_match`.

@@ -26,6 +26,9 @@ import {
   emisorInput,
   cafInput,
   dteV1Input,
+  f29V1Input,
+  pagoImpuestoInput,
+  obligacionInput,
   pagoInput,
   type PagoInput,
   type CobroInput,
@@ -86,6 +89,9 @@ import {
   emisor,
   caf,
   dte,
+  f29,
+  pagoImpuesto,
+  obligacion,
   estanque,
   fenologia,
   fermentacion,
@@ -113,6 +119,7 @@ import { confirmarEnvasado, guardarOrden, metaOrden } from './services/envasado'
 import { anularVenta, confirmarVenta, guardarVenta, metaVenta } from './services/ventas';
 import { aplicarCobro, metaCobro, registrarCobro } from './services/cobros';
 import { ajustarSecuencia } from './services/secuencias';
+import { guardarF29, marcarObligacion, metaF29, metaObligacion, metaPagoImpuesto } from './services/tributario';
 import { guardarEmisor, idDteCompra, idDteGasto, idDteVenta, importarDte, metaCaf, metaDte, metaEmisor } from './services/dte';
 import { withOrg } from './tenancy';
 
@@ -697,6 +704,60 @@ const IMPORTERS: Record<string, Importer> = {
       );
       const [d] = await tx.select().from(dte).where(eq(dte.id, r.id));
       return d as Record<string, unknown>;
+    }
+  },
+  // F6-2: F29 de v1 con su foto (declarados y pagados quedan congelados tal cual); sin foto, se calcula con guardarF29.
+  f29: {
+    table: f29,
+    schema: f29V1Input,
+    meta: metaF29,
+    guardar: async (tx, actor, data) => {
+      const r = data as {
+        id: string;
+        periodo: string;
+        estado: string;
+        folioSII?: string | null;
+        snapshot?: Record<string, unknown> | null;
+        fechaPago?: string | null;
+      };
+      if (!r.snapshot)
+        return guardarF29(tx, actor, {
+          periodo: r.periodo,
+          estado: r.estado as never,
+          folioSii: r.folioSII ?? null,
+          fechaPago: r.fechaPago ?? r.periodo + '-20'
+        });
+      const [ya] = await tx
+        .select({ id: f29.id })
+        .from(f29)
+        .where(and(eq(f29.periodo, r.periodo), isNull(f29.deletedAt)));
+      return upsert(tx, f29, actor, metaF29, { id: ya?.id ?? r.id, periodo: r.periodo, estado: r.estado, folioSii: r.folioSII ?? null, snapshot: r.snapshot });
+    }
+  },
+  pagoImpuesto: {
+    table: pagoImpuesto,
+    schema: pagoImpuestoInput,
+    meta: metaPagoImpuesto,
+    adaptar: (r) => ({
+      ...r,
+      periodo: String(r.periodo ?? String(r.fecha ?? '').slice(0, 7)),
+      folioSii: r.folioSII ?? null,
+      monto: Math.round(Number(r.monto) || 0)
+    })
+  },
+  // v1: obligacion.key → clave; una fila por clave (id determinista, el mismo que usa marcarObligacion).
+  obligacion: {
+    table: obligacion,
+    schema: obligacionInput,
+    meta: metaObligacion,
+    adaptar: (r) => ({ clave: r.key ?? r.clave, estado: r.estado === 'cumplida' ? 'cumplida' : 'pendiente', fecha: r.fecha || null, folio: r.folio ?? null }),
+    guardar: async (tx, actor, data) => {
+      await marcarObligacion(tx, actor, data as never);
+      const [o] = await tx
+        .select()
+        .from(obligacion)
+        .where(and(eq(obligacion.clave, String(data.clave)), isNull(obligacion.deletedAt)));
+      return o as Record<string, unknown>;
     }
   }
 };

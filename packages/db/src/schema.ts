@@ -1583,3 +1583,59 @@ export const dteLinea = pgTable(
   },
   (t) => [index('dte_linea_dte_idx').on(t.orgId, t.dteId)]
 );
+
+/* --- Tributario: F29, pagos de impuesto y obligaciones del calendario (F6-2, online) --- */
+export const f29 = pgTable(
+  'f29',
+  {
+    ...base(),
+    /** AAAA-MM */
+    periodo: text('periodo').notNull(),
+    /** borrador | revisado | declarado | pagado (declarado y pagado congelan la foto) */
+    estado: text('estado').notNull().default('borrador'),
+    folioSii: text('folio_sii'),
+    fechaPago: text('fecha_pago'),
+    /** Foto del cálculo (tax.f29): códigos del formulario y remanente siguiente. */
+    snapshot: jsonb('snapshot').$type<Record<string, unknown>>().notNull()
+  },
+  (t) => [
+    uniqueIndex('f29_periodo_uq')
+      .on(t.orgId, t.periodo)
+      .where(sql`${t.deletedAt} is null`)
+  ]
+);
+
+export const pagoImpuesto = pgTable(
+  'pago_impuesto',
+  {
+    ...base(),
+    /** F29 | PPM | patente | contribuciones | renta | otro */
+    tipo: text('tipo').notNull(),
+    periodo: text('periodo').notNull(),
+    fecha: text('fecha').notNull(),
+    monto: money('monto').notNull(),
+    folioSii: text('folio_sii'),
+    /** El PPM ya va dentro del pago del F29 (no es un cargo bancario aparte). */
+    incluidoEnF29: boolean('incluido_en_f29').notNull().default(false),
+    f29Id: text('f29_id').references(() => f29.id)
+  },
+  (t) => [index('pago_impuesto_periodo_idx').on(t.orgId, t.periodo)]
+);
+
+export const obligacion = pgTable(
+  'obligacion',
+  {
+    ...base(),
+    /** Clave del calendario, p. ej. F29-2026-09, CONTRIB-2027-1ª */
+    clave: text('clave').notNull(),
+    /** pendiente | cumplida */
+    estado: text('estado').notNull(),
+    fecha: text('fecha'),
+    folio: text('folio')
+  },
+  (t) => [
+    uniqueIndex('obligacion_clave_uq')
+      .on(t.orgId, t.clave)
+      .where(sql`${t.deletedAt} is null`)
+  ]
+);

@@ -1040,3 +1040,53 @@ test('marca y etiquetas: marca por renovar y etiqueta con prorrateo del diseño'
   await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
   await expect(fila).toHaveCount(0);
 });
+
+test('envasado: orden con costo en vivo; confirmar descuenta botellas y anular las devuelve', async ({ page }) => {
+  await login(page, 'enologo@winzer.test');
+  await page.goto('/vina-demo/envasado');
+  const stockEnvase = async (d: import('@playwright/test').Locator) =>
+    Number(((await d.getByRole('list', { name: 'Stock de materiales' }).innerText()).match(/Envase\s+[\d.]+ \/ ([\d.]+)/)?.[1] ?? '0').replace(/\./g, ''));
+  const llenar = async (d: import('@playwright/test').Locator) => {
+    const est = d.getByLabel(/^Estanque/);
+    await est.selectOption((await est.locator('option', { hasText: 'E-01' }).getAttribute('value'))!);
+    await d.getByLabel(/^Formato/).selectOption({ label: 'Botella 0,75 L' });
+    await d.getByLabel(/^Unidades/).fill('120');
+    await d.getByLabel(/^Envase/).selectOption({ index: 1 });
+  };
+  await page.getByRole('button', { name: 'Nueva orden' }).click();
+  let d = page.getByRole('dialog', { name: 'Nueva orden de envasado' });
+  await llenar(d);
+  await d.getByLabel(/^Mano de obra/).fill('12000');
+  const costo = d.getByRole('complementary', { name: 'Costo por botella' });
+  await expect(costo).toContainText('Mano de obra');
+  await expect(costo).toContainText('$100'); // 12.000 ÷ 120
+  const antes = await stockEnvase(d);
+  await page.screenshot(shots('34-orden-envasado'));
+  page.on('dialog', (x) => x.accept());
+  await d.getByRole('button', { name: 'Confirmar' }).click();
+  await expect(page.getByText('Orden confirmada: bodega e insumos actualizados.')).toBeVisible();
+  const fila = page
+    .getByRole('row', { name: /Confirmada/ })
+    .filter({ hasText: '120' })
+    .first();
+  await expect(fila).toContainText('Botella 0,75 L');
+
+  // El stock del envase bajó en 120.
+  await page.getByRole('button', { name: 'Nueva orden' }).click();
+  d = page.getByRole('dialog', { name: 'Nueva orden de envasado' });
+  await llenar(d);
+  expect(await stockEnvase(d)).toBe(antes - 120);
+  await d.getByRole('button', { name: 'Cancelar' }).click();
+
+  await page.getByRole('tab', { name: 'Validador de etiqueta' }).click();
+  await expect(page.getByRole('region', { name: 'Validación de rotulación' })).toContainText('Contenido neto');
+
+  await page.getByRole('tab', { name: 'Órdenes' }).click();
+  await fila.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Anular' }).click();
+  await expect(page.getByText('Orden anulada.')).toBeVisible();
+  await page.getByRole('button', { name: 'Nueva orden' }).click();
+  d = page.getByRole('dialog', { name: 'Nueva orden de envasado' });
+  await llenar(d);
+  expect(await stockEnvase(d)).toBe(antes);
+});

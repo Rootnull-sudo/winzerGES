@@ -416,3 +416,8 @@ Corregidos al migrar el viñedo (F1):
     en la fecha de la boleta, guardada como foto; N° único por RUT; pago con fecha y reversible.
 45. **Amortización de marca sin fechas** (costo ÷ 120 por mes, para siempre). → Prorrateo diario entre el registro y
     el vencimiento (`amortizacionMarca`). Una etiqueta usada por órdenes no se borra.
+46. **Envasado sin atomicidad ni validación de insumos**: la orden se guardaba y un listener aparte descontaba
+    bodega e insumos (sin validar stock de materiales, ni caja ni etiqueta); los litros guardados (redondeados) no
+    eran los descontados; el código era `count + 1` y anular no existía (borrar no devolvía el lote). →
+    `confirmarEnvasado` en una transacción, con validación de todo, foto de costo, código por secuencia y
+    `anularOrden` que revierte todo. La merma máxima es un parámetro (v1: 3 fijo).

@@ -21,6 +21,7 @@ import {
   formatoInput,
   marcaInput,
   etiquetaInput,
+  ordenEnvasadoInput,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -74,6 +75,7 @@ import {
   formato,
   marca,
   etiqueta,
+  ordenEnvasado,
   estanque,
   fenologia,
   fermentacion,
@@ -97,6 +99,7 @@ import { guardarGasto, guardarPresupuesto, metaGasto, metaPresupuesto } from './
 import { guardarHonorario, marcarHonorarioPagado, metaHonorario, metaTrabajador } from './services/personas';
 import { importarRemuneracion, metaRemuneracion } from './services/remuneraciones';
 import { metaEtiqueta, metaFormato, metaMarca } from './services/marcas';
+import { confirmarEnvasado, guardarOrden, metaOrden } from './services/envasado';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -412,6 +415,37 @@ const IMPORTERS: Record<string, Importer> = {
     refsOpcionales: { marcaId: marca, proveedorId: proveedor },
     adaptar: ({ version, ...r }) => ({ ...r, versionDiseno: version ?? 1 })
   },
+  // Confirmadas: con la foto de costo de v1 (si la trae) y sus movimientos regenerados por confirmarEnvasado.
+  ordenEnvasado: {
+    table: ordenEnvasado,
+    schema: ordenEnvasadoInput,
+    meta: metaOrden,
+    entidadV2: 'orden_envasado',
+    refs: ['estanqueId', 'loteId', 'formatoId', 'envaseId', 'cierreId', 'capsulaId', 'cajaId', 'etiquetaId', 'etiquetaInsumoId'],
+    refsOpcionales: { etiquetaId: etiqueta, cierreId: insumo, capsulaId: insumo, cajaId: insumo, etiquetaInsumoId: insumo },
+    guardar: async (tx, actor, data) => {
+      const [ya] = await tx.select().from(ordenEnvasado).where(eq(ordenEnvasado.id, data.id));
+      if (ya && ya.estado !== 'borrador') return ya as Record<string, unknown>;
+      const rec = await guardarOrden(tx, actor, data as never);
+      return rec;
+    },
+    despues: async (tx, actor, r, id) => {
+      if (r.estado !== 'confirmada') return;
+      const [o] = await tx.select({ estado: ordenEnvasado.estado }).from(ordenEnvasado).where(eq(ordenEnvasado.id, id));
+      if (o?.estado !== 'borrador') return;
+      const foto =
+        r.costoUnitario != null
+          ? {
+              codigo: r.codigo ? String(r.codigo) : null,
+              costoUnitario: Number(r.costoUnitario),
+              costoTotal: Number(r.costoTotal) || 0,
+              litrosConsumidos: Number(r.litrosConsumidos) || 0,
+              costoPartes: (r.costoPartes as Record<string, number>) ?? {}
+            }
+          : undefined;
+      await confirmarEnvasado(tx, actor, id, foto);
+    }
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,
@@ -420,7 +454,7 @@ const IMPORTERS: Record<string, Importer> = {
     refs: ['insumoId'],
     // Los consumos de aplicaciones, SO₂ y aditivos los vuelven a generar sus reacciones (no se duplican).
     adaptar: (r, orgId) =>
-      r.tipo === 'aplicacion' || r.tipo === 'so2' || r.tipo === 'aditivo' || r.tipo === 'compra'
+      r.tipo === 'aplicacion' || r.tipo === 'so2' || r.tipo === 'aditivo' || r.tipo === 'compra' || r.tipo === 'consumo_envasado'
         ? null
         : { ...r, ...origenDeRef(r.ref, orgId), ref: undefined, fecha: String(r.fecha ?? r.createdAt ?? '').slice(0, 10) }
   }

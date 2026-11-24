@@ -70,6 +70,7 @@ export const PARAMETROS: readonly ParametroDef[] = [
   p('enologia.desviacionDias', 'Desviación tolerada del calendario', 'entero', { unidad: 'días' }),
   p('enologia.kgCajonMin', 'Kilos por cajón (mínimo)', 'numero', { unidad: 'kg' }),
   p('enologia.kgCajonMax', 'Kilos por cajón (máximo)', 'numero', { unidad: 'kg' }),
+  p('enologia.mermaEnvasadoMax', 'Merma de envasado máxima', 'numero', { unidad: '%', ayuda: 'Sobre este valor se avisa en la orden.' }),
   p('enologia.tempBaseGD', 'Temperatura base de grados-día', 'numero', { unidad: '°C' }),
   p('finanzas.margenMinimo', 'Margen mínimo', 'tasa'),
   p('finanzas.saldoInicialCaja', 'Saldo inicial de caja', 'clp'),

@@ -1331,3 +1331,78 @@ export const etiqueta = pgTable('etiqueta', {
   denominacion: text('denominacion'),
   contenido: text('contenido')
 });
+
+/* --- Comercial: órdenes de envasado y libro de producto terminado (F5-2, online) --- */
+export const ordenEnvasado = pgTable(
+  'orden_envasado',
+  {
+    ...base(),
+    codigo: text('codigo'),
+    fecha: text('fecha').notNull(),
+    estanqueId: text('estanque_id')
+      .notNull()
+      .references(() => estanque.id),
+    loteId: text('lote_id')
+      .notNull()
+      .references(() => lote.id),
+    formatoId: text('formato_id')
+      .notNull()
+      .references(() => formato.id),
+    unidades: integer('unidades').notNull(),
+    mermaPct: num('merma_pct').notNull().default(1.5),
+    responsable: text('responsable'),
+    envaseId: text('envase_id')
+      .notNull()
+      .references(() => insumo.id),
+    cierreId: text('cierre_id').references(() => insumo.id),
+    capsulaId: text('capsula_id').references(() => insumo.id),
+    cajaId: text('caja_id').references(() => insumo.id),
+    etiquetaId: text('etiqueta_id').references(() => etiqueta.id),
+    etiquetaInsumoId: text('etiqueta_insumo_id').references(() => insumo.id),
+    manoObra: money('mano_obra').notNull().default(0),
+    energiaAgua: money('energia_agua').notNull().default(0),
+    graduacion: num('graduacion'),
+    declaraDO: boolean('declara_do').notNull().default(false),
+    pctUvaZona: num('pct_uva_zona'),
+    certificadoDO: text('certificado_do'),
+    observaciones: text('observaciones'),
+    /** borrador | confirmada | anulada */
+    estado: text('estado').notNull().default('borrador'),
+    // Congelados al confirmar.
+    costoUnitario: num('costo_unitario'),
+    costoTotal: money('costo_total'),
+    litrosConsumidos: num('litros_consumidos'),
+    costoPartes: jsonb('costo_partes'),
+    confirmadaEn: ts('confirmada_en')
+  },
+  (t) => [
+    uniqueIndex('orden_envasado_codigo_uq')
+      .on(t.orgId, t.codigo)
+      .where(sql`${t.deletedAt} is null and ${t.codigo} is not null`),
+    index('orden_envasado_fecha_idx').on(t.orgId, t.fecha)
+  ]
+);
+
+/** Libro de botellas: + envasar, − vender, ± ajustes. El stock se deriva (v_stock_producto). */
+export const movProducto = pgTable(
+  'mov_producto',
+  {
+    ...base(),
+    fecha: text('fecha').notNull(),
+    ordenEnvasadoId: text('orden_envasado_id')
+      .notNull()
+      .references(() => ordenEnvasado.id),
+    formatoId: text('formato_id')
+      .notNull()
+      .references(() => formato.id),
+    loteId: text('lote_id').references(() => lote.id),
+    unidades: integer('unidades').notNull(),
+    /** envasado | venta | anulacion | ajuste | muestra | quiebre */
+    tipo: text('tipo').notNull(),
+    costoUnitario: num('costo_unitario'),
+    /** FK a venta_linea: la agrega F5-3. */
+    ventaLineaId: text('venta_linea_id'),
+    motivo: text('motivo')
+  },
+  (t) => [index('mov_producto_orden_idx').on(t.orgId, t.ordenEnvasadoId)]
+);

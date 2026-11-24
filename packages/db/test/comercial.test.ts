@@ -7,7 +7,12 @@ import { marcaPorVencer, marcaVencida } from '../src/alertas/reglas/comercial';
 import { adminDb } from '../src/client';
 import type { Actor } from '../src/repo';
 import { organization } from '../src/schema';
-import { eliminarMarca, guardarEtiqueta, guardarFormato, guardarMarca } from '../src/services/marcas';
+import type { Mutation } from '@winzer/domain';
+import { anularOrden, confirmarEnvasado, guardarOrden } from '../src/services/envasado';
+import { guardarInsumo } from '../src/services/insumos';
+import { eliminarFormato, eliminarMarca, guardarEtiqueta, guardarFormato, guardarMarca } from '../src/services/marcas';
+import { guardarTemporada, listarTemporadas } from '../src/services/temporadas';
+import * as sync from '../src/sync';
 import { withOrg } from '../src/tenancy';
 
 const run = randomUUID().slice(0, 8);
@@ -51,5 +56,109 @@ describe('formatos, marcas y etiquetas', () => {
     await calcularAlertas(A, [marcaVencida, marcaPorVencer], '2027-04-01');
     const [v] = await withOrg(A, (tx) => tx.execute<{ regla: string }>(sql`select regla from alerta where estado = 'abierta'`));
     expect(v!.regla).toBe('marca.vencida');
+  });
+});
+
+describe('órdenes de envasado', () => {
+  const push = async (entity: string, data: Record<string, unknown>, id: string = randomUUID()) => {
+    const m: Mutation = { mutationId: randomUUID(), entity, op: 'upsert', id, baseVersion: null, data, createdAt: new Date().toISOString() };
+    const [r] = await sync.push(admin, [m]);
+    expect(r, JSON.stringify(r)).toMatchObject({ status: 'ok' });
+    return id;
+  };
+  const stock = async (insumoId: string) =>
+    Number((await withOrg(A, (tx) => tx.execute<{ stock: string }>(sql`select stock from v_stock_insumo where insumo_id = ${insumoId}`)))[0]!.stock);
+  const litros = async () =>
+    Number(
+      (
+        await withOrg(A, (tx) =>
+          tx.execute<{ l: string }>(sql`select coalesce(sum(litros), 0) as l from mov_bodega where lote_id = ${LT} and deleted_at is null`)
+        )
+      )[0]!.l
+    );
+  const prod = async (ordenId: string) =>
+    Number(
+      (await withOrg(A, (tx) => tx.execute<{ stock: string }>(sql`select stock from v_stock_producto where orden_envasado_id = ${ordenId}`)))[0]?.stock ?? 0
+    );
+  let LT = '',
+    E = '',
+    F = '',
+    BOT = '',
+    COR = '',
+    CAJA = '';
+  const orden = (extra: Record<string, unknown> = {}) =>
+    withOrg(A, (tx) =>
+      guardarOrden(tx, admin, {
+        fecha: '2026-08-01',
+        estanqueId: E,
+        loteId: LT,
+        formatoId: F,
+        unidades: 1200,
+        mermaPct: 1.5,
+        envaseId: BOT,
+        cierreId: COR,
+        cajaId: CAJA,
+        manoObra: 120_000,
+        ...extra
+      })
+    );
+
+  beforeAll(async () => {
+    await withOrg(A, (tx) => guardarTemporada(tx, admin, { anio: 2027, inicio: '2026-07-01', fin: '2027-06-30' }));
+    const T = (await withOrg(A, listarTemporadas))[0]!.id;
+    LT = await push('lote', { codigo: 'L-EN', temporadaId: T, variedad: 'Syrah', tipo: 'tinto', estado: 'En guarda', fechaVendimiaPlan: '2026-03-01' });
+    E = await push('estanque', { codigo: 'EN-1', capacidad: 5000, tipo: 'Guarda', estado: 'operativo' });
+    await push('mov_bodega', { fecha: '2026-07-15', estanqueId: E, loteId: LT, litros: 1000, tipo: 'entrada', origen: 'vino' });
+    F = String((await withOrg(A, (tx) => guardarFormato(tx, admin, { nombre: 'Botella test', litros: 0.75, unidadesCaja: 12 }))).id);
+    const ins = async (nombre: string, tipo: 'Envase vidrio' | 'Cierre' | 'Caja', precio: number, stockInicial: number) =>
+      String((await withOrg(A, (tx) => guardarInsumo(tx, admin, { nombre, categoria: 'envasado', tipo, unidad: 'un', precio, stockInicial }))).id);
+    BOT = await ins('Botella EN', 'Envase vidrio', 420, 2000);
+    COR = await ins('Corcho EN', 'Cierre', 170, 1250);
+    CAJA = await ins('Caja EN', 'Caja', 960, 100);
+  });
+
+  it('confirmar descuenta bodega, insumos (caja entera) y suma botellas, con costo congelado y código', async () => {
+    const o = await orden();
+    const c = await withOrg(A, (tx) => confirmarEnvasado(tx, admin, String(o.id)));
+    expect(c.codigo).toBe('OE-2026-0001');
+    expect(Number(c.litrosConsumidos)).toBe(913.5); // 1.200 × 0,75 × 1,015
+    expect(await litros()).toBeCloseTo(1000 - 913.5, 6);
+    expect([await stock(BOT), await stock(COR), await stock(CAJA)]).toEqual([800, 50, 0]); // 100 cajas de 12
+    expect(await prod(String(o.id))).toBe(1200);
+    // costo unitario = vino (0) + botella 420 + corcho 170 + caja 960/12 + MO 120.000/1.200
+    expect(Number(c.costoUnitario)).toBeCloseTo(420 + 170 + 80 + 100, 6);
+    await expect(withOrg(A, (tx) => eliminarFormato(tx, admin, F))).rejects.toThrow(/órdenes de envasado/);
+  });
+
+  it('si falta un insumo no se escribe nada (atómico)', async () => {
+    const o = await orden({ unidades: 100 });
+    await expect(withOrg(A, (tx) => confirmarEnvasado(tx, admin, String(o.id)))).rejects.toThrow(/Falta stock de insumos: Corcho EN/);
+    expect(await litros()).toBeCloseTo(86.5, 6);
+    expect(await stock(BOT)).toBe(800);
+  });
+
+  it('anular revierte todo; con ventas o ajustes de sus botellas, no', async () => {
+    const [o] = await withOrg(A, (tx) => tx.execute<{ id: string }>(sql`select id from orden_envasado where codigo = 'OE-2026-0001'`));
+    await withOrg(A, (tx) => anularOrden(tx, admin, o!.id));
+    expect(await litros()).toBeCloseTo(1000, 6);
+    expect([await stock(BOT), await stock(COR), await stock(CAJA)]).toEqual([2000, 1250, 100]);
+    const o2 = await orden({ unidades: 120 });
+    await withOrg(A, (tx) => confirmarEnvasado(tx, admin, String(o2.id)));
+    await withOrg(A, (tx) =>
+      tx.execute(
+        sql`insert into mov_producto (id, org_id, fecha, orden_envasado_id, formato_id, unidades, tipo) values (${randomUUID()}, ${A}, '2026-08-05', ${o2.id}, ${F}, -12, 'quiebre')`
+      )
+    );
+    await expect(withOrg(A, (tx) => anularOrden(tx, admin, String(o2.id)))).rejects.toThrow(/ventas o ajustes/);
+  });
+
+  it('el lote pasa a "Envasado" cuando queda bajo 1 L', async () => {
+    const quedan = await litros();
+    const unidades = Math.floor(quedan / (0.75 * 1.015));
+    const o = await orden({ unidades, cierreId: null, cajaId: null });
+    await withOrg(A, (tx) => confirmarEnvasado(tx, admin, String(o.id)));
+    expect(await litros()).toBeLessThan(1);
+    const [l] = await withOrg(A, (tx) => tx.execute<{ estado: string }>(sql`select estado from lote where id = ${LT}`));
+    expect(l!.estado).toBe('Envasado');
   });
 });

@@ -1,5 +1,5 @@
 import { schema, withOrg } from '@winzer/db';
-import { asc, isNull } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import { NoAccess } from '@/components/no-access';
 import { PageHeader } from '@/components/ui/page';
 import { orgWith } from '@/lib/session';
@@ -12,12 +12,16 @@ export default async function Page({ params }: { params: Promise<{ org: string }
   const { org } = await params;
   const { allowed, fueraDePlan, actor } = await orgWith(org, 'marca');
   if (!allowed) return <NoAccess modulo="marca y etiquetas" plan={fueraDePlan} />;
-  const { marca, etiqueta, proveedor } = schema;
-  const [marcas, etiquetas, proveedores] = await withOrg(actor.orgId, (tx) =>
+  const { marca, etiqueta, proveedor, ordenEnvasado } = schema;
+  const [marcas, etiquetas, proveedores, ordenes] = await withOrg(actor.orgId, (tx) =>
     Promise.all([
       tx.select().from(marca).where(isNull(marca.deletedAt)).orderBy(asc(marca.nombre)),
       tx.select().from(etiqueta).where(isNull(etiqueta.deletedAt)).orderBy(asc(etiqueta.nombre)),
-      tx.select({ id: proveedor.id, nombre: proveedor.nombre }).from(proveedor).where(isNull(proveedor.deletedAt)).orderBy(asc(proveedor.nombre))
+      tx.select({ id: proveedor.id, nombre: proveedor.nombre }).from(proveedor).where(isNull(proveedor.deletedAt)).orderBy(asc(proveedor.nombre)),
+      tx
+        .select({ etiquetaId: ordenEnvasado.etiquetaId, unidades: ordenEnvasado.unidades })
+        .from(ordenEnvasado)
+        .where(and(eq(ordenEnvasado.estado, 'confirmada'), isNull(ordenEnvasado.deletedAt)))
     ])
   );
   const sin = <T extends Record<string, unknown>>({
@@ -43,7 +47,7 @@ export default async function Page({ params }: { params: Promise<{ org: string }
           ...(sin(e) as EtiquetaFila),
           costoImpresion: Number(e.costoImpresion),
           graduacion: e.graduacion == null ? null : Number(e.graduacion),
-          producidas: 0
+          producidas: ordenes.filter((o) => o.etiquetaId === e.id).reduce((t, o) => t + o.unidades, 0)
         }))}
         proveedores={proveedores}
       />

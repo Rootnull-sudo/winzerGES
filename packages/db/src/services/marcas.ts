@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import type { Tx } from '../client';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
 import { etiqueta, formato, marca } from '../schema';
+import { usadoPorOrdenes } from './envasado';
 
 export const metaFormato: EntityMeta = { entity: 'formato', module: 'envasado', label: 'formatos', display: (r) => String(r.nombre) };
 export const metaMarca: EntityMeta = { entity: 'marca', module: 'marca', label: 'marcas', display: (r) => String(r.nombre) };
@@ -28,11 +29,6 @@ export async function guardarMarca(tx: Tx, actor: Actor, input: MarcaInput, vers
 export async function guardarEtiqueta(tx: Tx, actor: Actor, input: EtiquetaInput, version?: number) {
   const data = etiquetaInput.parse(input);
   return upsert(tx, etiqueta, actor, metaEtiqueta, { ...data, id: data.id ?? randomUUID() }, opts(version));
-}
-
-/** ¿Lo usa alguna orden de envasado? (F5-2 crea la tabla de órdenes y completa esta consulta). */
-async function usadoPorOrdenes(_tx: Tx, _campo: 'formatoId' | 'etiquetaId', _id: string): Promise<boolean> {
-  return false;
 }
 
 export async function eliminarFormato(tx: Tx, actor: Actor, id: string) {

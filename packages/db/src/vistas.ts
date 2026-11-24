@@ -83,5 +83,17 @@ export const VISTAS: Vista[] = [
             where a.gasto_id = g.id and a.deleted_at is null
           ) ap
           where g.deleted_at is null and g.estado = 'pendiente'`
+  },
+  {
+    // Producto terminado (F5-2): unidades por orden de envasado según el libro mov_producto, valorizadas al costo
+    // unitario congelado de la orden (v1: inventory.stockOrden / valorProductoTerminado).
+    nombre: 'v_stock_producto',
+    sql: `select o.org_id, o.id as orden_envasado_id, o.codigo, o.formato_id, o.lote_id, o.fecha, o.unidades as producidas,
+            o.costo_unitario, coalesce(sum(m.unidades), 0) as stock,
+            coalesce(sum(m.unidades), 0) * coalesce(o.costo_unitario, 0) as valor
+          from orden_envasado o
+          left join mov_producto m on m.orden_envasado_id = o.id and m.deleted_at is null
+          where o.deleted_at is null and o.estado = 'confirmada'
+          group by o.id`
   }
 ];

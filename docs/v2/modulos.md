@@ -146,7 +146,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 
 ## Comercial (online)
 
-### Envasado y etiquetado · ⬜ · F5 · L (espera a Bodega)
+### Envasado y etiquetado · ✅ · F5 · L (espera a Bodega)
 - **Tablas**: `formato`, `orden_envasado`, `mov_producto`.
 - **Pantallas**:
   - órdenes de envasado, con costo unitario por componente en vivo y litros necesarios vs disponibles;

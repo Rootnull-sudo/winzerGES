@@ -59,6 +59,8 @@ export interface OrgConfig {
     kgCajonMin: number;
     kgCajonMax: number;
     tempBaseGD: number;
+    /** Merma de envasado sobre la cual se avisa (%; v1: 3 fijo). */
+    mermaEnvasadoMax: number;
   };
   finanzas: { margenMinimo: number; saldoInicialCaja: number; patrimonio: number; capitalInvertido: number };
   alertas: { stockMinimoDiasVencimiento: number; foliosPct: number; inactividadMin: number };
@@ -118,7 +120,8 @@ export const DEFAULT_CONFIG: OrgConfig = {
     desviacionDias: 3,
     kgCajonMin: 18,
     kgCajonMax: 20,
-    tempBaseGD: 10
+    tempBaseGD: 10,
+    mermaEnvasadoMax: 3
   },
   finanzas: { margenMinimo: 0.25, saldoInicialCaja: 15_000_000, patrimonio: 120_000_000, capitalInvertido: 150_000_000 },
   alertas: { stockMinimoDiasVencimiento: 30, foliosPct: 0.8, inactividadMin: 15 }

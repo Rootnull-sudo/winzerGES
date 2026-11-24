@@ -92,7 +92,7 @@ flowchart LR
 | Issue | Tablas | Tamaño |
 |---|---|---|
 | F5-1 Formatos, marca y etiquetas (amortización de marca con fechas; alerta de renovación) ✅ | `formato`, `marca`, `etiqueta` | M |
-| F5-2 Órdenes de envasado + `confirmarEnvasado` (requiere F2-2) | `orden_envasado`, `mov_producto` | L |
+| F5-2 Órdenes de envasado + `confirmarEnvasado` (atómico; valida bodega, insumos y D.O.; anular; `costoLitroLote` y `costoEnvasado` con paridad v1; validador Ley 18.455) ✅ | `orden_envasado`, `mov_producto` | L |
 | F5-3 Ventas con líneas + `confirmarVenta` / `anularVenta` (DTE simulado mínimo) | `venta`, `venta_linea` | L |
 | F5-4 Cobros aplicados y cuentas por cobrar (migrar `cobro.venta_id`) | `cobro_aplicacion` | M |
 | F5-5 Inventarios y ajustes | — | M |

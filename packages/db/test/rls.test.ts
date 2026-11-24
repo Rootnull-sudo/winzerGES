@@ -181,7 +181,7 @@ describe('sync offline', () => {
 
 describe('importador v1', () => {
   it('importa el demo, es idempotente y reporta pendientes', async () => {
-    const dump = { ...demoDump, data: { ...demoDump.data, venta: [{ id: 'v1' }], ordenEnvasado: [{ id: 'o1' }, { id: 'o2' }] } };
+    const dump = { ...demoDump, data: { ...demoDump.data, venta: [{ id: 'v1' }], dte: [{ id: 'd1' }, { id: 'd2' }] } };
     const r1 = await importV1(actorB, dump as never);
     expect(r1.importados).toEqual({
       cuartel: 3,
@@ -198,6 +198,7 @@ describe('importador v1', () => {
       formato: 4,
       marca: 1,
       etiqueta: 2,
+      ordenEnvasado: 3,
       cobro: 2,
       insumo: 11,
       movInsumo: 1,
@@ -217,7 +218,7 @@ describe('importador v1', () => {
       analisis: 4
     });
     expect(r1.omitidos).toEqual([]);
-    expect(r1.pendientes).toEqual({ venta: 1, ordenEnvasado: 2 });
+    expect(r1.pendientes).toEqual({ venta: 1, dte: 2 });
     await importV1(actorB, dump as never);
     const n = await withOrg(B, (tx) => tx.execute<{ n: number }>(sql`select count(*)::int n from cuartel where demo`));
     expect(n[0]!.n).toBe(3);

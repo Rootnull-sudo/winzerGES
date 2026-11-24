@@ -3,7 +3,7 @@
  * Clientes y cobranza — módulo ONLINE: escribe directo en Postgres vía Server Actions.
  * Patrón: requireOrg → withOrg (RLS) → upsert/softDelete (permisos + versión + auditoría) → revalidatePath.
  */
-import { ConflictError, schema, softDelete, upsert, withOrg } from '@winzer/db';
+import { clienteTieneVentas, ConflictError, schema, softDelete, upsert, withOrg } from '@winzer/db';
 import { clienteInput, cobroInput, PermissionError } from '@winzer/domain';
 import { and, eq, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -50,6 +50,7 @@ export async function deleteCliente(slug: string, id: string): Promise<Result> {
         .where(and(eq(schema.cobro.clienteId, id), isNull(schema.cobro.deletedAt)))
         .limit(1);
       if (cobros.length) throw new PermissionError('No se puede eliminar: el cliente tiene cobros registrados.');
+      if (await clienteTieneVentas(tx, id)) throw new PermissionError('No se puede eliminar: el cliente tiene ventas registradas.');
       await softDelete(tx, schema.cliente, actor, metaCliente, id);
     });
   } catch (e) {

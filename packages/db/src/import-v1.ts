@@ -22,6 +22,7 @@ import {
   marcaInput,
   etiquetaInput,
   ordenEnvasadoInput,
+  ventaInput,
   pagoInput,
   type PagoInput,
   anioDeFecha,
@@ -76,6 +77,7 @@ import {
   marca,
   etiqueta,
   ordenEnvasado,
+  venta,
   estanque,
   fenologia,
   fermentacion,
@@ -100,6 +102,8 @@ import { guardarHonorario, marcarHonorarioPagado, metaHonorario, metaTrabajador 
 import { importarRemuneracion, metaRemuneracion } from './services/remuneraciones';
 import { metaEtiqueta, metaFormato, metaMarca } from './services/marcas';
 import { confirmarEnvasado, guardarOrden, metaOrden } from './services/envasado';
+import { anularVenta, confirmarVenta, guardarVenta, metaVenta } from './services/ventas';
+import { ajustarSecuencia } from './services/secuencias';
 import { withOrg } from './tenancy';
 
 export interface V1Dump {
@@ -444,6 +448,64 @@ const IMPORTERS: Record<string, Importer> = {
             }
           : undefined;
       await confirmarEnvasado(tx, actor, id, foto);
+    }
+  },
+  // v1: una línea por venta. Confirmadas con sus totales y costo de v1 (foto); los movimientos los regenera
+  // confirmarVenta. Código y folio de v1 se conservan y las secuencias siguen desde ahí.
+  venta: {
+    table: venta,
+    schema: ventaInput,
+    meta: metaVenta,
+    refs: ['clienteId'],
+    adaptar: (r, orgId) => ({
+      fecha: r.fecha,
+      clienteId: r.clienteId,
+      canal: r.canal ?? (r.tipo === 'granel' ? 'granel' : null),
+      documento: ['factura', 'boleta', 'guia'].includes(String(r.documento)) ? r.documento : 'factura',
+      generarDte: !!(r.dteId || r.folio || r.generarDTE),
+      vencimiento: r.vencimiento || null,
+      observaciones: r.descripcion ?? null,
+      lineas: [
+        {
+          tipo: r.tipo === 'granel' ? 'granel' : 'envasado',
+          ordenEnvasadoId: r.ordenEnvasadoId ? mapId(orgId, String(r.ordenEnvasadoId)) : null,
+          estanqueId: r.tipo === 'granel' && r.estanqueId ? mapId(orgId, String(r.estanqueId)) : null,
+          loteId: r.tipo === 'granel' && r.loteId ? mapId(orgId, String(r.loteId)) : null,
+          descripcion: r.descripcion ?? null,
+          cantidad: Number(r.cantidad) || 0,
+          precio: Number(r.precio) || 0,
+          afectoIla: r.afectoILA == null ? r.tipo !== 'granel' : !!r.afectoILA,
+          graduacion: r.graduacion ?? null
+        }
+      ]
+    }),
+    guardar: async (tx, actor, data) => {
+      const [ya] = await tx.select().from(venta).where(eq(venta.id, data.id));
+      if (ya && ya.estado !== 'borrador') return ya as Record<string, unknown>;
+      return guardarVenta(tx, actor, data as never);
+    },
+    despues: async (tx, actor, r, id) => {
+      const [v] = await tx.select({ estado: venta.estado }).from(venta).where(eq(venta.id, id));
+      if (v?.estado !== 'borrador' || (r.estado !== 'confirmada' && r.estado !== 'anulada')) return;
+      const totalesV1 =
+        r.total != null
+          ? {
+              neto: Math.round(Number(r.neto) || 0),
+              iva: Math.round(Number(r.iva) || 0),
+              ila: Math.round(Number(r.ila) || 0),
+              total: Math.round(Number(r.total) || 0)
+            }
+          : undefined;
+      const c = await confirmarVenta(tx, actor, id, {
+        codigo: r.codigo ? String(r.codigo) : null,
+        dteFolio: r.folio != null ? Number(r.folio) : null,
+        costoUnitario: r.costoUnitario != null ? Number(r.costoUnitario) : null,
+        totales: totalesV1
+      });
+      const num = Number(String(c.codigo ?? '').replace(/\D/g, ''));
+      if (num) await ajustarSecuencia(tx, 'venta', num + 1);
+      if (c.dteTipo && c.dteFolio) await ajustarSecuencia(tx, `dte:${c.dteTipo}`, Number(c.dteFolio) + 1);
+      if (r.estado === 'anulada') await anularVenta(tx, actor, id);
     }
   },
   movInsumo: {

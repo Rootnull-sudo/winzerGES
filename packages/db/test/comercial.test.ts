@@ -13,6 +13,9 @@ import { guardarInsumo } from '../src/services/insumos';
 import { eliminarFormato, eliminarMarca, guardarEtiqueta, guardarFormato, guardarMarca } from '../src/services/marcas';
 import { guardarTemporada, listarTemporadas } from '../src/services/temporadas';
 import * as sync from '../src/sync';
+import { upsert } from '../src/repo';
+import { cliente } from '../src/schema';
+import { anularVenta, clienteTieneVentas, confirmarVenta, guardarVenta } from '../src/services/ventas';
 import { withOrg } from '../src/tenancy';
 
 const run = randomUUID().slice(0, 8);
@@ -160,5 +163,113 @@ describe('órdenes de envasado', () => {
     expect(await litros()).toBeLessThan(1);
     const [l] = await withOrg(A, (tx) => tx.execute<{ estado: string }>(sql`select estado from lote where id = ${LT}`));
     expect(l!.estado).toBe('Envasado');
+  });
+});
+
+describe('ventas', () => {
+  const push = async (entity: string, data: Record<string, unknown>, id: string = randomUUID()) => {
+    const m: Mutation = { mutationId: randomUUID(), entity, op: 'upsert', id, baseVersion: null, data, createdAt: new Date().toISOString() };
+    const [r] = await sync.push(admin, [m]);
+    expect(r, JSON.stringify(r)).toMatchObject({ status: 'ok' });
+    return id;
+  };
+  let LV = '',
+    EV = '',
+    OE = '',
+    CLI = '';
+  const stockOrden = async () =>
+    Number((await withOrg(A, (tx) => tx.execute<{ stock: string }>(sql`select stock from v_stock_producto where orden_envasado_id = ${OE}`)))[0]!.stock);
+  const litrosLote = async () =>
+    Number(
+      (
+        await withOrg(A, (tx) =>
+          tx.execute<{ l: string }>(sql`select coalesce(sum(litros), 0) as l from mov_bodega where lote_id = ${LV} and deleted_at is null`)
+        )
+      )[0]!.l
+    );
+  const nueva = (extra: Record<string, unknown>) =>
+    withOrg(A, (tx) => guardarVenta(tx, admin, { fecha: '2026-11-10', clienteId: CLI, documento: 'factura', ...extra } as never));
+
+  beforeAll(async () => {
+    const T = (await withOrg(A, listarTemporadas))[0]!.id;
+    LV = await push('lote', { codigo: 'L-VE', temporadaId: T, variedad: 'Merlot', tipo: 'tinto', estado: 'En guarda', fechaVendimiaPlan: '2026-03-01' });
+    EV = await push('estanque', { codigo: 'VE-1', capacidad: 5000, tipo: 'Guarda', estado: 'operativo' });
+    await push('mov_bodega', { fecha: '2026-07-15', estanqueId: EV, loteId: LV, litros: 2000, tipo: 'entrada', origen: 'vino' });
+    const F2 = String((await withOrg(A, (tx) => guardarFormato(tx, admin, { nombre: 'Botella venta', litros: 0.75, unidadesCaja: 12 }))).id);
+    const BOT = String(
+      (
+        await withOrg(A, (tx) =>
+          guardarInsumo(tx, admin, { nombre: 'Botella VE', categoria: 'envasado', tipo: 'Envase vidrio', unidad: 'un', precio: 400, stockInicial: 1000 })
+        )
+      ).id
+    );
+    const o = await withOrg(A, (tx) =>
+      guardarOrden(tx, admin, { fecha: '2026-08-01', estanqueId: EV, loteId: LV, formatoId: F2, unidades: 600, mermaPct: 0, envaseId: BOT })
+    );
+    await withOrg(A, (tx) => confirmarEnvasado(tx, admin, String(o.id)));
+    OE = String(o.id);
+    CLI = randomUUID();
+    await withOrg(A, (tx) =>
+      upsert(
+        tx,
+        cliente,
+        admin,
+        { entity: 'cliente', module: 'clientes', label: 'clientes' },
+        { id: CLI, nombre: 'Distribuidora Test', rut: '76.888.999-0', tipo: 'Empresa', plazo: 30 }
+      )
+    );
+  });
+
+  it('venta mixta (envasado + granel): descuenta ambos stocks, congela costos, código y folio', async () => {
+    expect([await stockOrden(), await litrosLote()]).toEqual([600, 1550]);
+    const v = await nueva({
+      lineas: [
+        { tipo: 'envasado', ordenEnvasadoId: OE, cantidad: 100, precio: 5000 },
+        { tipo: 'granel', estanqueId: EV, loteId: LV, cantidad: 300, precio: 2000 }
+      ]
+    });
+    expect(v.estado).toBe('borrador');
+    const c = await withOrg(A, (tx) => confirmarVenta(tx, admin, String(v.id)));
+    expect([c.codigo, c.dteTipo, c.dteFolio]).toEqual(['V-0001', 33, 1]);
+    // neto 500.000 + 600.000; ILA solo envasado (20,5 % de 500.000); IVA 19 %.
+    expect([c.neto, c.ila, c.iva]).toEqual([1_100_000, 102_500, 209_000]);
+    expect([await stockOrden(), await litrosLote()]).toEqual([500, 1250]);
+    const lin = await withOrg(A, (tx) =>
+      tx.execute<{ tipo: string; costo_unitario: string; litros: string }>(
+        sql`select tipo, costo_unitario, litros from venta_linea where venta_id = ${c.id} order by tipo`
+      )
+    );
+    expect(lin.map((l) => [l.tipo, Number(l.litros)])).toEqual([
+      ['envasado', 75],
+      ['granel', 300]
+    ]);
+    await expect(
+      withOrg(A, (tx) =>
+        guardarVenta(tx, admin, {
+          id: String(c.id),
+          fecha: '2026-11-10',
+          clienteId: CLI,
+          lineas: [{ tipo: 'envasado', ordenEnvasadoId: OE, cantidad: 1, precio: 1 }]
+        })
+      )
+    ).rejects.toThrow(/confirmada/);
+    expect(await withOrg(A, (tx) => clienteTieneVentas(tx, CLI))).toBe(true);
+  });
+
+  it('sin stock no se confirma y no escribe nada; boleta con su propia secuencia', async () => {
+    const v = await nueva({ lineas: [{ tipo: 'envasado', ordenEnvasadoId: OE, cantidad: 501, precio: 5000 }] });
+    await expect(withOrg(A, (tx) => confirmarVenta(tx, admin, String(v.id)))).rejects.toThrow(/No hay stock suficiente/);
+    expect(await stockOrden()).toBe(500);
+    const b = await nueva({ documento: 'boleta', lineas: [{ tipo: 'envasado', ordenEnvasadoId: OE, cantidad: 2, precio: 8990 }] });
+    const c = await withOrg(A, (tx) => confirmarVenta(tx, admin, String(b.id)));
+    expect([c.codigo, c.dteTipo, c.dteFolio]).toEqual(['V-0002', 39, 1]);
+    expect(Number(c.total)).toBeCloseTo(17_980, -1);
+  });
+
+  it('anular revierte stocks y asigna el folio de la nota de crédito a la factura', async () => {
+    const [f] = await withOrg(A, (tx) => tx.execute<{ id: string }>(sql`select id from venta where codigo = 'V-0001'`));
+    const a = await withOrg(A, (tx) => anularVenta(tx, admin, f!.id));
+    expect([a.estado, a.ncFolio]).toEqual(['anulada', 1]);
+    expect([await stockOrden(), await litrosLote()]).toEqual([598, 1550]);
   });
 });

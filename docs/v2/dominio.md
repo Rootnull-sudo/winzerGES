@@ -421,3 +421,7 @@ Corregidos al migrar el viñedo (F1):
     eran los descontados; el código era `count + 1` y anular no existía (borrar no devolvía el lote). →
     `confirmarEnvasado` en una transacción, con validación de todo, foto de costo, código por secuencia y
     `anularOrden` que revierte todo. La merma máxima es un parámetro (v1: 3 fijo).
+47. **Ventas**: una sola línea; boleta con el precio tratado como neto; ILA también a granel; edición de todo salvo
+    cantidad y precio con DTE emitido; códigos y folios `count + 1`; venta a granel validada fuera de `validarSalida`;
+    anular boleta sin pasar por los estados. → Varias líneas, boleta con IVA incluido, ILA por línea (por defecto
+    envasado), borrador → confirmada (bloqueada) → anulada, código y folio por secuencia, NC con folio propio.

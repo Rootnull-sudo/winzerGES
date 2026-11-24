@@ -2,12 +2,31 @@
   "app": "vina-gestion",
   "version": "1.0.2",
   "exportedAt": "2026-11-15T12:00:00.000Z",
-  "schema": { "cuartel": 2, "cliente": 1 },
+  "schema": {
+    "cuartel": 2,
+    "cliente": 1
+  },
   "meta": {},
   "data": {
-    "config": [{ "id": "main", "empresa": { "nombreFantasia": "Viña Importada" } }],
+    "config": [
+      {
+        "id": "main",
+        "empresa": {
+          "nombreFantasia": "Viña Importada"
+        }
+      }
+    ],
     "cuartel": [
-      { "id": "cua_1", "_e": "cuartel", "_v": 2, "codigo": "IM-01", "variedad": "País", "tipo": "tinto", "superficie": 3.1, "valle": "Itata" },
+      {
+        "id": "cua_1",
+        "_e": "cuartel",
+        "_v": 2,
+        "codigo": "IM-01",
+        "variedad": "País",
+        "tipo": "tinto",
+        "superficie": 3.1,
+        "valle": "Itata"
+      },
       {
         "id": "cua_2",
         "_e": "cuartel",
@@ -20,10 +39,39 @@
       }
     ],
     "cliente": [
-      { "id": "cli_1", "_e": "cliente", "nombre": "Vinoteca Importada Ltda.", "rut": "76.111.333-K", "tipo": "Empresa", "canal": "distribuidor", "plazo": 30 },
-      { "id": "cli_2", "_e": "cliente", "nombre": "Consumidor final", "rut": "66.666.666-6", "tipo": "Persona", "canal": "directa", "plazo": 0 },
-      { "id": "cli_bad", "_e": "cliente", "nombre": "RUT malo", "rut": "11.111.111-2", "tipo": "Empresa" }
+      {
+        "id": "cli_1",
+        "_e": "cliente",
+        "nombre": "Vinoteca Importada Ltda.",
+        "rut": "76.111.333-K",
+        "tipo": "Empresa",
+        "canal": "distribuidor",
+        "plazo": 30
+      },
+      {
+        "id": "cli_2",
+        "_e": "cliente",
+        "nombre": "Consumidor final",
+        "rut": "66.666.666-6",
+        "tipo": "Persona",
+        "canal": "directa",
+        "plazo": 0
+      },
+      {
+        "id": "cli_bad",
+        "_e": "cliente",
+        "nombre": "RUT malo",
+        "rut": "11.111.111-2",
+        "tipo": "Empresa"
+      }
     ],
-    "venta": [{ "id": "ven_1", "_e": "venta", "codigo": "V-0001" }]
+    "dte": [
+      {
+        "id": "dte_1",
+        "_e": "dte",
+        "tipo": 33,
+        "folio": 1
+      }
+    ]
   }
 }

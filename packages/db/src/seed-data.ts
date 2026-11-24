@@ -963,6 +963,90 @@ export const demoDump = {
         _demo: true
       }
     ],
+    // Ventas en formato v1 (una línea). Sin código ni folio: los asigna confirmarVenta al importar.
+    venta: [
+      {
+        id: 'ven_d1',
+        fecha: '2026-09-10',
+        tipo: 'envasado',
+        clienteId: 'cli_dist',
+        canal: 'distribuidor',
+        ordenEnvasadoId: 'oe_d1',
+        cantidad: 600,
+        precio: 4500,
+        afectoILA: true,
+        documento: 'factura',
+        generarDTE: true,
+        vencimiento: '2026-10-10',
+        estado: 'confirmada',
+        _demo: true
+      },
+      {
+        id: 'ven_d2',
+        fecha: '2026-10-05',
+        tipo: 'envasado',
+        clienteId: 'cli_rest',
+        canal: 'restaurante',
+        ordenEnvasadoId: 'oe_d2',
+        cantidad: 360,
+        precio: 5200,
+        afectoILA: true,
+        documento: 'factura',
+        generarDTE: true,
+        vencimiento: '2026-10-20',
+        estado: 'confirmada',
+        _demo: true
+      },
+      {
+        id: 'ven_d3',
+        fecha: '2026-10-20',
+        tipo: 'granel',
+        clienteId: 'cli_gran',
+        canal: 'granel',
+        estanqueId: 'est_d3',
+        loteId: 'lot_d2',
+        cantidad: 500,
+        precio: 2200,
+        afectoILA: false,
+        documento: 'factura',
+        generarDTE: true,
+        vencimiento: '2026-11-19',
+        estado: 'confirmada',
+        descripcion: 'Vino tinto a granel',
+        _demo: true
+      },
+      {
+        id: 'ven_d4',
+        fecha: '2026-11-12',
+        tipo: 'envasado',
+        clienteId: 'cli_part',
+        canal: 'directa',
+        ordenEnvasadoId: 'oe_d1',
+        cantidad: 24,
+        precio: 8990,
+        afectoILA: true,
+        documento: 'boleta',
+        generarDTE: true,
+        estado: 'confirmada',
+        _demo: true
+      },
+      {
+        id: 'ven_d5',
+        fecha: '2026-11-22',
+        tipo: 'envasado',
+        clienteId: 'cli_vino',
+        canal: 'distribuidor',
+        ordenEnvasadoId: 'oe_d2',
+        cantidad: 120,
+        precio: 5100,
+        afectoILA: true,
+        documento: 'factura',
+        generarDTE: true,
+        vencimiento: '2026-12-22',
+        estado: 'borrador',
+        _demo: true
+      }
+    ],
     movInsumo: [{ id: 'mov_d2', fecha: '2026-10-15', insumoId: 'ins_urea', cantidad: -20, tipo: 'ajuste', motivo: 'Merma', _demo: true }],
     fenologia: [
       {

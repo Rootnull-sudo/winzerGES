@@ -1400,9 +1400,73 @@ export const movProducto = pgTable(
     /** envasado | venta | anulacion | ajuste | muestra | quiebre */
     tipo: text('tipo').notNull(),
     costoUnitario: num('costo_unitario'),
-    /** FK a venta_linea: la agrega F5-3. */
-    ventaLineaId: text('venta_linea_id'),
+    ventaLineaId: text('venta_linea_id').references((): AnyPgColumn => ventaLinea.id),
     motivo: text('motivo')
   },
   (t) => [index('mov_producto_orden_idx').on(t.orgId, t.ordenEnvasadoId)]
+);
+
+/* --- Comercial: ventas con líneas (F5-3, online) --- */
+export const venta = pgTable(
+  'venta',
+  {
+    ...base(),
+    /** V-NNNN al confirmar (secuencia). */
+    codigo: text('codigo'),
+    fecha: text('fecha').notNull(),
+    clienteId: text('cliente_id')
+      .notNull()
+      .references(() => cliente.id),
+    canal: text('canal'),
+    /** factura | boleta | guia */
+    documento: text('documento').notNull().default('factura'),
+    generarDte: boolean('generar_dte').notNull().default(true),
+    vencimiento: text('vencimiento'),
+    /** borrador | confirmada | anulada */
+    estado: text('estado').notNull().default('borrador'),
+    neto: money('neto').notNull().default(0),
+    exento: money('exento').notNull().default(0),
+    iva: money('iva').notNull().default(0),
+    ila: money('ila').notNull().default(0),
+    total: money('total').notNull().default(0),
+    /** DTE mínimo (F5): tipo y folio de la secuencia `dte:<tipo>`. La tabla dte llega en F6-1. */
+    dteTipo: integer('dte_tipo'),
+    dteFolio: integer('dte_folio'),
+    /** Folio de la nota de crédito (61) al anular una factura. */
+    ncFolio: integer('nc_folio'),
+    anuladaEn: ts('anulada_en'),
+    observaciones: text('observaciones')
+  },
+  (t) => [
+    uniqueIndex('venta_codigo_uq')
+      .on(t.orgId, t.codigo)
+      .where(sql`${t.deletedAt} is null and ${t.codigo} is not null`),
+    index('venta_fecha_idx').on(t.orgId, t.fecha)
+  ]
+);
+
+export const ventaLinea = pgTable(
+  'venta_linea',
+  {
+    ...base(),
+    ventaId: text('venta_id')
+      .notNull()
+      .references(() => venta.id),
+    /** envasado | granel */
+    tipo: text('tipo').notNull(),
+    ordenEnvasadoId: text('orden_envasado_id').references(() => ordenEnvasado.id),
+    estanqueId: text('estanque_id').references(() => estanque.id),
+    loteId: text('lote_id').references(() => lote.id),
+    formatoId: text('formato_id').references(() => formato.id),
+    descripcion: text('descripcion'),
+    cantidad: num('cantidad').notNull(),
+    precio: num('precio').notNull(),
+    afectoIla: boolean('afecto_ila').notNull().default(true),
+    graduacion: num('graduacion'),
+    /** Congelado al confirmar (orden o costo/L del lote). */
+    costoUnitario: num('costo_unitario'),
+    neto: money('neto').notNull().default(0),
+    litros: num('litros')
+  },
+  (t) => [index('venta_linea_venta_idx').on(t.orgId, t.ventaId)]
 );

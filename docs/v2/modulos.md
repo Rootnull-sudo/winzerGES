@@ -173,7 +173,7 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Lee**: las vistas `v_stock_*`.
 - **Hecho cuando**: el valor del inventario coincide con v1.
 
-### Ventas · ⬜ · F5 · L
+### Ventas · ✅ · F5 · L
 - **Tablas**: `venta`, `venta_linea`, `cobro_aplicacion` (migración de `cobro.venta_id`).
 - **Pantallas**:
   - registro **con varias líneas** (envasado o granel), con margen en vivo si el rol puede ver costos;

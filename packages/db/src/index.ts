@@ -20,6 +20,7 @@ export * from './services/personas';
 export * from './services/remuneraciones';
 export * from './services/marcas';
 export * from './services/envasado';
+export * from './services/ventas';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

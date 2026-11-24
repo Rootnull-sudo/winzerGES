@@ -115,7 +115,7 @@ test('(d) importar un respaldo de v1 y ver clientes y cuarteles', async ({ page 
   await expect(page.getByText('Importación terminada')).toBeVisible();
   await expect(page.getByText('✓ 2 cuartel')).toBeVisible();
   await expect(page.getByText('✓ 2 cliente')).toBeVisible();
-  await expect(page.getByText(/venta \(1\)/)).toBeVisible();
+  await expect(page.getByText(/dte \(1\)/)).toBeVisible(); // pendiente hasta F6
   await page.screenshot(shots('04-importar'));
   await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Clientes y cobranza' }).click();
   await expect(page.getByRole('cell', { name: /Vinoteca Importada/ })).toBeVisible();
@@ -1089,4 +1089,41 @@ test('envasado: orden con costo en vivo; confirmar descuenta botellas y anular l
   d = page.getByRole('dialog', { name: 'Nueva orden de envasado' });
   await llenar(d);
   expect(await stockEnvase(d)).toBe(antes);
+});
+
+test('ventas: venta mixta (envasado + granel) con ILA por línea, folio y anulación; el rol ventas no ve costos', async ({ page }) => {
+  await login(page, 'ventas@winzer.test');
+  await page.goto('/vina-demo/ventas?t=2027');
+  await expect(page.getByRole('columnheader', { name: 'Margen' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Nueva venta' }).click();
+  const d = page.getByRole('dialog', { name: 'Nueva venta' });
+  await d.getByLabel(/^Cliente/).selectOption({ label: 'Distribuidora Andes SpA' });
+  const prod = d.getByLabel('Línea 1 · Producto');
+  await prod.selectOption((await prod.locator('option', { hasText: 'Sauvignon Blanc' }).first().getAttribute('value'))!);
+  await d.getByLabel('Línea 1 · Cantidad').fill('12');
+  await d.getByLabel('Línea 1 · Precio').fill('5000');
+  await d.getByRole('button', { name: 'Agregar línea' }).click();
+  await d.getByLabel('Línea 2 · Tipo').selectOption('granel');
+  const gr = d.getByLabel('Línea 2 · Estanque y lote');
+  await gr.selectOption((await gr.locator('option', { hasText: 'E-03' }).first().getAttribute('value'))!);
+  await d.getByLabel('Línea 2 · Cantidad').fill('50');
+  await d.getByLabel('Línea 2 · Precio').fill('2000');
+  const tot = d.getByRole('complementary', { name: 'Totales' });
+  // Neto 60.000 + 100.000; ILA 20,5 % solo de la línea envasada; IVA 19 % del neto.
+  await expect(tot).toContainText('$160.000');
+  await expect(tot).toContainText('$12.300');
+  await expect(tot).toContainText('$202.700');
+  await expect(d.getByLabel('Margen')).toHaveCount(0);
+  await page.screenshot(shots('35-venta'));
+  page.on('dialog', (x) => x.accept());
+  await d.getByRole('button', { name: 'Confirmar' }).click();
+  const fila = page
+    .getByRole('row', { name: /Distribuidora Andes SpA/ })
+    .filter({ hasText: '2 líneas' })
+    .first();
+  await expect(fila).toContainText(/Factura N° \d+/);
+  await expect(fila).toContainText('Confirmada');
+  await fila.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Anular' }).click();
+  await expect(fila).toContainText('Anulada');
 });

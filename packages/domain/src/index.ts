@@ -31,4 +31,5 @@ export * from './entities/remuneracion';
 export * from './entities/honorario';
 export * from './entities/marca';
 export * from './entities/envasado';
+export * from './entities/venta';
 export * from './sync';

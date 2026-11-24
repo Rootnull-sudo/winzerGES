@@ -185,11 +185,16 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   - `anularVenta`: nota de crédito 61 o boleta anulada, y reversa.
 - **Hecho cuando**: una venta con una línea envasada y otra a granel descuenta ambos stocks y genera un DTE simulado.
 
-### Clientes y cobranza · ✅ (ampliar en F5)
-- **Falta**:
-  - cuentas por cobrar con antigüedad (por vencer, 1–30, 31–60, > 60 días);
-  - cobros parciales aplicados a varias ventas;
-  - ficha con historial de compras.
+### Clientes y cobranza · ✅ · F5-4
+- **Tablas**: `cliente`, `cobro`, `cobro_aplicacion`; vista `v_por_cobrar`.
+- **Pantallas** (`/[org]/clientes`):
+  - Clientes: maestro con compras y saldo; la ficha muestra el historial de compras;
+  - Por cobrar: antigüedad (por vencer, 1–30, 31–60, > 60 días) con totales por tramo;
+  - Cobros: un cobro se reparte entre las ventas abiertas del cliente (primero las que vencen antes); lo no
+    aplicado queda como anticipo; eliminar un cobro devuelve el saldo.
+- **Ventas**: columna de estado de pago (pendiente, parcial, pagada, vencida) desde el saldo.
+- **Alerta**: `clientes.mora` ("N ventas en mora · Total $X vencido") sobre el saldo, no sobre el total.
+- **Importador**: `cobro.ventaId` de v1 → aplicación acotada al saldo; venta `pagado` sin cobro → cobro sintético.
 
 ---
 

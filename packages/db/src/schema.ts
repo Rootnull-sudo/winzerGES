@@ -250,7 +250,6 @@ export const cobro = pgTable(
     clienteId: text('cliente_id')
       .notNull()
       .references(() => cliente.id),
-    ventaId: text('venta_id'),
     monto: money('monto').notNull(),
     medio: text('medio').notNull().default('transferencia'),
     glosa: text('glosa')
@@ -1469,4 +1468,20 @@ export const ventaLinea = pgTable(
     litros: num('litros')
   },
   (t) => [index('venta_linea_venta_idx').on(t.orgId, t.ventaId)]
+);
+
+/* --- Comercial: cobros aplicados a ventas (F5-4, online; reemplaza cobro.venta_id) --- */
+export const cobroAplicacion = pgTable(
+  'cobro_aplicacion',
+  {
+    ...base(),
+    cobroId: text('cobro_id')
+      .notNull()
+      .references(() => cobro.id),
+    ventaId: text('venta_id')
+      .notNull()
+      .references(() => venta.id),
+    monto: money('monto').notNull()
+  },
+  (t) => [index('cobro_aplicacion_cobro_idx').on(t.orgId, t.cobroId), index('cobro_aplicacion_venta_idx').on(t.orgId, t.ventaId)]
 );

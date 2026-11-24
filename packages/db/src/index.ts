@@ -21,6 +21,7 @@ export * from './services/remuneraciones';
 export * from './services/marcas';
 export * from './services/envasado';
 export * from './services/ventas';
+export * from './services/cobros';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

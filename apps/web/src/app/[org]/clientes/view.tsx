@@ -1,5 +1,5 @@
 'use client';
-import { CANALES, clp, MEDIOS_COBRO, today } from '@winzer/domain';
+import { CANALES, clp } from '@winzer/domain';
 import { Plus, Users } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
@@ -11,9 +11,10 @@ import { Adjuntos } from '@/components/adjuntos';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input, Select } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/page';
+import { Tabs, useTab } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
-import { cn } from '@/lib/cn';
-import { deleteCliente, saveCliente, saveCobro, type Result } from './actions';
+import { deleteCliente, saveCliente, type Result } from './actions';
+import { CobroDialog, Cobros, nombreVenta, PorCobrar } from './cobranza';
 
 export interface ClienteRow {
   id: string;
@@ -39,27 +40,49 @@ export interface CobroRow {
   monto: number;
   medio: string;
   glosa: string | null;
+  aplicaciones: { ventaId: string; monto: number }[];
+}
+/** Venta confirmada con su saldo (v_por_cobrar). */
+export interface VentaCxc {
+  id: string;
+  clienteId: string;
+  codigo: string | null;
+  documento: string;
+  folio: number | null;
+  fecha: string;
+  vencimiento: string | null;
+  total: number;
+  cobrado: number;
+  saldo: number;
 }
 
 const canalLabel = (k: string | null) => CANALES.find((c) => c[0] === k)?.[1] ?? '—';
-const fmtDate = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+const TABS = [
+  { id: 'clientes', label: 'Clientes' },
+  { id: 'por-cobrar', label: 'Por cobrar' },
+  { id: 'cobros', label: 'Cobros' }
+] as const;
 
-export function ClientesView({ clientes, cobros }: { clientes: ClienteRow[]; cobros: CobroRow[] }) {
+export function ClientesView({ clientes, cobros, ventas }: { clientes: ClienteRow[]; cobros: CobroRow[]; ventas: VentaCxc[] }) {
   const can = useCan();
   const params = useSearchParams();
-  const [tab, setTab] = useState<'clientes' | 'cobros'>('clientes');
+  const [tab, setTab] = useTab(TABS);
   const [editing, setEditing] = useState<ClienteRow | 'new' | null>(null);
-  const [cobro, setCobro] = useState<{ clienteId?: string } | null>(null);
+  const [cobro, setCobro] = useState<{ clienteId?: string; ventaId?: string } | null>(null);
   useEffect(() => {
     if (params.get('nuevo') === '1' && can('clientes', 'c')) setEditing('new');
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const cobradoPor = useMemo(() => {
+  const saldoPor = useMemo(() => {
     const m = new Map<string, number>();
-    cobros.forEach((c) => m.set(c.clienteId, (m.get(c.clienteId) ?? 0) + c.monto));
+    ventas.forEach((v) => m.set(v.clienteId, (m.get(v.clienteId) ?? 0) + v.saldo));
     return m;
-  }, [cobros]);
-  const totalMes = cobros.filter((c) => c.fecha.slice(0, 7) === today().slice(0, 7)).reduce((a, c) => a + c.monto, 0);
+  }, [ventas]);
+  const compradoPor = useMemo(() => {
+    const m = new Map<string, number>();
+    ventas.forEach((v) => m.set(v.clienteId, (m.get(v.clienteId) ?? 0) + v.total));
+    return m;
+  }, [ventas]);
 
   const cols: Column<ClienteRow>[] = [
     {
@@ -72,61 +95,36 @@ export function ClientesView({ clientes, cobros }: { clientes: ClienteRow[]; cob
         </span>
       )
     },
-    { key: 'rut', label: 'RUT', render: (c) => <span className="tabular text-ink-2">{c.rut}</span> },
+    { key: 'rut', label: 'RUT', render: (c) => <span className="text-ink-2 tabular">{c.rut}</span> },
     { key: 'canal', label: 'Canal', value: (c) => canalLabel(c.canal) },
     { key: 'comuna', label: 'Comuna', value: (c) => c.comuna ?? '', render: (c) => c.comuna ?? <span className="text-ink-4">—</span> },
-    { key: 'condiciones', label: 'Condiciones', value: (c) => c.condiciones ?? '', render: (c) => c.condiciones ?? <span className="text-ink-4">—</span> },
-    { key: 'cobrado', label: 'Cobrado', num: true, value: (c) => cobradoPor.get(c.id) ?? 0, render: (c) => clp(cobradoPor.get(c.id) ?? 0) }
-  ];
-  const nombreCliente = (id: string) => clientes.find((c) => c.id === id)?.nombre ?? 'Cliente eliminado';
-  const colsCobro: Column<CobroRow>[] = [
-    { key: 'fecha', label: 'Fecha', render: (c) => fmtDate(c.fecha) },
-    { key: 'cliente', label: 'Cliente', value: (c) => nombreCliente(c.clienteId) },
-    { key: 'medio', label: 'Medio', render: (c) => <span className="capitalize">{c.medio}</span> },
-    { key: 'glosa', label: 'Glosa', value: (c) => c.glosa ?? '', render: (c) => c.glosa ?? <span className="text-ink-4">—</span> },
-    { key: 'monto', label: 'Monto', num: true, value: (c) => c.monto, render: (c) => <span className="font-medium">{clp(c.monto)}</span> }
+    { key: 'comprado', label: 'Compras', num: true, value: (c) => compradoPor.get(c.id) ?? 0, render: (c) => clp(compradoPor.get(c.id) ?? 0) },
+    {
+      key: 'saldo',
+      label: 'Saldo',
+      num: true,
+      value: (c) => saldoPor.get(c.id) ?? 0,
+      render: (c) => ((saldoPor.get(c.id) ?? 0) > 0 ? <b>{clp(saldoPor.get(c.id) ?? 0)}</b> : <span className="text-ink-4">—</span>)
+    }
   ];
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-rule">
-        <div role="tablist" className="-mb-px flex gap-5">
-          {(['clientes', 'cobros'] as const).map((t) => (
-            <button
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              className={cn(
-                'h-10 border-b-2 text-[14px] font-medium capitalize',
-                tab === t ? 'border-ink text-ink' : 'border-transparent text-ink-3 hover:text-ink'
-              )}
-            >
-              {t} <span className="tabular ml-1 text-ink-4">{t === 'clientes' ? clientes.length : cobros.length}</span>
-            </button>
-          ))}
-        </div>
-        <div className="mb-2 flex gap-2">
-          {can('clientes', 'c') && tab === 'cobros' && clientes.length > 0 && (
-            <Button variant="primary" onClick={() => setCobro({})}>
-              <Plus size={16} /> Registrar cobro
-            </Button>
-          )}
-          {can('clientes', 'c') && tab === 'clientes' && (
-            <Button variant="primary" onClick={() => setEditing('new')}>
-              <Plus size={16} /> Nuevo cliente
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {tab === 'clientes' ? (
+      <Tabs tabs={TABS} actual={tab} onChange={setTab} />
+      {tab === 'clientes' && (
         <DataTable
           rows={clientes}
           columns={cols}
           onRowClick={can('clientes', 'e') ? (c) => setEditing(c) : undefined}
           exportName="clientes"
           canExport={can('clientes', 'x')}
+          toolbar={
+            can('clientes', 'c') && (
+              <Button variant="primary" onClick={() => setEditing('new')}>
+                <Plus size={16} /> Nuevo cliente
+              </Button>
+            )
+          }
           empty={
             <EmptyState
               icon={<Users size={28} />}
@@ -135,24 +133,14 @@ export function ClientesView({ clientes, cobros }: { clientes: ClienteRow[]; cob
             />
           }
         />
-      ) : (
-        <>
-          <p className="mb-4 text-[13px] text-ink-3">
-            Cobrado este mes: <span className="tabular font-semibold text-ink">{clp(totalMes)}</span>
-          </p>
-          <DataTable
-            rows={cobros}
-            columns={colsCobro}
-            exportName="cobros"
-            canExport={can('clientes', 'x')}
-            empty={<EmptyState title="Sin cobros registrados" />}
-          />
-        </>
       )}
+      {tab === 'por-cobrar' && <PorCobrar ventas={ventas} clientes={clientes} onCobrar={(clienteId, ventaId) => setCobro({ clienteId, ventaId })} />}
+      {tab === 'cobros' && <Cobros cobros={cobros} clientes={clientes} ventas={ventas} onCobrar={() => setCobro({})} />}
 
       {editing && (
         <ClienteDialog
           cliente={editing === 'new' ? null : editing}
+          ventas={editing === 'new' ? [] : ventas.filter((v) => v.clienteId === editing.id)}
           onClose={() => setEditing(null)}
           onCobro={(id) => {
             setEditing(null);
@@ -160,7 +148,7 @@ export function ClientesView({ clientes, cobros }: { clientes: ClienteRow[]; cob
           }}
         />
       )}
-      {cobro && <CobroDialog clientes={clientes} clienteId={cobro.clienteId} onClose={() => setCobro(null)} />}
+      {cobro && <CobroDialog clientes={clientes} ventas={ventas} inicial={cobro} onClose={() => setCobro(null)} />}
     </>
   );
 }
@@ -187,7 +175,17 @@ function useSubmit(onDone: () => void) {
   return { pending, errors, error, run };
 }
 
-function ClienteDialog({ cliente, onClose, onCobro }: { cliente: ClienteRow | null; onClose: () => void; onCobro: (id: string) => void }) {
+function ClienteDialog({
+  cliente,
+  ventas,
+  onClose,
+  onCobro
+}: {
+  cliente: ClienteRow | null;
+  ventas: VentaCxc[];
+  onClose: () => void;
+  onCobro: (id: string) => void;
+}) {
   const { org } = useOrg();
   const can = useCan();
   const { pending, errors, error, run } = useSubmit(onClose);
@@ -290,75 +288,25 @@ function ClienteDialog({ cliente, onClose, onCobro }: { cliente: ClienteRow | nu
           </p>
         )}
       </form>
+      {c && ventas.length > 0 && (
+        <section aria-label="Historial de compras" className="mt-6 border-t border-rule pt-4">
+          <h3 className="mb-2 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Historial de compras</h3>
+          <ul className="divide-y divide-rule rounded-card border border-rule text-[13px]">
+            {[...ventas]
+              .sort((a, b) => b.fecha.localeCompare(a.fecha))
+              .map((v) => (
+                <li key={v.id} className="grid grid-cols-[1fr_auto_auto] gap-3 px-3 py-2">
+                  <span>
+                    <b>{nombreVenta(v)}</b> <span className="text-ink-3">· {new Date(v.fecha + 'T12:00:00').toLocaleDateString('es-CL')}</span>
+                  </span>
+                  <span className="tabular">{clp(v.total)}</span>
+                  <span className="text-right tabular">{v.saldo > 0 ? <b>saldo {clp(v.saldo)}</b> : <span className="text-ok">Pagada</span>}</span>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
       {c && <Adjuntos entidad="cliente" registroId={c.id} />}
-    </Dialog>
-  );
-}
-
-function CobroDialog({ clientes, clienteId, onClose }: { clientes: ClienteRow[]; clienteId?: string; onClose: () => void }) {
-  const { org } = useOrg();
-  const { pending, errors, error, run } = useSubmit(onClose);
-  function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.currentTarget));
-    run(() => saveCobro(org.slug, data), 'Cobro registrado.');
-  }
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      title="Registrar cobro"
-      description="Queda disponible para la conciliación con la cartola bancaria."
-      footer={
-        <>
-          <Button type="button" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" form="cobro-form" variant="primary" disabled={pending}>
-            {pending ? 'Guardando…' : 'Registrar'}
-          </Button>
-        </>
-      }
-    >
-      <form id="cobro-form" onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <Field label="Cliente" required error={errors.clienteId} className="sm:col-span-2">
-          {(id) => (
-            <Select id={id} name="clienteId" defaultValue={clienteId ?? ''} required>
-              <option value="" disabled>
-                Elige un cliente…
-              </option>
-              {clientes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label="Fecha" required error={errors.fecha}>
-          {(id) => <Input id={id} name="fecha" type="date" defaultValue={today()} required />}
-        </Field>
-        <Field label="Monto" unit="CLP" required error={errors.monto}>
-          {(id, d) => <Input id={id} name="monto" type="number" min={1} step={1} inputMode="numeric" aria-describedby={d} className="tabular" required />}
-        </Field>
-        <Field label="Medio">
-          {(id) => (
-            <Select id={id} name="medio" defaultValue="transferencia">
-              {MEDIOS_COBRO.map((m) => (
-                <option key={m} value={m} className="capitalize">
-                  {m}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label="Glosa">{(id) => <Input id={id} name="glosa" placeholder="Factura 1234" />}</Field>
-        {error && (
-          <p role="alert" className="rounded-control bg-bad-soft px-3 py-2 text-[13px] text-bad sm:col-span-2">
-            {error}
-          </p>
-        )}
-      </form>
     </Dialog>
   );
 }

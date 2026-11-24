@@ -25,6 +25,7 @@ import {
   ventaInput,
   pagoInput,
   type PagoInput,
+  type CobroInput,
   anioDeFecha,
   aplicacionInput,
   clienteInput,
@@ -47,7 +48,7 @@ import {
   variedadInput,
   ventanaInput
 } from '@winzer/domain';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { idDerivado } from './ids';
 import type { z } from 'zod';
@@ -60,6 +61,7 @@ import {
   cliente,
   clima,
   cobro,
+  cobroAplicacion,
   cosecha,
   cuartel,
   adicionSO2,
@@ -103,6 +105,7 @@ import { importarRemuneracion, metaRemuneracion } from './services/remuneracione
 import { metaEtiqueta, metaFormato, metaMarca } from './services/marcas';
 import { confirmarEnvasado, guardarOrden, metaOrden } from './services/envasado';
 import { anularVenta, confirmarVenta, guardarVenta, metaVenta } from './services/ventas';
+import { aplicarCobro, metaCobro, registrarCobro } from './services/cobros';
 import { ajustarSecuencia } from './services/secuencias';
 import { withOrg } from './tenancy';
 
@@ -152,7 +155,6 @@ const IMPORTERS: Record<string, Importer> = {
   variedad: { table: variedad, schema: variedadInput, meta: { entity: 'variedad', module: 'configuracion', label: 'variedades' } },
   cuartel: { table: cuartel, schema: cuartelInput, meta: { entity: 'cuartel', module: 'catastro', label: 'cuarteles' } },
   cliente: { table: cliente, schema: clienteInput, meta: { entity: 'cliente', module: 'clientes', label: 'clientes' } },
-  cobro: { table: cobro, schema: cobroInput, meta: { entity: 'cobro', module: 'clientes', label: 'cobros' }, refs: ['clienteId', 'ventaId'] },
   proveedor: { table: proveedor, schema: proveedorInput, meta: metaProveedor },
   insumo: {
     table: insumo,
@@ -508,6 +510,48 @@ const IMPORTERS: Record<string, Importer> = {
       if (r.estado === 'anulada') await anularVenta(tx, actor, id);
     }
   },
+  // v1: cobro.ventaId → aplicación (acotada al saldo). Una venta "pagado" sin cobros recibe uno sintético por su saldo.
+  cobro: {
+    table: cobro,
+    schema: cobroInput,
+    meta: metaCobro,
+    refs: ['clienteId'],
+    adaptar: (r, orgId) => ({
+      fecha: r.fecha,
+      clienteId: r.clienteId,
+      monto: Math.round(Math.abs(Number(r.monto) || 0)),
+      medio: ['transferencia', 'efectivo', 'tarjeta', 'cheque'].includes(String(r.medio)) ? r.medio : 'transferencia',
+      glosa: r.glosa ?? null,
+      aplicaciones: r.ventaId ? [{ ventaId: mapId(orgId, String(r.ventaId)), monto: Math.round(Math.abs(Number(r.monto) || 0)) }] : []
+    }),
+    guardar: async (tx, actor, data) => {
+      const [ya] = await tx.select().from(cobro).where(eq(cobro.id, data.id));
+      const aps = (data.aplicaciones as { ventaId: string; monto: number }[]).map((a) => ({ ...a }));
+      for (const a of aps) {
+        const [s0] = await tx.execute<{ saldo: string }>(sql`select saldo from v_por_cobrar where venta_id = ${a.ventaId}`);
+        a.monto = Math.min(a.monto, Math.max(0, Math.round(Number(s0?.saldo ?? 0))));
+      }
+      if (ya) {
+        // Reimportar: si el cobro ya existía sin aplicaciones (p. ej. de antes de F5-4), se agregan las que falten.
+        const [tiene] = await tx
+          .select({ id: cobroAplicacion.id })
+          .from(cobroAplicacion)
+          .where(and(eq(cobroAplicacion.cobroId, ya.id), isNull(cobroAplicacion.deletedAt)))
+          .limit(1);
+        const validas = aps.filter((a) => a.monto > 0);
+        if (!tiene && validas.length) await aplicarCobro(tx, actor, ya.id, ya.clienteId, validas);
+        return ya as Record<string, unknown>;
+      }
+      const monto = Math.min(Number(data.monto) || 0, Number.MAX_SAFE_INTEGER);
+      const total = aps.reduce((t, a) => t + a.monto, 0);
+      // Cobro sintético (sin monto conocido): solo lo aplicado.
+      return registrarCobro(tx, actor, {
+        ...(data as never as CobroInput),
+        monto: monto >= Number.MAX_SAFE_INTEGER ? total : monto,
+        aplicaciones: aps.filter((a) => a.monto > 0)
+      });
+    }
+  },
   movInsumo: {
     table: movInsumo,
     schema: movInsumoInput,
@@ -533,7 +577,7 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
   for (const [entidad, recs] of Object.entries(dump.data)) {
     if (!IMPORTERS[entidad] && recs.length && !['config', 'usuario', 'rol', 'auditoria'].includes(entidad)) report.pendientes[entidad] = recs.length;
   }
-  dump = { ...dump, data: { ...dump.data, pago: pagosDeCompras(dump.data) } };
+  dump = { ...dump, data: { ...dump.data, pago: pagosDeCompras(dump.data), cobro: cobrosDeVentas(dump.data) } };
   const temporadas = new Map<number, string>();
   for (const [entidad, imp] of Object.entries(IMPORTERS)) {
     const recs = dump.data[entidad] ?? [];
@@ -614,6 +658,25 @@ function pagosDeCompras(data: V1Dump['data']): Record<string, unknown>[] {
     });
   }
   return pagos;
+}
+
+/** Cobros de v1 + uno sintético por cada venta "pagado" sin cobros (v1 marcaba el estado sin cobro, o con uno parcial). */
+function cobrosDeVentas(data: V1Dump['data']): Record<string, unknown>[] {
+  const cobros = [...(data.cobro ?? [])];
+  const conCobro = new Set(cobros.map((c) => String(c.ventaId ?? '')));
+  for (const v of data.venta ?? []) {
+    if (v.estadoPago !== 'pagado' || conCobro.has(String(v.id)) || v.estado === 'anulada') continue;
+    cobros.push({
+      id: `cobro|${v.id}`,
+      fecha: v.fechaPago || v.fecha,
+      clienteId: v.clienteId,
+      ventaId: v.id,
+      monto: Math.abs(Number(v.total) || 0) || Number.MAX_SAFE_INTEGER,
+      medio: 'transferencia',
+      _demo: v._demo
+    });
+  }
+  return cobros;
 }
 
 /** Id de la temporada `anio` de la viña; la crea con el rango por defecto si no existe (temporadas de v1). */

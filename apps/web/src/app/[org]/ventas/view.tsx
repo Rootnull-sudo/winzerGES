@@ -1,5 +1,16 @@
 'use client';
-import { clp, DOCUMENTOS_VENTA, fechaHoy, margenVenta, montoLinea, totalesVenta, vencimientoSugerido, type OrgConfig } from '@winzer/domain';
+import {
+  clp,
+  DOCUMENTOS_VENTA,
+  ESTADO_PAGO_LABEL,
+  estadoPagoDoc,
+  fechaHoy,
+  margenVenta,
+  montoLinea,
+  totalesVenta,
+  vencimientoSugerido,
+  type OrgConfig
+} from '@winzer/domain';
 import { FileText, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -51,6 +62,8 @@ export interface VentaFila {
   dteFolio: number | null;
   ncFolio: number | null;
   observaciones: string | null;
+  /** Saldo por cobrar (v_por_cobrar); null si no está confirmada. */
+  saldo: number | null;
   lineas: LineaVenta[];
 }
 export interface DatosVenta {
@@ -144,6 +157,19 @@ function Ventas({ ventas, datos }: { ventas: VentaFila[]; datos: DatosVenta }) {
           } satisfies Column<VentaFila>
         ]
       : []),
+    {
+      key: 'pago',
+      label: 'Pago',
+      value: (v) =>
+        v.saldo == null
+          ? ''
+          : ESTADO_PAGO_LABEL[estadoPagoDoc({ documento: 'factura', total: v.total, saldo: v.saldo, vencimiento: v.vencimiento }, fechaHoy())],
+      render: (v) => {
+        if (v.saldo == null || v.estado !== 'confirmada') return <span className="text-ink-4">—</span>;
+        const e = estadoPagoDoc({ documento: 'factura', total: v.total, saldo: v.saldo, vencimiento: v.vencimiento }, fechaHoy());
+        return <Badge tone={e === 'pagada' ? 'ok' : e === 'vencida' ? 'bad' : e === 'parcial' ? 'info' : 'warn'}>{ESTADO_PAGO_LABEL[e]}</Badge>;
+      }
+    },
     {
       key: 'estado',
       label: 'Estado',

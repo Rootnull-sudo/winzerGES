@@ -3,7 +3,7 @@
  * Marca: error si el registro INAPI ya venció; aviso si vence en 180 días o menos.
  */
 import { estadoMarca } from '@winzer/domain';
-import { and, eq, gte, isNull } from 'drizzle-orm';
+import { and, eq, gte, isNull, sql } from 'drizzle-orm';
 import { marca, ordenEnvasado } from '../../schema';
 import type { Hallazgo, Regla } from '../motor';
 
@@ -45,5 +45,20 @@ export const mermaEnvasadoAlta: Regla = {
         mensaje: `${Number(o.merma).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% sobre el volumen envasado.`,
         ruta: 'envasado'
       }));
+  }
+};
+
+const clp = (v: number) => '$' + Math.round(v).toLocaleString('es-CL');
+
+/** Ventas vencidas con saldo (v1: alerts.js:93, "N ventas en mora"), ahora sobre el saldo real tras los cobros. */
+export const ventasEnMora: Regla = {
+  id: 'clientes.mora',
+  modulo: 'clientes',
+  severidad: 'bad',
+  async evaluar(tx, { hoy }) {
+    const filas = await tx.execute<{ saldo: string }>(sql`select saldo from v_por_cobrar where saldo > 0 and vencimiento is not null and vencimiento < ${hoy}`);
+    if (!filas.length) return [];
+    const total = filas.reduce((s, f) => s + Number(f.saldo), 0);
+    return [{ titulo: `${filas.length} ventas en mora`, mensaje: `Total ${clp(total)} vencido.`, ruta: 'clientes?tab=por-cobrar' }];
   }
 };

@@ -10,7 +10,7 @@ import { randomUUID } from 'node:crypto';
 import type { Tx } from '../client';
 import { idDerivado } from '../ids';
 import { ReglaError, softDelete, upsert, type Actor, type EntityMeta } from '../repo';
-import { cliente, formato, movBodega, movProducto, ordenEnvasado, venta, ventaLinea } from '../schema';
+import { cliente, cobroAplicacion, formato, movBodega, movProducto, ordenEnvasado, venta, ventaLinea } from '../schema';
 import { costoLitroLoteDb } from './envasado';
 import { configVigente } from './parametros';
 import { siguienteCodigo, siguienteNumero } from './secuencias';
@@ -215,9 +215,13 @@ export async function confirmarVenta(tx: Tx, actor: Actor, id: string, importand
   });
 }
 
-/** Monto cobrado de la venta (F5-4 crea cobro_aplicacion y completa esta consulta). */
-export async function cobradoDeVenta(_tx: Tx, _ventaId: string): Promise<number> {
-  return 0;
+/** Monto cobrado de la venta (Σ aplicaciones de cobros vigentes). */
+export async function cobradoDeVenta(tx: Tx, ventaId: string): Promise<number> {
+  const [r] = await tx
+    .select({ n: sql<string>`coalesce(sum(${cobroAplicacion.monto}), 0)` })
+    .from(cobroAplicacion)
+    .where(and(eq(cobroAplicacion.ventaId, ventaId), vivo(cobroAplicacion)));
+  return Number(r?.n ?? 0);
 }
 
 /** Anula una venta confirmada: revierte botellas y litros; si era factura con folio, asigna el folio de la NC (61). */

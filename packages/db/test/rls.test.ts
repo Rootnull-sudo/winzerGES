@@ -200,7 +200,7 @@ describe('importador v1', () => {
       etiqueta: 2,
       ordenEnvasado: 3,
       venta: 5,
-      cobro: 2,
+      cobro: 3,
       insumo: 11,
       movInsumo: 1,
       fenologia: 5,

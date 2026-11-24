@@ -14,7 +14,7 @@ export default async function Page({ params }: { params: Promise<{ org: string }
   if (!allowed) return <NoAccess modulo="ventas" plan={fueraDePlan} />;
   const { venta, ventaLinea, cliente, formato, lote, estanque } = schema;
   const d = await withOrg(actor.orgId, async (tx) => {
-    const [ventas, lineas, clientes, productos, granel, formatos, lotes, estanques, balance, cfg] = await Promise.all([
+    const [ventas, lineas, clientes, productos, granel, formatos, lotes, estanques, balance, cfg, saldos] = await Promise.all([
       tx.select().from(venta).where(isNull(venta.deletedAt)),
       tx.select().from(ventaLinea).where(isNull(ventaLinea.deletedAt)),
       tx
@@ -32,12 +32,14 @@ export default async function Page({ params }: { params: Promise<{ org: string }
       tx.execute<{ lote_id: string; codigo: string; entradas: string; envasado: string; venta_granel: string; merma: string; vinagre: string; stock: string }>(
         sql`select lote_id, codigo, entradas, envasado, venta_granel, merma, vinagre, stock from v_balance_lote where entradas > 0`
       ),
-      configVigente(tx)
+      configVigente(tx),
+      tx.execute<{ venta_id: string; saldo: string }>(sql`select venta_id, saldo from v_por_cobrar`)
     ]);
     const lotesGranel = [...new Set(granel.map((g) => g.lote_id))];
     const costoLitro = Object.fromEntries(await Promise.all(lotesGranel.map(async (id) => [id, (await costoLitroLoteDb(tx, id)).costoLitro] as const)));
-    return { ventas, lineas, clientes, productos, granel, formatos, lotes, estanques, balance, cfg, costoLitro };
+    return { ventas, lineas, clientes, productos, granel, formatos, lotes, estanques, balance, cfg, costoLitro, saldos };
   });
+  const saldo = new Map(d.saldos.map((x) => [x.venta_id, Number(x.saldo)]));
   const filas: VentaFila[] = d.ventas.map((v) => ({
     id: v.id,
     version: v.version,
@@ -57,6 +59,7 @@ export default async function Page({ params }: { params: Promise<{ org: string }
     dteFolio: v.dteFolio,
     ncFolio: v.ncFolio,
     observaciones: v.observaciones,
+    saldo: saldo.get(v.id) ?? null,
     lineas: d.lineas
       .filter((l) => l.ventaId === v.id)
       .map((l) => ({

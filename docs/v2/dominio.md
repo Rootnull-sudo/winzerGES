@@ -425,3 +425,6 @@ Corregidos al migrar el viñedo (F1):
     cantidad y precio con DTE emitido; códigos y folios `count + 1`; venta a granel validada fuera de `validarSalida`;
     anular boleta sin pasar por los estados. → Varias líneas, boleta con IVA incluido, ILA por línea (por defecto
     envasado), borrador → confirmada (bloqueada) → anulada, código y folio por secuencia, NC con folio propio.
+48. **Cobranza**: un cobro se ligaba a una sola venta; "marcar pagada" ignoraba cobros anteriores; anular una venta
+    dejaba sus cobros huérfanos; la mora sumaba el total de la venta aunque tuviera abonos. → Cobros aplicados a
+    varias ventas con saldo real (`v_por_cobrar`), anticipos, anular bloqueado con cobros y mora sobre el saldo.

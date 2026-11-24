@@ -1127,3 +1127,28 @@ test('ventas: venta mixta (envasado + granel) con ILA por línea, folio y anulac
   await page.getByRole('dialog').getByRole('button', { name: 'Anular' }).click();
   await expect(fila).toContainText('Anulada');
 });
+
+test('cobranza: cobro parcial aplicado a una venta baja su saldo; al eliminarlo vuelve', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/clientes?tab=por-cobrar');
+  // Demo: venta del restaurante por $2.611.440 con un abono de $1.000.000.
+  const fila = page.getByRole('row', { name: /Restaurante/ }).filter({ hasText: /V-0002\b/ });
+  await expect(fila).toContainText('$1.611.440');
+  await fila.click();
+  const d = page.getByRole('dialog', { name: 'Registrar cobro' });
+  await d.getByLabel(/Monto del cobro/).fill('500000');
+  await expect(d.getByLabel('Aplicar a V-0002')).toHaveValue('500000');
+  await d.getByLabel(/Glosa/).fill('TRF-COB-E2E');
+  await page.screenshot(shots('36-cobro'));
+  await d.getByRole('button', { name: 'Registrar cobro' }).click();
+  await expect(fila).toContainText('$1.111.440');
+
+  await page.getByRole('tab', { name: 'Cobros' }).click();
+  const cobro = page.getByRole('row', { name: /TRF-COB-E2E/ });
+  await cobro.click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(cobro).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Por cobrar' }).click();
+  await expect(fila).toContainText('$1.611.440');
+});

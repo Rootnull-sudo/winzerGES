@@ -211,6 +211,13 @@
       "when": 1795526999711,
       "tag": "0029_ventas",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795528034475,
+      "tag": "0030_cobro_aplicacion",
+      "breakpoints": true
     }
   ]
 }

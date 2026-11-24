@@ -133,8 +133,9 @@ export const demoDump = {
       }
     ].map((r) => ({ ...r, rut: r.rut === '66.666.666-6' ? r.rut : rutOk(r.rut), _demo: true })),
     cobro: [
-      { id: 'cob_1', fecha: '2026-10-10', clienteId: 'cli_dist', monto: 1395000, medio: 'transferencia', _demo: true },
-      { id: 'cob_2', fecha: '2026-11-02', clienteId: 'cli_rest', monto: 418500, medio: 'transferencia', _demo: true }
+      // Cobro total de la venta 1 y abono parcial de la venta 2 (aplicados a la venta: F5-4).
+      { id: 'cob_1', fecha: '2026-10-10', clienteId: 'cli_dist', ventaId: 'ven_d1', monto: 3766500, medio: 'transferencia', _demo: true },
+      { id: 'cob_2', fecha: '2026-11-02', clienteId: 'cli_rest', ventaId: 'ven_d2', monto: 1000000, medio: 'transferencia', _demo: true }
     ],
     // --- Viñedo (F1): datos ficticios de dos temporadas (2026 y 2027) ---
     proveedor: [
@@ -1028,6 +1029,8 @@ export const demoDump = {
         documento: 'boleta',
         generarDTE: true,
         estado: 'confirmada',
+        estadoPago: 'pagado',
+        fechaPago: '2026-11-12',
         _demo: true
       },
       {

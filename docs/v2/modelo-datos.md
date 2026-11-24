@@ -89,8 +89,8 @@ movimientos (solo agregar); **D** = documento con estado.
 | `etiqueta` | — | `nombre`, `version_diseno` (la `version` de `base()` es la de concurrencia), `marca_id`, `fecha`, `disenador`, `aprobacion_legal`, costos únicos (`costo_diseno`, `costo_fotografia`, `costo_ilustracion`), `tiraje_estimado`, `tiraje_minimo`, `costo_impresion`, `proveedor_id`, declaraciones (`varietal`, `graduacion`, `do`, `denominacion`, `contenido`) | Adjunto: archivos de diseño. No se borra si la usan órdenes |
 | `venta` | D | `codigo` (secuencia V-NNNN al confirmar), `fecha`, `cliente_id`, `canal`, `documento` (factura/boleta/guia), `generar_dte`, `vencimiento`, `estado` (borrador/confirmada/anulada), totales: `neto`, `exento`, `iva`, `ila`, `total`; DTE mínimo: `dte_tipo` (33/39/52), `dte_folio` (secuencia `dte:<tipo>`), `nc_folio` (61 al anular una factura); `anulada_en`, `observaciones` | Servicios `confirmarVenta`/`anularVenta`. La tabla `dte` (F6-1) se arma desde estas columnas |
 | `venta_linea` | — | `venta_id`, `tipo` (envasado/granel), `orden_envasado_id` o (`estanque_id` + `lote_id`), `formato_id`, `descripcion`, `cantidad`, `precio` (neto; con IVA en boleta), `afecto_ila`, `graduacion`, `costo_unitario` (congelado), `neto`, `litros` | **Nuevo**: varias líneas. Movimientos: `mov_producto` (−) o `mov_bodega` venta_granel (−) con id derivado de la línea |
-| `cobro` | — | (existe) `fecha`, `cliente_id`, `monto`, `medio` | Cambia: `venta_id` pasa a `cobro_aplicacion` (migración) |
-| `cobro_aplicacion` | — | `cobro_id`, `venta_id`, `monto` | Saldo de la venta = total − Σ aplicaciones |
+| `cobro` | — | `fecha`, `cliente_id`, `monto`, `medio`, `glosa` | `venta_id` pasó a `cobro_aplicacion` (migración 0030 con traspaso de datos). Lo no aplicado es anticipo. No se edita: se elimina y se registra de nuevo |
+| `cobro_aplicacion` | — | `cobro_id`, `venta_id`, `monto` | Servicio `registrarCobro`: venta confirmada, mismo cliente, monto ≤ saldo. Saldo de la venta = total − Σ aplicaciones |
 
 ## 6. Abastecimiento y gastos
 
@@ -204,7 +204,7 @@ Los stocks y saldos **no se guardan**: se calculan con vistas, que heredan el RL
 | `v_ocupacion` | `v_stock_estanque` + capacidad → % por estanque y por tipo de vino |
 | `v_stock_insumo` | `stock_inicial` + Σ `mov_insumo.cantidad`, × precio vigente |
 | `v_stock_producto` | Σ `mov_producto.unidades` por (orden, formato), × costo unitario congelado |
-| `v_saldo_venta` | `venta.total` − Σ `cobro_aplicacion.monto` (solo confirmadas) |
+| `v_por_cobrar` | Ventas confirmadas: `total`, `cobrado` (Σ `cobro_aplicacion.monto`), `saldo` = total − cobrado, `vencimiento`. Antigüedad y estado de pago se derivan en el dominio |
 | `v_por_pagar` | Documentos con deuda (factura, factura exenta, boleta registradas; F3-4 suma gastos a crédito): `total` − Σ NC que lo referencian − Σ `pago_aplicacion.monto` = `saldo`. El estado de pago se deriva en el dominio (`estadoPagoDoc`) |
 | `v_balance_lote` | Entradas, envasado, granel, mermas, vinagre, ajustes y stock por lote, más kg de uva y L/kg |
 
@@ -245,8 +245,8 @@ Sin equivalente: `meta` (preferencias locales de v1), `_v`/migraciones de v1, PI
 
 ## Qué cambia en lo ya implementado
 
-- **`cobro.venta_id`**: pasa a `cobro_aplicacion`. Migración generada + ajuste en `clientes/actions.ts` y en el
-  importador. Va en el issue de ventas (F5).
+- **`cobro.venta_id`**: pasó a `cobro_aplicacion` en F5-4 (migración 0030 copia cada cobro con venta como una
+  aplicación acotada al total y quita la columna).
 - **`organization.settings`**: los valores de negocio pasan a `parametro_org`; `settings` queda para preferencias
   de interfaz. Va en el issue de parámetros (F0).
 - **`variedad`**: el formulario de cuartel empieza a leerla. Va en el issue de maestros (F1).

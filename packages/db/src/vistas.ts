@@ -95,5 +95,17 @@ export const VISTAS: Vista[] = [
           left join mov_producto m on m.orden_envasado_id = o.id and m.deleted_at is null
           where o.deleted_at is null and o.estado = 'confirmada'
           group by o.id`
+  },
+  {
+    // Cuentas por cobrar (F5-4): ventas confirmadas; saldo = total − Σ cobros aplicados (v1: venta.total − pagado).
+    nombre: 'v_por_cobrar',
+    sql: `select v.org_id, v.id as venta_id, v.cliente_id, v.codigo, v.documento, v.dte_folio, v.fecha, v.vencimiento, v.total,
+            ap.total as cobrado, v.total - ap.total as saldo
+          from venta v
+          cross join lateral (
+            select coalesce(sum(a.monto), 0)::numeric as total from cobro_aplicacion a
+            where a.venta_id = v.id and a.deleted_at is null
+          ) ap
+          where v.deleted_at is null and v.estado = 'confirmada'`
   }
 ];

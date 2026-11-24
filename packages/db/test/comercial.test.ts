@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { calcularAlertas } from '../src/alertas/motor';
-import { marcaPorVencer, marcaVencida } from '../src/alertas/reglas/comercial';
+import { marcaPorVencer, marcaVencida, ventasEnMora } from '../src/alertas/reglas/comercial';
 import { adminDb } from '../src/client';
 import type { Actor } from '../src/repo';
 import { organization } from '../src/schema';
@@ -16,6 +16,7 @@ import * as sync from '../src/sync';
 import { upsert } from '../src/repo';
 import { cliente } from '../src/schema';
 import { anularVenta, clienteTieneVentas, confirmarVenta, guardarVenta } from '../src/services/ventas';
+import { eliminarCobro, registrarCobro } from '../src/services/cobros';
 import { withOrg } from '../src/tenancy';
 
 const run = randomUUID().slice(0, 8);
@@ -271,5 +272,45 @@ describe('ventas', () => {
     const a = await withOrg(A, (tx) => anularVenta(tx, admin, f!.id));
     expect([a.estado, a.ncFolio]).toEqual(['anulada', 1]);
     expect([await stockOrden(), await litrosLote()]).toEqual([598, 1550]);
+  });
+
+  it('cobros: parcial baja el saldo; no más que el saldo ni de otro cliente; anular bloqueado; mora', async () => {
+    const v = await nueva({ vencimiento: '2026-11-15', lineas: [{ tipo: 'envasado', ordenEnvasadoId: OE, cantidad: 10, precio: 10_000 }] });
+    const c = await withOrg(A, (tx) => confirmarVenta(tx, admin, String(v.id)));
+    const total = Number(c.total);
+    const saldo = async () =>
+      Number((await withOrg(A, (tx) => tx.execute<{ saldo: string }>(sql`select saldo from v_por_cobrar where venta_id = ${c.id}`)))[0]!.saldo);
+    const cob = await withOrg(A, (tx) =>
+      registrarCobro(tx, admin, { fecha: '2026-11-20', clienteId: CLI, monto: 60_000, aplicaciones: [{ ventaId: String(c.id), monto: 50_000 }] })
+    );
+    expect(await saldo()).toBe(total - 50_000); // 10.000 quedan como anticipo
+    await expect(
+      withOrg(A, (tx) =>
+        registrarCobro(tx, admin, { fecha: '2026-11-20', clienteId: CLI, monto: total, aplicaciones: [{ ventaId: String(c.id), monto: total }] })
+      )
+    ).rejects.toThrow(/su saldo es/);
+    const OTRO = randomUUID();
+    await withOrg(A, (tx) =>
+      upsert(
+        tx,
+        cliente,
+        admin,
+        { entity: 'cliente', module: 'clientes', label: 'clientes' },
+        { id: OTRO, nombre: 'Otro', rut: '66.666.666-6', tipo: 'Persona', plazo: 0 }
+      )
+    );
+    await expect(
+      withOrg(A, (tx) =>
+        registrarCobro(tx, admin, { fecha: '2026-11-20', clienteId: OTRO, monto: 1000, aplicaciones: [{ ventaId: String(c.id), monto: 1000 }] })
+      )
+    ).rejects.toThrow(/otro cliente/);
+    await expect(withOrg(A, (tx) => anularVenta(tx, admin, String(c.id)))).rejects.toThrow(/cobros aplicados/);
+    const r = await calcularAlertas(A, [ventasEnMora], '2026-11-24');
+    expect(r.errores).toEqual([]);
+    const [m] = await withOrg(A, (tx) => tx.execute<{ titulo: string }>(sql`select titulo from alerta where regla = 'clientes.mora' and estado = 'abierta'`));
+    expect(m!.titulo).toMatch(/ventas en mora/);
+    await withOrg(A, (tx) => eliminarCobro(tx, admin, String(cob.id)));
+    expect(await saldo()).toBe(total);
+    await withOrg(A, (tx) => anularVenta(tx, admin, String(c.id)));
   });
 });

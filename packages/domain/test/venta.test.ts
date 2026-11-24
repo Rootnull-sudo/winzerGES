@@ -43,3 +43,14 @@ describe('ventas — corrige v1', () => {
     expect(margenVenta(100_000, [{ cantidad: 10, costoUnitario: 6000 }])).toEqual({ costo: 60_000, margen: 40_000, pct: 0.4 });
   });
 });
+
+describe('cobranza', () => {
+  it('antigüedad y cobro con aplicaciones (anticipo permitido, no más que el monto)', async () => {
+    const { antiguedad, cobroInput } = await import('../src/entities/cliente');
+    expect([antiguedad(-3), antiguedad(0), antiguedad(15), antiguedad(45), antiguedad(90)]).toEqual(['por_vencer', 'por_vencer', 'd1_30', 'd31_60', 'd60']);
+    const base = { fecha: '2026-11-20', clienteId: 'c', monto: 100_000 };
+    expect(cobroInput.parse({ ...base, aplicaciones: [{ ventaId: 'v', monto: 60_000 }] }).aplicaciones).toHaveLength(1);
+    expect(cobroInput.parse(base).aplicaciones).toEqual([]);
+    expect(cobroInput.safeParse({ ...base, aplicaciones: [{ ventaId: 'v', monto: 120_000 }] }).success).toBe(false);
+  });
+});

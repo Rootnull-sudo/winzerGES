@@ -43,7 +43,7 @@ export const MODULES: readonly ModuleDef[] = [
   m('inventarios', 'Inventarios', 'comercial', 'boxes', 'v2'),
   m('marca', 'Marca y etiquetas', 'comercial', 'tag', 'v2'),
   m('clientes', 'Clientes y cobranza', 'comercial', 'users', 'v2'),
-  m('costos', 'Costos por botella/litro', 'finanzas', 'calculator'),
+  m('costos', 'Costos por botella/litro', 'finanzas', 'calculator', 'v2'),
   m('financiero', 'Financiero', 'finanzas', 'line-chart'),
   m('administracion', 'Sueldos y gastos', 'finanzas', 'wallet', 'v2'),
   m('proveedores', 'Proveedores y compras', 'finanzas', 'truck', 'v2'),

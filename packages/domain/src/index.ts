@@ -4,6 +4,7 @@ export * from './parametros';
 export * as oenology from './oenology';
 export * as tax from './tax';
 export * from './costos';
+export * from './financiero';
 export * from './modules';
 export * from './permissions';
 export * from './planes';

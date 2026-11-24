@@ -229,15 +229,17 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   valores. Se agregan días trabajados, horas extra, anticipos y el tope de AFC.
 - **Hecho cuando**: la liquidación de un mes pasado usa la UF y la UTM de ese mes.
 
-### Costos por botella/litro · ⬜ · F7 · M
-- **Tablas**: `activo`.
-- **Pantallas**:
-  - resumen: costo por litro ponderado, indirectos y costo de ventas;
-  - tarjetas por formato con costo directo + indirecto y margen;
-  - costo directo por lote;
-  - activos fijos con su depreciación (los registra Sueldos y gastos desde F3-5; aquí se leen).
-- **Cálculos**: `financial.costoLitroLote`, depreciación y amortización.
-- **Corrige**: la depreciación termina al cumplir la vida útil y se prorratea desde la fecha de compra.
+### Costos por botella/litro · ✅ · F7-1 · M
+- **Lee**: ventas por línea, gastos, remuneraciones, honorarios, activos, marcas y órdenes confirmadas
+  (`services/financiero`: `datosPeriodo`, `ordenesConCosto`, `costosPorLote`).
+- **Pantalla** (`/[org]/costos`, período = temporada de la barra superior o `?mes=`): costo por litro ponderado,
+  indirectos (GAV + indirectos de producción + depreciación + financieros), indirecto por litro vendido y costo de
+  ventas; tarjeta por formato con las partes congeladas (promedio ponderado por unidades), indirectos y margen;
+  comparativa por litro; costo directo por lote con CSV.
+- **Cálculos** (`packages/domain/src/financiero.ts`, paridad con `financial.js`): `porFormato`, `estadoResultados`,
+  `costoPorFormato`; depreciación (`depreciacionEntre`) y amortización (`amortizacionMarca`) diarias y con fin.
+- **Corrige**: la depreciación termina al cumplir la vida útil; la marca se amortiza en su vigencia; las ventas con
+  varias líneas se costean por línea.
 
 ### Financiero · ⬜ · F7 · L
 - **Pantallas**: estado de resultados, 13 ratios con semáforo, punto de equilibrio, simulador con escenarios, flujo

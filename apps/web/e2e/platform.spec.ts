@@ -1296,3 +1296,18 @@ test('cumplimiento: registrar una obligación por vencer y descargar el libro de
   expect(texto.split('\r\n')[0]).toBe('﻿Ubicación;Lote;Variedad;Tipo;Añada;Estado;Litros');
   expect(texto).toContain('Bodega PT');
 });
+
+test('costos: costo de la botella 0,75 L con partes directas e indirectos; el rol ventas no accede', async ({ page, browser }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/costos?t=2027');
+  const card = page.getByRole('region', { name: 'Costo Botella 0,75 L' });
+  await expect(card).toContainText('Costo directo');
+  await expect(card).toContainText('+ Indirectos');
+  await expect(card).toContainText('Vino');
+  await expect(page.getByRole('row', { name: /L-2026-CS/ })).toBeVisible();
+  await page.screenshot(shots('45-costos'));
+  const ventas = await newSession(browser, 'ventas@winzer.test');
+  await ventas.page.goto('/vina-demo/costos');
+  await expect(ventas.page.getByText(/no tienes acceso|Sin acceso/i).first()).toBeVisible();
+  await ventas.ctx.close();
+});

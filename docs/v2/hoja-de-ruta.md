@@ -110,7 +110,7 @@ flowchart LR
 
 | Issue | Tamaño |
 |---|---|
-| F7-1 Costos por botella/litro | M |
+| F7-1 Costos por botella/litro (paridad del estado de resultados y por formato) ✅ | M |
 | F7-2 Financiero: estado de resultados, ratios, punto de equilibrio, simulador, flujo de caja, rankings; renta (IDPC, tabla `renta`, portar `tax.renta`) | L |
 | F7-3 Dashboard completo con comparación entre temporadas | L |
 | F7-4 Importador v1 completo (las 49 entidades, [mapeo](modelo-datos.md#mapeo-v1--v2-las-49-entidades)) + prueba con el respaldo demo | L |

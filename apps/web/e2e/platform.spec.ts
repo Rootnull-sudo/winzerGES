@@ -1295,6 +1295,11 @@ test('cumplimiento: registrar una obligación por vencer y descargar el libro de
   const texto = (await (await import('node:fs/promises')).readFile((await csv.path())!)).toString('utf8');
   expect(texto.split('\r\n')[0]).toBe('﻿Ubicación;Lote;Variedad;Tipo;Añada;Estado;Litros');
   expect(texto).toContain('Bodega PT');
+  // Limpieza: la obligación de prueba no queda como aviso en la demo.
+  await page.getByRole('row', { name: new RegExp(nombre) }).click();
+  page.once('dialog', (x) => x.accept());
+  await page.getByRole('dialog').getByRole('button', { name: 'Eliminar' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(nombre) })).toHaveCount(0);
 });
 
 test('costos: costo de la botella 0,75 L con partes directas e indirectos; el rol ventas no accede', async ({ page, browser }) => {
@@ -1350,4 +1355,26 @@ test('tributario: renta anual calculada, declarar congela la foto', async ({ pag
   await expect(d).toHaveCount(0);
   await expect(page.getByText('Foto congelada al declarar')).toBeVisible();
   await page.screenshot(shots('48-renta'));
+});
+
+test('dashboard: bloques por temporada con comparación; el agrónomo no ve finanzas', async ({ page, browser }) => {
+  await login(page, 'admin@winzer.test');
+  await page.goto('/vina-demo?t=2026');
+  await expect(page.getByText('Temporada 2026, comparada con la 2025')).toBeVisible();
+  const op = page.getByRole('region', { name: 'Operación y bodega' });
+  await expect(op).toContainText('Kg cosechados');
+  const texto2026 = await op.innerText();
+  await expect(page.getByRole('region', { name: 'Finanzas' })).toContainText('Margen bruto');
+  await expect(page.getByRole('region', { name: 'Tributario' })).toContainText('F29 a pagar');
+  await page.screenshot(shots('49-dashboard'));
+  await page.goto('/vina-demo?t=2027');
+  await expect(page.getByText('Temporada 2027, comparada con la 2026')).toBeVisible();
+  await expect.poll(() => op.innerText()).not.toBe(texto2026);
+
+  const agro = await newSession(browser, 'agronomo@winzer.test');
+  await agro.page.goto('/vina-demo');
+  await expect(agro.page.getByRole('region', { name: 'Operación y bodega' })).toBeVisible();
+  await expect(agro.page.getByRole('region', { name: 'Finanzas' })).toHaveCount(0);
+  await expect(agro.page.getByRole('region', { name: 'Tributario' })).toHaveCount(0);
+  await agro.ctx.close();
 });

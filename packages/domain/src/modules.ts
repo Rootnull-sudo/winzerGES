@@ -27,7 +27,7 @@ export interface ModuleDef {
 const m = (id: string, name: string, area: AreaId, icon: string, status: ModuleDef['status'] = 'pendiente'): ModuleDef => ({ id, name, area, icon, status });
 
 export const MODULES: readonly ModuleDef[] = [
-  m('dashboard', 'Dashboard', 'inicio', 'layout-dashboard'),
+  m('dashboard', 'Dashboard', 'inicio', 'layout-dashboard', 'v2'),
   m('catastro', 'Catastro vitícola', 'operacion', 'map', 'v2'),
   m('fenologia', 'Desborre y fenología', 'operacion', 'sprout', 'v2'),
   m('insumos', 'Insumos y labores', 'operacion', 'flask-conical', 'v2'),

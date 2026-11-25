@@ -14,18 +14,20 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 
 ## Inicio
 
-### Dashboard · ⬜ parcial · F7 · L
-- **Pantallas**: saludo, KPIs por área según los permisos del rol, gráficos y panel de alertas.
-- **KPIs que vienen de v1**:
-  - **Operación y bodega**: kg cosechados, litros producidos, litros envasados, mermas y vinagre, ocupación de
-    bodega, lotes en fermentación, metabisulfito usado, granel en stock.
-  - **Comercial, finanzas y tributario**: ventas, unidades, margen, cuentas por cobrar y pagar, IVA del mes.
-  - Todos comparados contra la temporada anterior.
-- **Gráficos**: kg vs litros de las últimas 5 temporadas, ocupación por estanque, SO₂ de las fichas activas,
-  rentabilidad por cuartel.
+### Dashboard · ✅ · F7-3 · L
+- **Pantalla** (`/[org]`, temporada de la barra superior comparada con la anterior): saludo, panel de avisos con
+  conteo por severidad, y un bloque por área según los permisos del rol:
+  - **Operación y bodega**: kg cosechados, litros producidos (L/kg), envasados y granel vendido, mermas y vinagre,
+    ocupación, lotes en fermentación, granel en stock por tipo; kg y litros de las últimas 5 temporadas y ocupación
+    por estanque (`services/dashboard`: `operacionPorTemporada`, `bodegaHoy`);
+  - **Comercial**: ingresos, unidades, granel, ticket; vendidas vs stock por formato; ingresos por canal;
+  - **Finanzas**: margen bruto, EBITDA, utilidad neta, punto de equilibrio, ROS, costo de la botella 0,75 L, caja
+    proyectada; flujo de caja y margen por cuartel;
+  - **Tributario**: IVA débito y F29 del mes anterior con su estado, PPM del año, estado de la renta; documentos
+    emitidos y recibidos por mes.
+- Imprimir con `window.print()` (el menú y los enlaces se ocultan).
 - **Corrige**: todos los KPIs usan el rango de la temporada (v1 mezclaba temporada y año calendario).
-- **Hecho cuando**: cada KPI coincide con v1 sobre el respaldo demo importado.
-
+- **Pendiente**: metabisulfito usado y SO₂ de las fichas activas (están en Fermentación y Bodega).
 ---
 
 ## Operación (offline)

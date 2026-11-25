@@ -37,7 +37,11 @@ const modulos = readFileSync(join(ROOT, 'packages/domain/src/modules.ts'), 'utf8
 const v2 = [...modulos.matchAll(/m\('([a-z]+)'.*'v2'\)/g)].map((x) => x[1]);
 const ORG = join(WEB, 'app/[org]');
 const paginas = readdirSync(ORG).filter((d) => statSync(join(ORG, d)).isDirectory() && d !== 'm' && readdirSync(join(ORG, d)).includes('page.tsx'));
-for (const id of v2) if (!paginas.includes(id)) errores.push(`modules.ts marca '${id}' como 'v2' pero no existe apps/web/src/app/[org]/${id}/page.tsx`);
+// El dashboard es la portada de la viña (app/[org]/page.tsx), no una carpeta.
+if (v2.includes('dashboard') && !readdirSync(ORG).includes('page.tsx'))
+  errores.push(`modules.ts marca 'dashboard' como 'v2' pero no existe apps/web/src/app/[org]/page.tsx`);
+for (const id of v2.filter((x) => x !== 'dashboard'))
+  if (!paginas.includes(id)) errores.push(`modules.ts marca '${id}' como 'v2' pero no existe apps/web/src/app/[org]/${id}/page.tsx`);
 for (const p of paginas) if (!v2.includes(p)) errores.push(`existe app/[org]/${p}/page.tsx pero '${p}' no está marcado status 'v2' en modules.ts`);
 
 if (errores.length) {

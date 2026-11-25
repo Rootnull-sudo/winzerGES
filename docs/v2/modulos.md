@@ -241,12 +241,18 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
 - **Corrige**: la depreciación termina al cumplir la vida útil; la marca se amortiza en su vigencia; las ventas con
   varias líneas se costean por línea.
 
-### Financiero · ⬜ · F7 · L
-- **Pantallas**: estado de resultados, 13 ratios con semáforo, punto de equilibrio, simulador con escenarios, flujo
-  de caja mensual, rankings y BCG, resumen ejecutivo.
-- **Cálculos**: `financial.js:145-345`, con paridad salvo los bugs que se corrigen.
-- **Corrige**: el flujo de caja usa el líquido y el F29, sin contar dos veces.
-- **Hecho cuando**: el estado de resultados coincide con v1 sobre el respaldo demo.
+### Financiero · ✅ · F7-2 · L
+- **Pantalla** (`/[org]/financiero`, temporada o `?mes=`, comparado con el período anterior): estado de resultados
+  con CSV; 14 ratios con semáforo y contribución por formato; punto de equilibrio multiproducto; simulador (precio,
+  volumen, envase, sueldos, tipo de cambio, exportación) y escenarios; flujo de caja mensual; rankings (formato,
+  canal, cuartel) con matriz BCG; resumen ejecutivo con recomendaciones.
+- **Cálculos** (`packages/domain/src/financiero.ts`, paridad con `financial.js`): `estadoResultados`, `ratios`,
+  `puntoEquilibrio`, `escenarios`, `rentabilidadCuarteles`, `bcg`, `recomendaciones`, `renta`.
+- **Flujo de caja corregido** (`movimientosCaja`): cobros y pagos reales (parciales incluidos) y saldos por cobrar y
+  por pagar a su vencimiento; sueldos y honorarios por su líquido; F29 del mes anterior una sola vez.
+- **Alertas**: `financiero.margen_bajo`, `financiero.sin_equilibrio`, `financiero.caja_negativa`.
+- **Renta** (Tributario › Renta, tabla `renta`): borrador desde el estado de resultados del año, gastos no
+  deducibles y PPM; declarar o pagar congela la foto; pagar registra el pago y cumple `RENTA-<año>`.
 
 ---
 

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '../src/config';
-import { costoPorFormato, costosIndirectos, estadoResultados, porFormato, type DatosFinancieros } from '../src/financiero';
+import {
+  costoPorFormato,
+  costosIndirectos,
+  escenarios,
+  estadoResultados,
+  flujoCaja,
+  porFormato,
+  puntoEquilibrio,
+  ratios,
+  renta,
+  type DatosFinancieros
+} from '../src/financiero';
 import { loadLegacy } from './legacy';
 
 const p = { desde: '2026-01-01', hasta: '2026-12-31' };
@@ -148,5 +159,86 @@ describe('estado de resultados: paridad v1 (financial.js)', () => {
     expect(c.directo).toBe(1625);
     expect(c.indirecto).toBeCloseTo(ind * 0.75, 6);
     expect(c.margen).toBeCloseTo((5000 - c.total) / 5000, 9);
+  });
+});
+
+describe('ratios, punto de equilibrio, escenarios y renta: paridad v1', () => {
+  const VG = loadLegacy(['js/calc/inventory.js', 'js/calc/financial.js', 'js/calc/tax.js'], DEFAULT_CONFIG, {
+    venta,
+    gasto: [...gasto, { fecha: '2026-06-10', categoria: 'otros', area: 'admin', monto: 50_000, tipoCosto: 'fijo', noDeducible: true }],
+    trabajador,
+    remuneracion,
+    honorario,
+    formato,
+    activo: [],
+    marca: [],
+    ordenEnvasado: []
+  });
+  VG.utils.memo = (_k: string, fn: () => unknown) => fn();
+  const F = VG.calc.financial;
+  const INV = 5_000_000;
+  VG.calc.inventory.valorProductoTerminado = () => 2_000_000;
+  VG.calc.inventory.valorGranel = () => 2_500_000;
+  VG.calc.inventory.valorInventarioInsumos = () => 500_000;
+  const PART: Record<string, number> = { f75: 0.4, f15: 0.35 };
+  F.participacionEnvase = (id: string) => PART[id] ?? 0.3;
+  const d2 = {
+    ...datos,
+    gastos: [...datos.gastos, { fecha: '2026-06-10', categoria: 'otros', area: 'admin', monto: 50_000, tipoCosto: 'fijo', noDeducible: true }]
+  };
+  const er = estadoResultados(d2, p, DEFAULT_CONFIG.tributario);
+  const pf = porFormato(d2.lineas, ['f75', 'f15']);
+  const fmts = formato.map((f) => ({ id: f.id, nombre: f.nombre, litros: f.litros }));
+  const pe = (aj = {}) => puntoEquilibrio(er, pf, fmts, PART, DEFAULT_CONFIG.tributario.tasaIDPC, aj);
+
+  it('ratios', () => {
+    const a = ratios(er, d2, INV, DEFAULT_CONFIG);
+    const b = F.ratios(p);
+    expect(a.list.map((x) => [x.key, x.estado])).toEqual(b.list.map((x: { key: string; estado: string }) => [x.key, x.estado]));
+    for (const x of a.list) expect(x.value).toBeCloseTo(b.map[x.key].value, 6);
+  });
+
+  it.each([{}, { precio: 10, volumen: -20, costoEnvase: 15, sueldos: 5, tipoCambio: 10, exportShare: 0.3 }])('punto de equilibrio %j', (aj) => {
+    const a = pe(aj);
+    const b = F.puntoEquilibrio(p, aj);
+    for (const k of ['fijos', 'ingresos', 'costosVariables', 'contribucion', 'razon', 'peLitros', 'pePesos', 'margenSeguridad', 'utilidadNeta'] as const)
+      expect(a[k]).toBeCloseTo(b[k], 6);
+    expect(a.alcanzado).toBe(b.alcanzado);
+    expect(a.rows.map((r) => r.peUnidades)).toEqual(b.rows.map((r: { peUnidades: number }) => r.peUnidades));
+  });
+
+  it('escenarios', () => {
+    const a = escenarios(pe);
+    const b = F.escenarios(p);
+    expect(a.map((x) => x.nombre)).toEqual(b.map((x: { nombre: string }) => x.nombre));
+    a.forEach((x, i) => expect(x.utilidadNeta).toBeCloseTo(b[i].utilidadNeta, 6));
+  });
+
+  it('renta', () => {
+    VG.calc.tax.ppmAnual = () => ({ meses: [], porMes: [], total: 40_000, pagados: 35_000 });
+    const b = VG.calc.tax.renta(2026);
+    const a = renta(2026, er, 50_000, { pagados: 35_000, total: 40_000 }, DEFAULT_CONFIG.tributario);
+    expect(a).toEqual(b);
+  });
+});
+
+describe('flujo de caja corregido', () => {
+  it('cobros parciales reales, sueldos líquidos y F29 una sola vez; proyección después del mes actual', () => {
+    const r = flujoCaja(
+      2026,
+      [
+        { fecha: '2026-03-05', concepto: 'cobros', monto: 500_000 },
+        { fecha: '2026-03-28', concepto: 'sueldos', monto: 600_000 },
+        { fecha: '2026-04-20', concepto: 'impuestos', monto: 150_000 },
+        { fecha: '2026-11-30', concepto: 'cobros', monto: 1_000_000 }
+      ],
+      100_000,
+      '2026-10'
+    );
+    expect(r.rows[2]).toMatchObject({ entradas: 500_000, salidas: 600_000, neto: -100_000, saldo: 0, alerta: false });
+    expect(r.rows[3]).toMatchObject({ impuestos: 150_000, saldo: -150_000, alerta: true });
+    expect(r.rows[10]).toMatchObject({ proyectado: true, cobros: 1_000_000 });
+    expect(r.negativo?.mes).toBe('2026-04');
+    expect(r.saldoFinal).toBe(850_000);
   });
 });

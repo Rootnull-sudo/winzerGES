@@ -3,7 +3,7 @@
  * Tributario (F6-2; v1: modules/tributario). F29 con los códigos del formulario y su estado, PPM del año, pagos de
  * impuesto y calendario de obligaciones. Un F29 declarado o pagado muestra su foto congelada.
  */
-import { clp, ESTADOS_F29, F29_CERRADO, fechaHoy, nombrePeriodoCorto, resumenPpm, TIPOS_PAGO_IMPUESTO, type ResultadoF29 } from '@winzer/domain';
+import { clp, ESTADOS_F29, F29_CERRADO, fechaHoy, nombrePeriodoCorto, resumenPpm, TIPOS_PAGO_IMPUESTO, type Renta, type ResultadoF29 } from '@winzer/domain';
 import { ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,7 @@ import { EmptyState, Stat, StatGrid } from '@/components/ui/page';
 import { Tabs, useTab } from '@/components/ui/tabs';
 import { cn } from '@/lib/cn';
 import { ErrorForm, fecha, useSubmit } from '../proveedores/comun';
-import { deletePagoImpuesto, guardarF29Action, marcarObligacionAction, savePagoImpuesto } from './actions';
+import { deletePagoImpuesto, guardarF29Action, guardarRentaAction, marcarObligacionAction, savePagoImpuesto } from './actions';
 
 interface FilaF29 {
   periodo: string;
@@ -31,6 +31,7 @@ interface FilaF29 {
 export interface DatosTributario {
   periodo: string;
   anioCalendario: number;
+  renta: { calculo: Renta; estado: string | null; folioSii: string | null; fechaPago: string | null; vence: string };
   f29: FilaF29[];
   vence: string;
   pagos: { id: string; tipo: string; periodo: string; fecha: string; monto: number; folioSii: string | null; incluidoEnF29: boolean; delF29: boolean }[];
@@ -43,6 +44,7 @@ const TABS = [
   { id: 'ppm', label: 'PPM' },
   { id: 'pagos', label: 'Pagos de impuesto' },
   { id: 'calendario', label: 'Calendario' },
+  { id: 'renta', label: 'Renta' },
   { id: 'regimen', label: 'Régimen' }
 ] as const;
 const ESTADO = Object.fromEntries(ESTADOS_F29) as Record<string, string>;
@@ -64,6 +66,7 @@ export function TributarioView({ datos }: { datos: DatosTributario }) {
       {tab === 'ppm' && <Ppm datos={datos} />}
       {tab === 'pagos' && <Pagos datos={datos} />}
       {tab === 'calendario' && <Calendario datos={datos} />}
+      {tab === 'renta' && <RentaTab datos={datos} />}
       {tab === 'regimen' && <Regimen datos={datos} />}
     </>
   );
@@ -483,5 +486,139 @@ function Regimen({ datos }: { datos: DatosTributario }) {
         . Revísalos al inicio de cada año con tu contador.
       </p>
     </section>
+  );
+}
+
+function RentaTab({ datos }: { datos: DatosTributario }) {
+  const can = useCan();
+  const { org } = useOrg();
+  const router = useRouter();
+  const r = datos.renta.calculo;
+  const [editando, setEditando] = useState(false);
+  const cerrado = !!datos.renta.estado && F29_CERRADO.includes(datos.renta.estado);
+  const fila = (l: string, v: number, cls?: string) => (
+    <tr className={cn('border-b border-rule', cls)}>
+      <td className="py-1.5">{l}</td>
+      <td className="py-1.5 text-right tabular">{clp(Math.round(v))}</td>
+    </tr>
+  );
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <Field label="Año comercial">
+          {(id) => (
+            <Select id={id} value={r.anioComercial} onChange={(e) => router.push(`?tab=renta&renta=${e.target.value}`)} className="w-36">
+              {[r.anioComercial + 1, r.anioComercial, r.anioComercial - 1, r.anioComercial - 2].map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <p className="pb-2 text-[13px] text-ink-3">
+          Año tributario {r.anioTributario} · vence el {fecha(datos.renta.vence)} ·{' '}
+          <Badge tone={TONO[datos.renta.estado ?? ''] ?? 'warn'}>{datos.renta.estado ? ESTADO[datos.renta.estado] : 'Sin guardar'}</Badge>
+          {datos.renta.folioSii && <span className="ml-2">Folio SII {datos.renta.folioSii}</span>}
+          {cerrado && <span className="ml-2">· Foto congelada al declarar</span>}
+        </p>
+        {(can('tributario', 'e') || can('tributario', 'c')) && (
+          <Button variant="primary" className="ml-auto" onClick={() => setEditando(true)}>
+            Cambiar estado
+          </Button>
+        )}
+      </div>
+      <StatGrid>
+        <Stat label="Renta líquida imponible" value={clp(Math.round(r.rli))} />
+        <Stat label={`IDPC (${pct(r.tasa, 1)})`} value={clp(r.idpc)} />
+        <Stat label="Crédito por PPM" value={clp(Math.round(r.ppm))} />
+        <Stat
+          label={r.aPagar ? 'Impuesto a pagar' : 'Devolución estimada'}
+          value={<span className={cn(!r.aPagar && 'text-ok')}>{clp(Math.round(r.aPagar || r.devolucion))}</span>}
+        />
+      </StatGrid>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <section aria-label="Determinación de la renta" className="rounded-card border border-rule bg-raised p-5">
+          <h2 className="mb-3 font-label text-[18px]">Determinación</h2>
+          <table className="w-full text-[14px]">
+            <tbody>
+              {fila('Resultado financiero antes de impuestos', r.resultadoFinanciero)}
+              {fila('+ Agregados (gastos rechazados o no deducibles)', r.agregados, 'text-ink-2')}
+              {fila('− Deducciones', r.deducciones, 'text-ink-2')}
+              {fila('Renta líquida imponible', r.rli, 'font-semibold')}
+              {fila(`Impuesto de primera categoría (${pct(r.tasa, 1)})`, r.idpc)}
+              {fila('− PPM del año', r.ppm, 'text-ink-2')}
+              {fila(r.aPagar ? 'Impuesto a pagar' : 'Devolución', r.aPagar || r.devolucion, 'font-semibold bg-sunken')}
+            </tbody>
+          </table>
+        </section>
+        <section aria-label="Conciliación financiero y tributario" className="rounded-card border border-rule bg-raised p-5 text-[14px]">
+          <h2 className="mb-3 font-label text-[18px]">Conciliación financiero / tributario</h2>
+          <dl className="grid grid-cols-[1fr_auto] gap-y-1.5">
+            <dt>Utilidad financiera (antes de impuestos)</dt>
+            <dd className="text-right tabular">{clp(Math.round(r.conciliacion.utilidadFinanciera))}</dd>
+            <dt className="text-ink-2">+ Gastos rechazados</dt>
+            <dd className="text-right tabular">{clp(Math.round(r.conciliacion.masGastosRechazados))}</dd>
+            <dt className="font-semibold">= Renta líquida imponible</dt>
+            <dd className="text-right font-semibold tabular">{clp(Math.round(r.conciliacion.rentaLiquidaImponible))}</dd>
+          </dl>
+          <p className="mt-3 text-[12px] text-ink-3">
+            Borrador de apoyo con el estado de resultados del año ({REGIMEN[r.regimen] ?? r.regimen}). No reemplaza la declaración (F22) ni la asesoría de tu
+            contador.
+          </p>
+        </section>
+      </div>
+      {editando && <EstadoRenta anio={r.anioComercial} actual={datos.renta} slug={org.slug} onClose={() => setEditando(false)} />}
+    </>
+  );
+}
+
+function EstadoRenta({ anio, actual, slug, onClose }: { anio: number; actual: DatosTributario['renta']; slug: string; onClose: () => void }) {
+  const { pending, errors, error, run } = useSubmit(onClose);
+  const [estado, setEstado] = useState(actual.estado ?? 'borrador');
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    run(() => guardarRentaAction(slug, { ...Object.fromEntries(new FormData(e.currentTarget)), anio, estado }), 'Renta actualizada.');
+  }
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`Estado de la renta · AT${anio + 1}`}
+      description="Declarar o pagar congela el cálculo. Pagar registra el pago de impuesto y cumple la obligación del calendario."
+      footer={
+        <>
+          <Button type="button" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="renta-form" variant="primary" disabled={pending}>
+            {pending ? 'Guardando…' : 'Guardar'}
+          </Button>
+        </>
+      }
+    >
+      <form id="renta-form" onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+        <Field label="Estado" className="sm:col-span-2">
+          {(id) => (
+            <Select id={id} value={estado} onChange={(e) => setEstado(e.target.value)}>
+              {ESTADOS_F29.map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Folio SII" error={errors.folioSii}>
+          {(id) => <Input id={id} name="folioSii" defaultValue={actual.folioSii ?? ''} maxLength={20} />}
+        </Field>
+        {estado === 'pagado' && (
+          <Field label="Fecha de pago" required error={errors.fechaPago}>
+            {(id) => <Input id={id} name="fechaPago" type="date" defaultValue={actual.fechaPago ?? fechaHoy()} required />}
+          </Field>
+        )}
+        <ErrorForm error={error} className="sm:col-span-2" />
+      </form>
+    </Dialog>
   );
 }

@@ -31,6 +31,7 @@ import {
   obligacionInput,
   cuentaBancoInput,
   cumplimientoInput,
+  rentaV1Input,
   TIPOS_CUMPLIMIENTO,
   movBancoV1Input,
   huellaMov,
@@ -101,6 +102,7 @@ import {
   cuentaBanco,
   movBanco,
   cumplimiento,
+  renta,
   estanque,
   fenologia,
   fermentacion,
@@ -130,6 +132,7 @@ import { aplicarCobro, metaCobro, registrarCobro } from './services/cobros';
 import { ajustarSecuencia } from './services/secuencias';
 import { conciliar, metaCuenta, metaMovBanco } from './services/conciliacion';
 import { metaCumplimiento } from './services/cumplimiento';
+import { guardarRenta, metaRenta } from './services/renta';
 import { guardarF29, marcarObligacion, metaF29, metaObligacion, metaPagoImpuesto } from './services/tributario';
 import { guardarEmisor, idDteCompra, idDteGasto, idDteVenta, importarDte, metaCaf, metaDte, metaEmisor } from './services/dte';
 import { withOrg } from './tenancy';
@@ -773,6 +776,34 @@ const IMPORTERS: Record<string, Importer> = {
   },
   // F6-3: cuentas y libro de banco. El matchRef de v1 ("venta:…", "compra:…") ya viene remapeado al cobro o pago
   // de v2 (`origenesBanco`); el match se rehace con `conciliar` si el documento sigue siendo conciliable.
+  // F7-2: renta de v1 con su foto (declarada o pagada queda tal cual); sin foto, se calcula con guardarRenta.
+  renta: {
+    table: renta,
+    schema: rentaV1Input,
+    meta: metaRenta,
+    guardar: async (tx, actor, data) => {
+      const r = data as { id: string; anioComercial: number; estado: string; folioSII?: string | null; snapshot?: Record<string, unknown> | null };
+      if (!r.snapshot)
+        return guardarRenta(tx, actor, {
+          anio: r.anioComercial,
+          estado: r.estado as never,
+          folioSii: r.folioSII ?? null,
+          fechaPago: `${r.anioComercial + 1}-04-30`
+        });
+      const [ya] = await tx
+        .select({ id: renta.id })
+        .from(renta)
+        .where(and(eq(renta.anioComercial, r.anioComercial), isNull(renta.deletedAt)));
+      return upsert(tx, renta, actor, metaRenta, {
+        id: ya?.id ?? r.id,
+        anioComercial: r.anioComercial,
+        anioTributario: r.anioComercial + 1,
+        estado: r.estado,
+        folioSii: r.folioSII ?? null,
+        snapshot: r.snapshot
+      });
+    }
+  },
   cumplimiento: {
     table: cumplimiento,
     schema: cumplimientoInput,

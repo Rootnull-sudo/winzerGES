@@ -1,7 +1,16 @@
 'use server';
 /** Tributario — módulo ONLINE: estado del F29, pagos de impuesto y obligaciones del calendario. */
-import { eliminarPagoImpuesto, guardarF29, marcarObligacion, registrarPagoImpuesto, withOrg } from '@winzer/db';
-import { f29EstadoInput, obligacionInput, pagoImpuestoInput, type F29EstadoInput, type ObligacionInput, type PagoImpuestoInput } from '@winzer/domain';
+import { eliminarPagoImpuesto, guardarF29, guardarRenta, marcarObligacion, registrarPagoImpuesto, withOrg } from '@winzer/db';
+import {
+  f29EstadoInput,
+  obligacionInput,
+  pagoImpuestoInput,
+  rentaEstadoInput,
+  type RentaEstadoInput,
+  type F29EstadoInput,
+  type ObligacionInput,
+  type PagoImpuestoInput
+} from '@winzer/domain';
 import { ejecutar, invalido, type Result } from '../acciones-comunes';
 
 const ruta = (slug: string) => [`/${slug}/tributario`];
@@ -25,4 +34,10 @@ export async function marcarObligacionAction(slug: string, input: Record<string,
   const p = obligacionInput.safeParse(input);
   if (!p.success) return invalido(p.error.issues);
   return ejecutar(slug, ruta(slug), (actor) => withOrg(actor.orgId, (tx) => marcarObligacion(tx, actor, input as ObligacionInput)));
+}
+
+export async function guardarRentaAction(slug: string, input: Record<string, unknown>): Promise<Result> {
+  const p = rentaEstadoInput.safeParse(input);
+  if (!p.success) return invalido(p.error.issues);
+  return ejecutar(slug, ruta(slug), (actor) => withOrg(actor.orgId, (tx) => guardarRenta(tx, actor, input as RentaEstadoInput)));
 }

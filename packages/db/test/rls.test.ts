@@ -181,7 +181,7 @@ describe('sync offline', () => {
 
 describe('importador v1', () => {
   it('importa el demo, es idempotente y reporta pendientes', async () => {
-    const dump = { ...demoDump, data: { ...demoDump.data, renta: [{ id: 'd1' }, { id: 'd2' }] } };
+    const dump = { ...demoDump, data: { ...demoDump.data, tarea: [{ id: 'd1' }, { id: 'd2' }] } };
     const r1 = await importV1(actorB, dump as never);
     expect(r1.importados).toEqual({
       cuartel: 3,
@@ -226,7 +226,7 @@ describe('importador v1', () => {
       cumplimiento: 9
     });
     expect(r1.omitidos).toEqual([]);
-    expect(r1.pendientes).toEqual({ renta: 2 });
+    expect(r1.pendientes).toEqual({ tarea: 2 });
     await importV1(actorB, dump as never);
     const n = await withOrg(B, (tx) => tx.execute<{ n: number }>(sql`select count(*)::int n from cuartel where demo`));
     expect(n[0]!.n).toBe(3);

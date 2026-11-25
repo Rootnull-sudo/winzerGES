@@ -1731,3 +1731,23 @@ export const cumplimiento = pgTable('cumplimiento', {
   responsable: text('responsable'),
   notas: text('notas')
 });
+
+/* --- Tributario: declaración de renta anual (F7-2, online) --- */
+export const renta = pgTable(
+  'renta',
+  {
+    ...base(),
+    anioComercial: integer('anio_comercial').notNull(),
+    anioTributario: integer('anio_tributario').notNull(),
+    /** borrador | revisado | declarado | pagado (declarado y pagado congelan la foto) */
+    estado: text('estado').notNull().default('borrador'),
+    folioSii: text('folio_sii'),
+    fechaPago: text('fecha_pago'),
+    snapshot: jsonb('snapshot').$type<Record<string, unknown>>().notNull()
+  },
+  (t) => [
+    uniqueIndex('renta_anio_uq')
+      .on(t.orgId, t.anioComercial)
+      .where(sql`${t.deletedAt} is null`)
+  ]
+);

@@ -1,4 +1,4 @@
-import { configVigente, f29Periodos, schema, withOrg } from '@winzer/db';
+import { configVigente, f29Periodos, rentaDelAnio, schema, withOrg } from '@winzer/db';
 import { calendarioTributario, estadoObligacion, fechaHoy, tax } from '@winzer/domain';
 import { desc, isNull } from 'drizzle-orm';
 import { NoAccess } from '@/components/no-access';
@@ -12,7 +12,13 @@ export const metadata = { title: 'Tributario (F29, PPM)' };
  * Módulo ONLINE (F6-2): F29 calculado desde los libros de DTE, honorarios y remuneraciones; PPM del año; pagos de
  * impuesto y calendario. `?periodo=AAAA-MM` elige el F29; `?anio=` el calendario.
  */
-export default async function Page({ params, searchParams }: { params: Promise<{ org: string }>; searchParams: Promise<{ periodo?: string; anio?: string }> }) {
+export default async function Page({
+  params,
+  searchParams
+}: {
+  params: Promise<{ org: string }>;
+  searchParams: Promise<{ periodo?: string; anio?: string; renta?: string }>;
+}) {
   const { org } = await params;
   const q = await searchParams;
   const { allowed, fueraDePlan, actor } = await orgWith(org, 'tributario');
@@ -21,23 +27,33 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const periodo = /^\d{4}-(0[1-9]|1[0-2])$/.test(q.periodo ?? '') ? q.periodo! : tax.periodoAnterior(hoy.slice(0, 7));
   const anioF29 = periodo.slice(0, 4);
   const anioCal = /^\d{4}$/.test(q.anio ?? '') ? Number(q.anio) : Number(hoy.slice(0, 4));
+  // Renta: año comercial elegido; por defecto el anterior hasta abril (se declara en abril del año siguiente).
+  const anioRenta = /^\d{4}$/.test(q.renta ?? '') ? Number(q.renta) : Number(hoy.slice(0, 4)) - (Number(hoy.slice(5, 7)) <= 4 ? 1 : 0);
   // Historial del año del período elegido hasta hoy (o diciembre), incluyendo siempre el período elegido.
   const tope = `${anioF29}-12` < hoy.slice(0, 7) ? `${anioF29}-12` : hoy.slice(0, 7);
   const hastaAnio = periodo > tope ? periodo : tope;
   const d = await withOrg(actor.orgId, async (tx) => {
-    const [delAnio, pagos, obligaciones, cfg] = await Promise.all([
+    const [delAnio, pagos, obligaciones, cfg, renta] = await Promise.all([
       f29Periodos(tx, `${anioF29}-01`, hastaAnio),
       tx.select().from(schema.pagoImpuesto).where(isNull(schema.pagoImpuesto.deletedAt)).orderBy(desc(schema.pagoImpuesto.fecha)),
       tx.select().from(schema.obligacion).where(isNull(schema.obligacion.deletedAt)),
-      configVigente(tx)
+      configVigente(tx),
+      rentaDelAnio(tx, anioRenta)
     ]);
-    return { delAnio, pagos, obligaciones, cfg };
+    return { delAnio, pagos, obligaciones, cfg, renta };
   });
   const t = d.cfg.tributario;
   const reg = new Map(d.obligaciones.map((o) => [o.clave, o]));
   const datos: DatosTributario = {
     periodo,
     anioCalendario: anioCal,
+    renta: {
+      calculo: d.renta.calculo,
+      estado: d.renta.registro?.estado ?? null,
+      folioSii: d.renta.registro?.folioSii ?? null,
+      fechaPago: d.renta.registro?.fechaPago ?? null,
+      vence: `${anioRenta + 1}-${String(t.mesRenta).padStart(2, '0')}-${String(t.diaRenta).padStart(2, '0')}`
+    },
     f29: d.delAnio.map((x) => ({
       periodo: x.periodo,
       calculo: x.calculo,

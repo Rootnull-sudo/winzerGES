@@ -445,3 +445,7 @@ Corregidos al migrar el viñedo (F1):
     restaba el movimiento completo; el gasto financiero creado por la diferencia volvía a aparecer en tránsito y
     quedaba al deshacer; los montos "1.395.000" de la cartola se leían como 1,395. → Candidatos reales con match
     único, diferencia exacta, gasto conciliado que se elimina al deshacer y montos con punto de miles.
+53. **Finanzas**: el flujo de caja sumaba el costo empresa de sueldos y el bruto de honorarios y además el F29
+    (doble conteo de retenciones e impuesto único); usaba ventas y compras "pagado" sin pagos parciales; la
+    depreciación no terminaba y la marca se amortizaba sin fechas. → Flujo con cobros y pagos reales, líquidos y F29
+    una vez; depreciación y amortización diarias con fin (bugs 2, 3 y 4).

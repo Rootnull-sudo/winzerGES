@@ -115,7 +115,7 @@ test('(d) importar un respaldo de v1 y ver clientes y cuarteles', async ({ page 
   await expect(page.getByText('Importación terminada')).toBeVisible();
   await expect(page.getByText('✓ 2 cuartel')).toBeVisible();
   await expect(page.getByText('✓ 2 cliente')).toBeVisible();
-  await expect(page.getByText(/renta \(1\)/)).toBeVisible(); // pendiente hasta F7-2
+  await expect(page.getByText(/tarea \(1\)/)).toBeVisible(); // pendiente hasta F7-4
   await page.screenshot(shots('04-importar'));
   await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Clientes y cobranza' }).click();
   await expect(page.getByRole('cell', { name: /Vinoteca Importada/ })).toBeVisible();
@@ -1310,4 +1310,44 @@ test('costos: costo de la botella 0,75 L con partes directas e indirectos; el ro
   await ventas.page.goto('/vina-demo/costos');
   await expect(ventas.page.getByText(/no tienes acceso|Sin acceso/i).first()).toBeVisible();
   await ventas.ctx.close();
+});
+
+test('financiero: estado de resultados con comparación y simulador que mueve el punto de equilibrio', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/financiero?t=2027');
+  const er = page.getByRole('region', { name: 'Estado de resultados' });
+  await expect(er).toContainText('Margen bruto');
+  await expect(er).toContainText('Utilidad neta');
+  await expect(er).toContainText('Temporada 2026');
+  await page.screenshot(shots('46-financiero'));
+  await page.getByRole('tab', { name: 'Simulador' }).click();
+  const sim = page.getByRole('region', { name: 'Resultado simulado' });
+  const pe = async () =>
+    (
+      await sim
+        .getByRole('row', { name: /Punto de equilibrio/ })
+        .getByRole('cell')
+        .nth(2)
+        .innerText()
+    ).trim();
+  const antes = await pe();
+  await page.getByRole('slider', { name: /Precio/ }).fill('20');
+  await expect.poll(pe).not.toBe(antes);
+  await page.screenshot(shots('47-simulador'));
+  await page.getByRole('tab', { name: 'Flujo de caja' }).click();
+  await expect(page.getByRole('columnheader', { name: 'Sueldos (líquido)' })).toBeVisible();
+});
+
+test('tributario: renta anual calculada, declarar congela la foto', async ({ page }) => {
+  await login(page, 'administrativo@winzer.test');
+  await page.goto('/vina-demo/tributario?tab=renta&renta=2026');
+  await expect(page.getByRole('region', { name: 'Determinación de la renta' })).toContainText('Renta líquida imponible');
+  await page.getByRole('button', { name: 'Cambiar estado' }).click();
+  const d = page.getByRole('dialog', { name: /Estado de la renta/ });
+  await d.getByLabel('Estado').selectOption('declarado');
+  await d.getByLabel(/Folio SII/).fill('F22-E2E');
+  await d.getByRole('button', { name: 'Guardar' }).click();
+  await expect(d).toHaveCount(0);
+  await expect(page.getByText('Foto congelada al declarar')).toBeVisible();
+  await page.screenshot(shots('48-renta'));
 });

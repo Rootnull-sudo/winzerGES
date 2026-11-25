@@ -28,6 +28,7 @@ export * from './services/tributario';
 export * from './services/conciliacion';
 export * from './services/cumplimiento';
 export * from './services/financiero';
+export * from './services/renta';
 export * as schema from './schema';
 export * from './alertas/motor';
 export { REGLAS } from './alertas/reglas';

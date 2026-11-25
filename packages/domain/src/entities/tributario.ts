@@ -207,3 +207,26 @@ export const f29V1Input = z
     estado: z.enum(['borrador', 'revisado', 'declarado', 'pagado']).default('borrador')
   })
   .passthrough();
+
+/** Estado de la declaración de renta (mismas reglas que el F29: declarado o pagado congelan la foto). */
+export const rentaEstadoInput = z
+  .object({
+    anio: z.coerce.number().int().min(2000).max(2100),
+    estado: z.enum(['borrador', 'revisado', 'declarado', 'pagado']),
+    folioSii: texto(20),
+    fechaPago: fecha
+      .optional()
+      .nullable()
+      .or(z.literal('').transform(() => null))
+  })
+  .refine((x) => x.estado !== 'pagado' || !!x.fechaPago, { message: 'Indica la fecha de pago.', path: ['fechaPago'] });
+export type RentaEstadoInput = z.input<typeof rentaEstadoInput>;
+
+/** Renta de un respaldo v1 (importador). */
+export const rentaV1Input = z
+  .object({
+    id: z.string().min(1),
+    anioComercial: z.coerce.number().int(),
+    estado: z.enum(['borrador', 'revisado', 'declarado', 'pagado']).catch('borrador')
+  })
+  .passthrough();

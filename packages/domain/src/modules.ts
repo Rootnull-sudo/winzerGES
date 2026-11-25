@@ -53,7 +53,7 @@ export const MODULES: readonly ModuleDef[] = [
   m('tributario', 'Tributario (F29, PPM, Renta)', 'tributario', 'file-text', 'v2'),
   m('usuarios', 'Usuarios y permisos', 'administracion', 'user-cog', 'v2'),
   m('configuracion', 'Configuración y datos', 'administracion', 'settings', 'v2'),
-  m('ayuda', 'Ayuda', 'administracion', 'life-buoy')
+  m('ayuda', 'Ayuda', 'administracion', 'life-buoy', 'v2')
 ];
 
 export const MODULE_IDS = MODULES.map((x) => x.id);

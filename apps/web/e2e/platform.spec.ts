@@ -1381,3 +1381,15 @@ test('dashboard: bloques por temporada con comparación; el agrónomo no ve fina
   await expect(agro.page.getByRole('region', { name: 'Tributario' })).toHaveCount(0);
   await agro.ctx.close();
 });
+
+test('ayuda: la guía muestra solo los módulos del rol', async ({ page }) => {
+  await login(page, 'ventas@winzer.test');
+  await page.goto('/vina-demo/ayuda');
+  const guia = page.getByRole('list', { name: 'Guía por módulo' });
+  await expect(guia.getByRole('link', { name: 'Ventas' })).toBeVisible();
+  await expect(guia.getByRole('link', { name: 'Clientes y cobranza' })).toBeVisible();
+  await expect(guia.getByRole('link', { name: 'Financiero' })).toHaveCount(0);
+  await expect(guia.getByRole('link', { name: 'Catastro vitícola' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Advertencias legales' })).toContainText('No envía DTE al SII');
+  await page.screenshot(shots('50-ayuda'));
+});

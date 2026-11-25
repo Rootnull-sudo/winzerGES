@@ -325,5 +325,6 @@ Leyenda del estado: ✅ migrado · ⬜ pendiente.
   - importar CSV por tabla;
   - plan y facturación (F8).
 
-### Ayuda · ⬜ · F7 · S
-- Guía estática por módulo, atajos de teclado y avisos legales. Contenido en MDX dentro de la app.
+### Ayuda · ✅ · F7-5 · S
+- `/[org]/ayuda`: primeros pasos con enlaces, atajos, flujo integrado, guía por módulo filtrada por el rol (textos de
+  v1 al día con v2) y advertencias legales (sin las de v1 sobre PIN local y GitHub Pages).

@@ -7,6 +7,7 @@ assets/
 # Generados
 package-lock.json
 packages/db/drizzle/
+packages/db/test/fixtures/demo-v1.json
 **/.next/
 **/test-results/
 **/playwright-report/

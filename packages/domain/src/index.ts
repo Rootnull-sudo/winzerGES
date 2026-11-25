@@ -37,4 +37,5 @@ export * from './entities/dte';
 export * from './entities/tributario';
 export * from './entities/banco';
 export * from './entities/cumplimiento';
+export * from './entities/tarea';
 export * from './sync';

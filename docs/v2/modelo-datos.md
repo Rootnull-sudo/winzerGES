@@ -218,14 +218,20 @@ Los cálculos complejos (costo por litro, estado de resultados, F29) siguen como
 
 ## Mapeo v1 → v2 (las 49 entidades)
 
-Guía para el importador (`packages/db/src/import-v1.ts`, `IMPORTERS`).
+Guía para el importador (`packages/db/src/import-v1.ts`, `IMPORTERS`). Desde F7-4 se importan todas; `config` solo
+aporta los datos del emisor, y usuarios, roles y auditoría se omiten a propósito (se invita por correo).
+
+**Prueba con el respaldo demo completo**: `node scripts/demo-v1.mjs` ejecuta el seed de v1 en una VM y escribe
+`packages/db/test/fixtures/demo-v1.json` (determinista). `test/paridad-v1.test.ts` lo importa sin omitidos ni
+pendientes y compara con v1 sobre los mismos datos: litros por estanque, stock de insumos, valor del producto
+terminado, estado de resultados (salvo depreciación y amortización, bug 4) y F29 de cada mes.
 
 | v1 | v2 | Nota |
 |---|---|---|
 | config | `organization` + `parametro_org` | Empresa → organization; tributario, enología, finanzas → parametro_org; remuneraciones → `indicador` (global) |
 | usuario, rol | `user` + `member`, `org_role` | No se importan los PIN; se invita por correo |
 | auditoria | `audit_log` | Opcional (histórico) |
-| tarea | `tarea` | |
+| tarea | `tarea` | Solo las manuales; `#/ruta` → `ruta`. Las automáticas las regeneran reacciones y servicios |
 | cuartel, variedad | `cuartel`, `variedad` | Ya importados |
 | fenologia, clima, aplicacion, labor, cosecha, jornal, ventana | igual | `temporada` (número) → `temporada_id` (se crea si falta) |
 | lote | `lote` + `lote_cuartel` | `cuartelIds[]` → filas |

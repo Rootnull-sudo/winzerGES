@@ -115,7 +115,7 @@ test('(d) importar un respaldo de v1 y ver clientes y cuarteles', async ({ page 
   await expect(page.getByText('Importación terminada')).toBeVisible();
   await expect(page.getByText('✓ 2 cuartel')).toBeVisible();
   await expect(page.getByText('✓ 2 cliente')).toBeVisible();
-  await expect(page.getByText(/tarea \(1\)/)).toBeVisible(); // pendiente hasta F7-4
+  await expect(page.getByText('✓ 1 tarea')).toBeVisible(); // las 49 entidades de v1 se importan (F7-4)
   await page.screenshot(shots('04-importar'));
   await page.getByRole('navigation', { name: 'Módulos' }).getByRole('link', { name: 'Clientes y cobranza' }).click();
   await expect(page.getByRole('cell', { name: /Vinoteca Importada/ })).toBeVisible();
@@ -550,8 +550,11 @@ test('bodega: un trasiego sin señal se sincroniza como una sola operación y la
             .getByRole('list', { name: 'Estanques' })
             .getByRole('button', { name: new RegExp(`^${codigo}`) })
             .innerText()
-        ).match(/([\d.]+) L \//)?.[1] ?? '0'
-      ).replace(/\./g, '')
+        ).match(/([\d.,]+) L \//)?.[1] ?? '0'
+      )
+        // Formato es-CL: punto de miles y coma decimal ("1.776,5").
+        .replace(/\./g, '')
+        .replace(',', '.')
     );
   await login(page, 'enologo@winzer.test');
   await page.goto('/vina-demo/bodega?t=2026');

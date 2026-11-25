@@ -67,10 +67,13 @@
     ],
     "tarea": [
       {
-        "id": "dte_1",
+        "id": "tar_1",
         "_e": "tarea",
-        "tipo": 33,
-        "folio": 1
+        "titulo": "Revisar etiquetas importadas",
+        "fecha": "2026-11-20",
+        "rol": "enologo",
+        "estado": "pendiente",
+        "ruta": "#/envasado"
       }
     ]
   }

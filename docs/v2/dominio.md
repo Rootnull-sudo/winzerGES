@@ -449,3 +449,8 @@ Corregidos al migrar el viñedo (F1):
     (doble conteo de retenciones e impuesto único); usaba ventas y compras "pagado" sin pagos parciales; la
     depreciación no terminaba y la marca se amortizaba sin fechas. → Flujo con cobros y pagos reales, líquidos y F29
     una vez; depreciación y amortización diarias con fin (bugs 2, 3 y 4).
+54. **Respaldo de v1 al importar** (encontrado con el demo completo): boletas con el precio tratado como neto (las
+    líneas importadas toman el neto de v1 para que el resultado cuadre); órdenes que consumían la etiqueta impresa
+    sin anotarla (se infiere del consumo); recibidos de gastos guardados sin `gastoId` (se asocian al que genera el
+    gasto, sin duplicar el IVA crédito); PPM de $0 (se omiten); vendimias que, en el orden en que se crearon,
+    superaban la capacidad del estanque (al importar no se valida movimiento a movimiento).

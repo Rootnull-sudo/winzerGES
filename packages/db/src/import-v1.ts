@@ -31,6 +31,7 @@ import {
   obligacionInput,
   cuentaBancoInput,
   cumplimientoInput,
+  tareaV1Input,
   rentaV1Input,
   TIPOS_CUMPLIMIENTO,
   movBancoV1Input,
@@ -61,7 +62,7 @@ import {
   variedadInput,
   ventanaInput
 } from '@winzer/domain';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { idDerivado } from './ids';
 import type { z } from 'zod';
@@ -102,6 +103,7 @@ import {
   cuentaBanco,
   movBanco,
   cumplimiento,
+  tarea,
   renta,
   estanque,
   fenologia,
@@ -643,6 +645,25 @@ const IMPORTERS: Record<string, Importer> = {
         const ya = await conservar(idDteGasto(actor.orgId, String(r.gastoId)));
         if (ya) return ya;
       }
+      // Recibido de v1 sin gastoId (el seed solo anotaba el nombre del gasto): si ya existe el que generó el gasto
+      // importado (misma fecha, tipo y total), es el mismo documento; importarlo de nuevo duplicaría el IVA crédito.
+      if (r.direccion === 'recibido' && !r.compraId) {
+        const [g] = await tx
+          .select({ id: dte.id })
+          .from(dte)
+          .where(
+            and(
+              eq(dte.direccion, 'recibido'),
+              eq(dte.tipo, Number(r.tipo)),
+              eq(dte.fecha, r.fecha),
+              eq(dte.total, Math.round(Number(r.total) || 0)),
+              isNotNull(dte.gastoId),
+              isNull(dte.deletedAt)
+            )
+          )
+          .limit(1);
+        if (g) return (await conservar(g.id))!;
+      }
       const ref = r.referencia as { tipo?: number; folio?: unknown; fecha?: string; codigo?: number; razon?: string } | null | undefined;
       let refId: string | null = null;
       if (ref?.folio != null) {
@@ -752,12 +773,16 @@ const IMPORTERS: Record<string, Importer> = {
     table: pagoImpuesto,
     schema: pagoImpuestoInput,
     meta: metaPagoImpuesto,
-    adaptar: (r) => ({
-      ...r,
-      periodo: String(r.periodo ?? String(r.fecha ?? '').slice(0, 7)),
-      folioSii: r.folioSII ?? null,
-      monto: Math.round(Number(r.monto) || 0)
-    })
+    // v1 registraba PPM en $0 (meses sin ventas): no son pagos y se omiten.
+    adaptar: (r) =>
+      Math.round(Number(r.monto) || 0) > 0
+        ? {
+            ...r,
+            periodo: String(r.periodo ?? String(r.fecha ?? '').slice(0, 7)),
+            folioSii: r.folioSII ?? null,
+            monto: Math.round(Number(r.monto) || 0)
+          }
+        : null
   },
   // v1: obligacion.key → clave; una fila por clave (id determinista, el mismo que usa marcarObligacion).
   obligacion: {
@@ -804,6 +829,8 @@ const IMPORTERS: Record<string, Importer> = {
       });
     }
   },
+  // F7-4: tareas anotadas a mano en v1 (las automáticas las regeneran reacciones y servicios).
+  tarea: { table: tarea, schema: tareaV1Input, meta: { entity: 'tarea', module: 'calendario', label: 'tareas' } },
   cumplimiento: {
     table: cumplimiento,
     schema: cumplimientoInput,
@@ -869,6 +896,27 @@ const IMPORTERS: Record<string, Importer> = {
     }
   }
 };
+
+/**
+ * Orden de envasado de v1 sin `etiquetaInsumoId` pero con consumo de una etiqueta impresa (el seed de v1 descontaba
+ * el insumo sin anotarlo en la orden): se infiere del consumo, para que confirmarEnvasado lo regenere igual.
+ */
+function etiquetaImpresaDeConsumos(data: V1Dump['data']): Record<string, unknown>[] {
+  return (data.ordenEnvasado ?? []).map((o) => {
+    if (o.etiquetaInsumoId) return o;
+    const conocidos = new Set([o.envaseId, o.cierreId, o.capsulaId, o.cajaId].filter(Boolean).map(String));
+    const extra = (data.movInsumo ?? []).find((m) => m.tipo === 'consumo_envasado' && m.ref === `envasado:${o.id}` && !conocidos.has(String(m.insumoId)));
+    return extra ? { ...o, etiquetaInsumoId: extra.insumoId } : o;
+  });
+}
+
+/** Orden por fecha y, dentro del día, entradas antes que salidas y luego por creación. */
+function cronologico(a: Record<string, unknown>, b: Record<string, unknown>) {
+  const f = String(a.fecha ?? '').localeCompare(String(b.fecha ?? ''));
+  if (f) return f;
+  const s = Math.sign(Number(b.litros) || 0) - Math.sign(Number(a.litros) || 0);
+  return s || String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? ''));
+}
 
 /** movBanco de v1 con el origen de su matchRef traducido a v2 (venta → su cobro, compra → su pago). */
 function origenesBanco(data: V1Dump['data']): Record<string, unknown>[] {
@@ -951,7 +999,11 @@ export async function importV1(actor: Actor, dump: V1Dump): Promise<ImportReport
       pago: pagosDeCompras(dump.data),
       cobro: cobrosDeVentas(dump.data),
       emisor: emisorDeConfig(dump.data),
-      movBanco: origenesBanco(dump.data)
+      movBanco: origenesBanco(dump.data),
+      // En orden cronológico: la capacidad y el stock de cada estanque se validan al aplicar cada movimiento
+      // (v1 los guarda en el orden en que se crearon, que no siempre es el de las fechas).
+      movBodega: [...(dump.data.movBodega ?? [])].sort((a, b) => cronologico(a, b)),
+      ordenEnvasado: etiquetaImpresaDeConsumos(dump.data)
     }
   };
   await secuenciasDteV1(actor.orgId, dump.data);

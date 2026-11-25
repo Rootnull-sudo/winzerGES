@@ -13,7 +13,10 @@ const int = (v: number) => Math.round(v).toLocaleString('es-CL');
  *  - si restó litros: el lote no queda con litros negativos en ese estanque.
  * Aplica también a ajustes y a borrados (v1 no validaba ninguno de los dos).
  */
-export const validarMovimientoBodega: Reaccion = async (tx, _actor, { op, previo, registro }) => {
+export const validarMovimientoBodega: Reaccion = async (tx, _actor, { op, previo, registro, importando }) => {
+  // Al importar v1 las salidas por envasado y venta a granel llegan después (las regeneran sus servicios): validar
+  // la capacidad movimiento a movimiento rechazaría vendimias que en v1 eran válidas. La paridad se verifica al final.
+  if (importando) return;
   const antes = previo && !previo.deletedAt ? Number(previo.litros) : 0;
   const despues = op === 'delete' || registro.deletedAt ? 0 : Number(registro.litros);
   const delta = despues - antes;

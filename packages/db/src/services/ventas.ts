@@ -193,6 +193,17 @@ export async function confirmarVenta(tx: Tx, actor: Actor, id: string, importand
       v.documento,
       tributario
     );
+  // Importando v1: las líneas toman el neto de la venta de v1 (v1 trataba el precio de boleta como neto), para que
+  // el estado de resultados por línea cuadre con el total importado.
+  if (importando?.totales) {
+    const base = lineas.reduce((s, l) => s + Number(l.neto), 0);
+    let resto = tot.neto;
+    for (const [i, l] of lineas.entries()) {
+      const neto = i === lineas.length - 1 ? resto : Math.round(base ? (Number(l.neto) * tot.neto) / base : tot.neto / lineas.length);
+      resto -= neto;
+      if (neto !== Number(l.neto)) await upsert(tx, ventaLinea, actor, metaLinea, { id: l.id, neto });
+    }
+  }
   // El código va también en el motivo del libro de botellas.
   await tx
     .update(movProducto)
